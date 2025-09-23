@@ -1,0 +1,37 @@
+import { Folder } from '../../../domain/entities/Folder';
+import { Note } from '../../../domain/entities/Note';
+import { FolderRepository } from '../../../domain/repositories/FolderRepository';
+import { NoteRepository } from '../../../domain/repositories/NoteRepository';
+
+export interface GetFolderContentsInput {
+    folderId?: string;
+}
+
+export interface GetFolderContentsOutput {
+    folders: Folder[];
+    notes: Note[];
+}
+
+export class GetFolderContents {
+    constructor(
+        private folderRepository: FolderRepository,
+        private noteRepository: NoteRepository
+    ) {}
+
+    async execute(input: GetFolderContentsInput): Promise<GetFolderContentsOutput> {
+        const [allFolders, allNotes] = await Promise.all([
+            this.folderRepository.findAll(),
+            this.noteRepository.findAll()
+        ]);
+
+        const folders = allFolders.filter(folder =>
+            folder.folderId === input.folderId
+        );
+
+        const notes = allNotes.filter(note =>
+            note.folderId === input.folderId
+        );
+
+        return { folders, notes };
+    }
+}
