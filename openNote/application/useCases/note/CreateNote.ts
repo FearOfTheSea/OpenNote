@@ -1,3 +1,4 @@
+// app/use-cases/note/CreateNote.ts
 import { Note } from '../../../domain/entities/Note';
 import { NoteRepository } from '../../../domain/repositories/NoteRepository';
 
@@ -16,13 +17,14 @@ export class CreateNote {
     constructor(private noteRepository: NoteRepository) {}
 
     async execute(input: CreateNoteInput): Promise<CreateNoteOutput> {
-        const note: Note = {
-            id: this.generateId(),
-            name: input.name,
-            content: input.content,
-            folderId: input.folderId,
-            tagsId: input.tagsId || []
-        };
+        // The validation happens automatically in the Note constructor
+        const note = new Note(
+            this.generateId(),
+            input.name,
+            input.content,
+            input.folderId,
+            input.tagsId || []
+        );
 
         await this.noteRepository.save(note);
 
