@@ -17,9 +17,7 @@ export class CreateNote {
     constructor(private noteRepository: NoteRepository) {}
 
     async execute(input: CreateNoteInput): Promise<CreateNoteOutput> {
-        // The validation happens automatically in the Note constructor
         const note = new Note(
-            this.generateId(),
             input.name,
             input.content,
             input.folderId,
