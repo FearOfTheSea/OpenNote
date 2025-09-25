@@ -14,8 +14,8 @@ export class CreateFolder {
     constructor(private folderRepository: FolderRepository) {}
 
     async execute(input: CreateFolderInput): Promise<CreateFolderOutput> {
-        const folder: Folder = {
-            id: this.generateId(),
+        const folder = new Folder = {
+            folder.name
             name: input.name,
             folderId: input.folderId
         };

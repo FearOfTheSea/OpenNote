@@ -1,4 +1,3 @@
-// app/use-cases/note/CreateNote.ts
 import { Note } from '../../../domain/entities/Note';
 import { NoteRepository } from '../../../domain/repositories/NoteRepository';
 
@@ -27,9 +26,5 @@ export class CreateNote {
         await this.noteRepository.save(note);
 
         return { id: note.id };
-    }
-
-    private generateId(): string {
-        return crypto.randomUUID();
     }
 }
