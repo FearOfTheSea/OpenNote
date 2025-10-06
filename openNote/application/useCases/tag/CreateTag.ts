@@ -1,5 +1,5 @@
 import { Tag } from '../../../domain/entities/Tag';
-import { TagRepository } from '../../../domain/repositories/TagRepository';
+import { TagRepository } from '../../repositories/TagRepository';
 
 export interface CreateTagInput {
     name: string;
@@ -13,17 +13,7 @@ export class CreateTag {
     constructor(private tagRepository: TagRepository) {}
 
     async execute(input: CreateTagInput): Promise<CreateTagOutput> {
-        const tag: Tag = {
-            id: this.generateId(),
-            name: input.name
-        };
-
-        await this.tagRepository.save(tag);
-
+        const tag = new Tag(input.name);
         return { id: tag.id };
-    }
-
-    private generateId(): string {
-        return crypto.randomUUID();
     }
 }

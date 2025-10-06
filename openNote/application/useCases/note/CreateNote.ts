@@ -1,5 +1,5 @@
 import { Note } from '../../../domain/entities/Note';
-import { NoteRepository } from '../../../domain/repositories/NoteRepository';
+import { NoteRepository } from '../../repositories/NoteRepository';
 
 export interface CreateNoteInput {
     name: string;
@@ -20,7 +20,7 @@ export class CreateNote {
             input.name,
             input.content,
             input.folderId,
-            input.tagsId || []
+            input.tagsId
         );
 
         await this.noteRepository.save(note);

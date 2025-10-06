@@ -1,4 +1,4 @@
-import { FolderRepository } from '../../../domain/repositories/FolderRepository';
+import { FolderRepository } from '../../repositories/FolderRepository';
 
 export interface DeleteFolderInput {
     id: string;

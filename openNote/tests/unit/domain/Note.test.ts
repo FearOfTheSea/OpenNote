@@ -1,4 +1,4 @@
-import { Note } from '../../domain/entities/Note';
+import { Note } from '../../../domain/entities/Note';
 
 describe('Note entity', () => {
     it('creates a note with provided values', () => {

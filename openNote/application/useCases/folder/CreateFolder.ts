@@ -1,5 +1,5 @@
 import { Folder } from '../../../domain/entities/Folder';
-import { FolderRepository } from '../../../domain/repositories/FolderRepository';
+import { FolderRepository } from '../../repositories/FolderRepository';
 
 export interface CreateFolderInput {
     name: string;
@@ -14,11 +14,10 @@ export class CreateFolder {
     constructor(private folderRepository: FolderRepository) {}
 
     async execute(input: CreateFolderInput): Promise<CreateFolderOutput> {
-        const folder = new Folder = {
-            folder.name
-            name: input.name,
-            folderId: input.folderId
-        };
+        const folder = new Folder(
+            input.name,
+            undefined,
+            input.folderId);
 
         await this.folderRepository.save(folder);
 

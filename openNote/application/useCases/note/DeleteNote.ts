@@ -1,4 +1,4 @@
-import { NoteRepository } from '../../../domain/repositories/NoteRepository';
+import { NoteRepository } from '../../repositories/NoteRepository';
 
 export interface DeleteNoteInput {
     id: string;

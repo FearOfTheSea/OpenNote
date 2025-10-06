@@ -1,4 +1,4 @@
-import {Folder} from "../entities/Folder";
+import {Folder} from "../../domain/entities/Folder";
 
 export interface FolderRepository {
     findById(id: string): Promise<Folder | null>;

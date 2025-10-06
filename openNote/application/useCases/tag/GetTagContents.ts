@@ -1,7 +1,7 @@
 import { Note } from '../../../domain/entities/Note';
 import { Tag } from '../../../domain/entities/Tag';
-import { TagRepository } from '../../../domain/repositories/TagRepository';
-import { NoteRepository } from '../../../domain/repositories/NoteRepository';
+import { TagRepository } from '../../repositories/TagRepository';
+import { NoteRepository } from '../../repositories/NoteRepository';
 
 export interface GetTagContentsInput {
     tagId: string;
