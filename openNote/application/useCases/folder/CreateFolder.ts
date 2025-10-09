@@ -23,8 +23,4 @@ export class CreateFolder {
 
         return { id: folder.id };
     }
-
-    private generateId(): string {
-        return crypto.randomUUID();
-    }
 }

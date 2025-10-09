@@ -14,6 +14,9 @@ export class CreateTag {
 
     async execute(input: CreateTagInput): Promise<CreateTagOutput> {
         const tag = new Tag(input.name);
+
+        await this.tagRepository.save(tag);
+
         return { id: tag.id };
     }
 }
