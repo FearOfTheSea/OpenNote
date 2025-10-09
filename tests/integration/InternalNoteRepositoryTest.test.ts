@@ -1,5 +1,5 @@
-import {InMemoryNoteRepository} from '../../infrastructure/InMemoryNoteRepository';
-import {Note} from '../../domain/entities/Note';
+import {InMemoryNoteRepository} from '../../openNote/infrastructure/InMemoryNoteRepository';
+import {Note} from '../../openNote/domain/entities/Note';
 
 describe('InMemoryNoteRepository', () => {
     let repository: InMemoryNoteRepository;
