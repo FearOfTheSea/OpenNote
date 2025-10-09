@@ -1,6 +1,6 @@
-import { CreateNote, CreateNoteInput } from '../../../application/useCases/note/CreateNote';
-import { Note } from '../../../domain/entities/Note';
-import { NoteRepository } from '../../../application/repositories/NoteRepository';
+import { CreateNote, CreateNoteInput } from '../../../openNote/application/useCases/note/CreateNote';
+import { Note } from '../../../openNote/domain/entities/Note';
+import { NoteRepository } from '../../../openNote/application/repositories/NoteRepository';
 
 // Mock the NoteRepository
 const mockNoteRepository: jest.Mocked<NoteRepository> = {
