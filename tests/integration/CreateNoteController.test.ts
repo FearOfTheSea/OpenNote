@@ -1,4 +1,4 @@
-import {CreateNoteController} from "../../openNote/infrastructure/controllers/CreateNoteController.ts";
+import {CreateNoteController} from "../../openNote/interface/controllers/CreateNoteController.ts";
 import {InMemoryNoteRepository} from "../../openNote/infrastructure/InMemoryNoteRepository.ts";
 import {CreateNoteInput, CreateNoteOutput} from "../../openNote/application/useCases/note/CreateNote.ts";
 import { assertEquals } from "@std/assert";
