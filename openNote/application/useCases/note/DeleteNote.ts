@@ -1,4 +1,4 @@
-import { NoteRepository } from '../../repositories/NoteRepository';
+import { NoteRepository } from '../../repositories/NoteRepository.ts';
 
 export interface DeleteNoteInput {
     id: string;

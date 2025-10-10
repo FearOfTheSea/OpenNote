@@ -1,5 +1,5 @@
-import {NoteRepository} from '../application/repositories/NoteRepository';
-import {Note} from '../domain/entities/Note';
+import {NoteRepository} from '../application/repositories/NoteRepository.ts';
+import {Note} from '../domain/entities/Note.ts';
 
 export class InMemoryNoteRepository implements NoteRepository {
     private notes: Note[] = [];

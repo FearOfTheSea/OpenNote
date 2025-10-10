@@ -1,7 +1,7 @@
-import { Folder } from '../../../domain/entities/Folder';
-import { Note } from '../../../domain/entities/Note';
-import { FolderRepository } from '../../repositories/FolderRepository';
-import { NoteRepository } from '../../repositories/NoteRepository';
+import { Folder } from '../../../domain/entities/Folder.ts';
+import { Note } from '../../../domain/entities/Note.ts';
+import { FolderRepository } from '../../repositories/FolderRepository.ts';
+import { NoteRepository } from '../../repositories/NoteRepository.ts';
 
 export interface GetFolderContentsInput {
     folderId?: string;

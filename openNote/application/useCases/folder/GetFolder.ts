@@ -1,5 +1,5 @@
-import { Folder } from '../../../domain/entities/Folder';
-import { FolderRepository } from '../../repositories/FolderRepository';
+import { Folder } from '../../../domain/entities/Folder.ts';
+import { FolderRepository } from '../../repositories/FolderRepository.ts';
 
 export interface GetFoldersInput {
     parentFolderId?: string;

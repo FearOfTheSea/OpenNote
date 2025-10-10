@@ -1,5 +1,5 @@
-import {FolderRepository} from '../application/repositories/FolderRepository';
-import {Folder} from '../domain/entities/Folder';
+import {FolderRepository} from '../application/repositories/FolderRepository.ts';
+import {Folder} from '../domain/entities/Folder.ts';
 
 export class InMemoryFolderRepository implements FolderRepository {
     private folders: Folder[] = [];

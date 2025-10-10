@@ -1,4 +1,4 @@
-import { TagRepository } from '../../repositories/TagRepository';
+import { TagRepository } from '../../repositories/TagRepository.ts';
 
 export interface DeleteTagInput {
     id: string;

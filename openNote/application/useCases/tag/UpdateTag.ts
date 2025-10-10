@@ -1,5 +1,5 @@
-import { Tag } from '../../../domain/entities/Tag';
-import { TagRepository } from '../../repositories/TagRepository';
+import { Tag } from '../../../domain/entities/Tag.ts';
+import { TagRepository } from '../../repositories/TagRepository.ts';
 
 export interface UpdateTagInput {
     id: string;

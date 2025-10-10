@@ -1,4 +1,4 @@
-import { FolderRepository } from '../../repositories/FolderRepository';
+import { FolderRepository } from '../../repositories/FolderRepository.ts';
 
 export interface DeleteFolderInput {
     id: string;

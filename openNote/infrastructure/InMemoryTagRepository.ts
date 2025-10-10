@@ -1,5 +1,5 @@
-import {TagRepository} from '../application/repositories/TagRepository';
-import {Tag} from '../domain/entities/Tag';
+import {TagRepository} from '../application/repositories/TagRepository.ts';
+import {Tag} from '../domain/entities/Tag.ts';
 
 export class InMemoryTagRepository implements TagRepository {
     private tags: Tag[] = [];

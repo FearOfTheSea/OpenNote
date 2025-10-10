@@ -1,5 +1,5 @@
-import { Note } from '../../../domain/entities/Note';
-import { NoteRepository } from '../../repositories/NoteRepository';
+import {Note} from '../../../domain/entities/Note.ts';
+import {NoteRepository} from '../../repositories/NoteRepository.ts';
 
 export interface GetNoteInput {
     id: string;
@@ -10,7 +10,8 @@ export interface GetNoteOutput {
 }
 
 export class GetNote {
-    constructor(private noteRepository: NoteRepository) {}
+    constructor(private noteRepository: NoteRepository) {
+    }
 
     async execute(input: GetNoteInput): Promise<GetNoteOutput> {
         const note = await this.noteRepository.findById(input.id);
@@ -19,6 +20,6 @@ export class GetNote {
             throw new Error(`Note with id ${input.id} not found`);
         }
 
-        return { note };
+        return {note};
     }
 }
