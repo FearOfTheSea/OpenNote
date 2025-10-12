@@ -1,4 +1,4 @@
-import { InMemoryNoteRepository } from "./infrastructure/InMemoryNoteRepository.ts";
+import { InMemoryNoteRepository } from "./infrastructure/repositories/InMemoryNoteRepository.ts";
 
 const env = Deno.env.get("NODE_ENV") || "development";
 

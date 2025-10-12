@@ -1,24 +1,24 @@
-import { Tag } from '../../../domain/entities/Tag.ts';
-import { TagRepository } from '../../repositories/TagRepository.ts';
+import { Tag } from "../../../domain/entities/Tag.ts";
+import { TagRepository } from "../../repositories/TagRepository.ts";
 
 export interface SearchTagsInput {
-    query: string;
+  query: string;
 }
 
 export interface SearchTagsOutput {
-    tags: Tag[];
+  tags: Tag[];
 }
 
 export class SearchTags {
-    constructor(private tagRepository: TagRepository) {}
+  constructor(private tagRepository: TagRepository) {}
 
-    async execute(input: SearchTagsInput): Promise<SearchTagsOutput> {
-        const allTags = await this.tagRepository.findAll();
+  async execute(input: SearchTagsInput): Promise<SearchTagsOutput> {
+    const allTags = await this.tagRepository.findAll();
 
-        const tags = allTags.filter(tag =>
-            tag.name.toLowerCase().includes(input.query.toLowerCase())
-        );
+    const tags = allTags.filter((tag) =>
+      tag.name.toLowerCase().includes(input.query.toLowerCase())
+    );
 
-        return { tags };
-    }
+    return { tags };
+  }
 }

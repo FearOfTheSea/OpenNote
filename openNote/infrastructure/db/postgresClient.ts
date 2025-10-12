@@ -1,5 +1,5 @@
-import { Client } from "https://deno.land/x/postgres@v0.17.0/mod.ts";
-import { load } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
+import { Client } from "pg";
+import { load } from "dotenv";
 
 await load({ export: true });
 

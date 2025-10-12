@@ -19,7 +19,7 @@ export class PostgreNoteRepository implements NoteRepository {
       WHERE n.note_id = $1
       GROUP BY n.note_id
       `,
-      [id]
+      [id],
     );
 
     if (result.rows.length === 0) return null;
@@ -40,7 +40,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [name]
+      [name],
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -58,7 +58,7 @@ export class PostgreNoteRepository implements NoteRepository {
       LEFT JOIN note_tags nt ON n.note_id = nt.note_id
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
-      `
+      `,
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -78,7 +78,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [folderId]
+      [folderId],
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -98,7 +98,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [tag]
+      [tag],
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -120,7 +120,7 @@ export class PostgreNoteRepository implements NoteRepository {
           folder_id = EXCLUDED.folder_id,
           updated_at = CURRENT_TIMESTAMP
       `,
-      [note.id, note.name, note.content, note.folderId]
+      [note.id, note.name, note.content, note.folderId],
     );
 
     const tags = this.extractTags(note.content);
@@ -138,7 +138,7 @@ export class PostgreNoteRepository implements NoteRepository {
         VALUES ($1)
         ON CONFLICT (tag_name) DO NOTHING
         `,
-        [tag]
+        [tag],
       );
 
       await dbClient.queryObject(
@@ -147,7 +147,7 @@ export class PostgreNoteRepository implements NoteRepository {
         VALUES ($1, $2)
         ON CONFLICT DO NOTHING
         `,
-        [note.id, tag]
+        [note.id, tag],
       );
     }
   }
@@ -174,7 +174,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [keyword]
+      [keyword],
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -191,7 +191,7 @@ export class PostgreNoteRepository implements NoteRepository {
       Array.isArray(row.tags) ? row.tags : [],
       row.note_id,
       row.created_at,
-      row.updated_at
+      row.updated_at,
     );
   }
 

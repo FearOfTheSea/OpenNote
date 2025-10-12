@@ -1,13 +1,19 @@
 # OpenNote
 
-> This project has received the kiss of death. That is, I myself don't use it anymore. I have switched to using a [text editor with markdown support](https://vscodium.com/), Git, and [Syncthing](https://syncthing.net/) for my journaling/note taking.
-> If you want to export your notes, the [cli](https://github.com/FoxUSA/OpenNote-CLI) can dump them to text files. 
+> This project has received the kiss of death. That is, I myself don't use it
+> anymore. I have switched to using a
+> [text editor with markdown support](https://vscodium.com/), Git, and
+> [Syncthing](https://syncthing.net/) for my journaling/note taking. If you want
+> to export your notes, the [cli](https://github.com/FoxUSA/OpenNote-CLI) can
+> dump them to text files.
 
-![][responsive]
-OpenNote is a progressive web application(PWA)/HTML5 offline app that was built to be a open source(MIT License), web based text editor/note taking software.
-It is designed to be self hosted and gives you ownership of your data
+![][responsive] OpenNote is a progressive web application(PWA)/HTML5 offline app
+that was built to be a open source(MIT License), web based text editor/note
+taking software. It is designed to be self hosted and gives you ownership of
+your data
 
 Please support this project by:
+
 - [Using GitTip][GitTip],
 - [donating bitcoins][Bitcoins],
 - and/or like on [Alternative To][Alternative].
@@ -18,15 +24,12 @@ Thank you!
 
 [or download manually from here.][Download]
 
+## Demo
 
-Demo
--------
 https://foxusa.github.io/OpenNote/OpenNote/
 
+## ![][topLevel] Features
 
-![][topLevel]
-Features
---------
 - BYOS(Bring Your Own Server)
 - Touch friendly and mouse friendly ui
 - Light weight
@@ -38,44 +41,44 @@ Features
 - Rename/Delete Folders(Click on folder title to get menu.)
 - Responsive
 - Tags
-- [CLI](https://github.com/FoxUSA/OpenNote-CLI)
-Upcoming Features
------------------
+- [CLI](https://github.com/FoxUSA/OpenNote-CLI) Upcoming Features
+
+---
+
 - Email to note
 - Mobile App
 
-Documentation
------------------
+## Documentation
+
 - [How to install][Install]
 - [How to upgrade][Upgrade]
 - [How to build](https://github.com/FoxUSA/OpenNote/blob/master/docs/Build.md)
 - [Themes][Themes]
 - [Project history][History]
 
-License
--------
-	JQuery - Distributed under the MIT License
-	Angular - Distributed under the MIT License
-	Bootstrap - Distributed under the MIT License
-	Angular UI Tree - Distributed under the MIT License
-	Alertify.js - Distributed under the MIT License
-	PouchDB - Distributed under the Apache License
-	Dragula - Distributed under the MIT License
-	Into.js - Distributed with license from Afshin Mehrabani Copyright (C) 2012
+## License
 
-	OpenNote Code - Distributed under the MIT License
+    JQuery - Distributed under the MIT License
+    Angular - Distributed under the MIT License
+    Bootstrap - Distributed under the MIT License
+    Angular UI Tree - Distributed under the MIT License
+    Alertify.js - Distributed under the MIT License
+    PouchDB - Distributed under the Apache License
+    Dragula - Distributed under the MIT License
+    Into.js - Distributed with license from Afshin Mehrabani Copyright (C) 2012
 
-	© Jacob Liscom 2018
+    OpenNote Code - Distributed under the MIT License
 
-Credits
--------
-	J. Liscom - Creator
+    © Jacob Liscom 2018
 
-	Kam Bnkamalesh - His TODO project heavily influenced my UI design
+## Credits
+
+    J. Liscom - Creator
+
+    Kam Bnkamalesh - His TODO project heavily influenced my UI design
 
 [topLevel]: ./docs/screenShots/topLevel.png
 [responsive]: ./docs/screenShots/OpenNote.png
-
 [Install]: https://github.com/FoxUSA/OpenNote/blob/master/docs/Install.md
 [History]: https://github.com/FoxUSA/OpenNote/blob/master/docs/History.md
 [Upgrade]: https://github.com/FoxUSA/OpenNote/blob/master/docs/Upgrade.md

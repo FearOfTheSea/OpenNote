@@ -2,8 +2,8 @@ import {
   assertEquals,
   assertNotEquals,
 } from "https://deno.land/std@0.201.0/assert/mod.ts";
-import { PostgreNoteRepository } from "../../../infrastructure/repositories/PostgreNoteRepository.ts";
-import { Note } from "../../../domain/entities/Note.ts";
+import { PostgreNoteRepository } from "../../../openNote/infrastructure/repositories/PostgreNoteRepository.ts";
+import { Note } from "../../../openNote/domain/entities/Note.ts";
 
 const repo = new PostgreNoteRepository();
 
@@ -15,7 +15,7 @@ function createSampleNote(titleSuffix = "Sample"): Note {
     `test Note ${titleSuffix}`,
     `this is a test note with #deno and #postgres`,
     undefined,
-    [] // tags được extract tự động
+    [], // tags được extract tự động
   );
 }
 
@@ -45,7 +45,7 @@ Deno.test("save() should update existing note", async () => {
     note.folderId,
     note.tagsId,
     note.id,
-    note.createdAt
+    note.createdAt,
   );
 
   await repo.save(updatedNote);
@@ -75,7 +75,7 @@ Deno.test("findByTag() should return notes that contain tag", async () => {
   const results = await repo.findByTag("deno");
   assertEquals(
     results.some((n: Note) => n.id === note.id),
-    true
+    true,
   );
 });
 
@@ -89,7 +89,7 @@ Deno.test("searchByKeyword() should find notes by keyword", async () => {
   const results = await repo.searchByKeyword("postgres");
   assertEquals(
     results.some((n: Note) => n.id === note.id),
-    true
+    true,
   );
 });
 

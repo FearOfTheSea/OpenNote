@@ -1,22 +1,22 @@
-import { Tag } from '../../../domain/entities/Tag.ts';
-import { TagRepository } from '../../repositories/TagRepository.ts';
+import { Tag } from "../../../domain/entities/Tag.ts";
+import { TagRepository } from "../../repositories/TagRepository.ts";
 
 export interface CreateTagInput {
-    name: string;
+  name: string;
 }
 
 export interface CreateTagOutput {
-    id: string;
+  id: string;
 }
 
 export class CreateTag {
-    constructor(private tagRepository: TagRepository) {}
+  constructor(private tagRepository: TagRepository) {}
 
-    async execute(input: CreateTagInput): Promise<CreateTagOutput> {
-        const tag = new Tag(input.name);
+  async execute(input: CreateTagInput): Promise<CreateTagOutput> {
+    const tag = new Tag(input.name);
 
-        await this.tagRepository.save(tag);
+    await this.tagRepository.save(tag);
 
-        return { id: tag.id };
-    }
+    return { id: tag.id };
+  }
 }
