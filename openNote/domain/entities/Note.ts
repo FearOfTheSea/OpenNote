@@ -14,7 +14,7 @@ export class Note {
     tagsId: string[] = [],
     id?: string,
     createdAt?: Date,
-    updatedAt?: Date,
+    updatedAt?: Date
   ) {
     if (!name || name.trim() === "") {
       throw new Error("Note name cannot be empty");
