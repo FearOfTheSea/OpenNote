@@ -2,13 +2,13 @@ import { Folder } from "../../../domain/entities/Folder";
 import { FolderRepository } from "../../repositories/FolderRepository";
 
 export interface UpdateFolderInput {
-  id: string;
-  name?: string;
-  folderId?: string;
+  readonly id: string;
+  readonly name?: string;
+  readonly folderId?: string;
 }
 
 export interface UpdateFolderOutput {
-  success: boolean;
+  readonly folder: Folder;
 }
 
 export class UpdateFolder {
@@ -24,11 +24,12 @@ export class UpdateFolder {
     const updatedFolder = new Folder(
       input.name !== undefined ? input.name : existingFolder.name,
       input.id,
-      input.folderId !== undefined ? input.folderId : existingFolder.folderId,
+      input.folderId !== undefined
+        ? input.folderId
+        : existingFolder.parentFolderId,
     );
 
     await this.folderRepository.save(updatedFolder);
-
-    return { success: true };
+    return { folder: updatedFolder };
   }
 }

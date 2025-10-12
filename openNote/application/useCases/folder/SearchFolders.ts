@@ -2,8 +2,8 @@ import { Folder } from "../../../domain/entities/Folder.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
 
 export interface SearchFoldersInput {
-  query: string;
-  parentFolderId?: string;
+  readonly query: string;
+  readonly parentFolderId?: string;
 }
 
 export interface SearchFoldersOutput {
@@ -26,7 +26,7 @@ export class SearchFolders {
       );
 
       const matchesParent = input.parentFolderId !== undefined
-        ? folder.folderId === input.parentFolderId
+        ? folder.parentFolderId === input.parentFolderId
         : true;
 
       return matchesQuery && matchesParent;

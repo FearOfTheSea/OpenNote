@@ -1,7 +1,7 @@
 // @ts-types="npm:@types/express@4.17.15"
 import express from "express";
 import { noteRepository } from "./ApplicationContext.ts";
-import { CreateNoteController } from "./interface/controllers/CreateNoteController.ts";
+import { CreateNoteController } from "./interface/controllers/note/CreateNoteController.ts";
 import { CreateNoteInput } from "./application/useCases/note/CreateNote.ts";
 
 const app = express();

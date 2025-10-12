@@ -1,7 +1,7 @@
 import { NoteRepository } from "../../repositories/NoteRepository.ts";
 
 export interface DeleteNoteInput {
-  id: string;
+  readonly id: string;
 }
 
 export class DeleteNote {

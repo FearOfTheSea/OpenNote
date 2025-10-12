@@ -1,11 +1,11 @@
 export class Note {
-  public readonly id: string;
-  public readonly name: string;
-  public readonly content: string;
-  public readonly folderId?: string;
-  public readonly tagsId: string[];
-  public readonly createdAt: Date;
-  public readonly updatedAt: Date;
+  readonly id: string;
+  readonly name: string;
+  readonly content: string;
+  readonly folderId?: string;
+  readonly tagsId: string[];
+  readonly createdAt: Date;
+  readonly updatedAt: Date;
 
   constructor(
     name: string,

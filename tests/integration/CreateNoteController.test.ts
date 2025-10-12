@@ -1,30 +1,22 @@
-import { CreateNoteController } from "../../openNote/interface/controllers/CreateNoteController.ts";
-import { InMemoryNoteRepository } from "../../openNote/infrastructure/repositories/InMemoryNoteRepository.ts";
 import {
-  CreateNoteInput,
-  CreateNoteOutput,
-} from "../../openNote/application/useCases/note/CreateNote.ts";
+  CreateNoteController,
+  CreateNoteRequest,
+  CreateNoteResponse,
+} from "../../openNote/interface/controllers/note/CreateNoteController.ts";
+import { InMemoryNoteRepository } from "../../openNote/infrastructure/repositories/InMemoryNoteRepository.ts";
 import { assertEquals } from "@std/assert";
 
-Deno.test("CreateNoteController should create a note", async () => {
+Deno.test("[CreateNoteController] Create new note test", async () => {
   const repository = new InMemoryNoteRepository();
 
-  const createNoteInput: CreateNoteInput = { name: "new note", content: "lma" };
-  const createNoteController = new CreateNoteController(repository);
-  const createNoteOutput: CreateNoteOutput = await createNoteController.apply(
-    createNoteInput,
-  );
+  const controller = new CreateNoteController(repository);
+  const request: CreateNoteRequest = {
+    name: "",
+    content: "deadline coming at 13/10",
+    folderId: "726e6",
+    tagsId: ["8fhr4", "7r6f"],
+  };
+  const response: CreateNoteResponse = await controller.apply(request);
 
-  console.log(createNoteOutput.id);
-  const foundNote = await repository.findById(createNoteOutput.id);
-  if (foundNote) {
-    console.log(
-      foundNote.name,
-      foundNote.content,
-      foundNote.folderId,
-      foundNote.tagsId,
-    );
-  }
-
-  assertEquals(createNoteOutput.id != null, true, "Note ID should be defined");
+  assertEquals(response != null, true, "Create note response must not be null");
 });

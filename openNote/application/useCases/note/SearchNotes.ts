@@ -2,13 +2,13 @@ import { Note } from "../../../domain/entities/Note.ts";
 import { NoteRepository } from "../../repositories/NoteRepository.ts";
 
 export interface SearchNotesInput {
-  query?: string;
-  folderId?: string;
-  tagsId?: string[];
+  readonly query?: string;
+  readonly folderId?: string;
+  readonly tagsId?: string[];
 }
 
 export interface SearchNotesOutput {
-  notes: Note[];
+  readonly notes: Note[];
 }
 
 export class SearchNotes {

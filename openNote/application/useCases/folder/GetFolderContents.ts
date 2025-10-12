@@ -4,12 +4,12 @@ import { FolderRepository } from "../../repositories/FolderRepository.ts";
 import { NoteRepository } from "../../repositories/NoteRepository.ts";
 
 export interface GetFolderContentsInput {
-  folderId?: string;
+  readonly folderId?: string;
 }
 
 export interface GetFolderContentsOutput {
-  folders: Folder[];
-  notes: Note[];
+  readonly folders: Folder[];
+  readonly notes: Note[];
 }
 
 export class GetFolderContents {
@@ -27,10 +27,12 @@ export class GetFolderContents {
     ]);
 
     const folders = allFolders.filter((folder) =>
-      folder.folderId === input.folderId
+      folder.parentFolderId === input.folderId
     );
 
-    const notes = allNotes.filter((note) => note.folderId === input.folderId);
+    const notes = allNotes.filter((note) =>
+      note.parentFolderId === input.folderId
+    );
 
     return { folders, notes };
   }

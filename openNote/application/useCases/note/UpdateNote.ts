@@ -2,17 +2,21 @@ import { Note } from "../../../domain/entities/Note.ts";
 import { NoteRepository } from "../../repositories/NoteRepository.ts";
 
 export interface UpdateNoteInput {
-  id: string;
-  name?: string;
-  content?: string;
-  folderId?: string;
-  tagsId?: string[];
+  readonly id: string;
+  readonly name?: string;
+  readonly content?: string;
+  readonly folderId?: string;
+  readonly tagsId?: string[];
+}
+
+export interface UpdateNoteOutput {
+  readonly note: Note;
 }
 
 export class UpdateNote {
   constructor(private noteRepository: NoteRepository) {}
 
-  async execute(input: UpdateNoteInput): Promise<void> {
+  async execute(input: UpdateNoteInput): Promise<UpdateNoteOutput> {
     const existingNote = await this.noteRepository.findById(input.id);
 
     if (!existingNote) {
@@ -28,5 +32,6 @@ export class UpdateNote {
     };
 
     await this.noteRepository.save(updatedNote);
+    return { note: updatedNote };
   }
 }

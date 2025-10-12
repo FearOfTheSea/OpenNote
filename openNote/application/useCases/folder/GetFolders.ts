@@ -16,7 +16,7 @@ export class GetFolders {
     const allFolders = await this.folderRepository.findAll();
 
     const filteredFolders = allFolders.filter((folder) =>
-      folder.folderId === input.parentFolderId
+      folder.parentFolderId === input.parentFolderId
     );
 
     return { folders: filteredFolders };
