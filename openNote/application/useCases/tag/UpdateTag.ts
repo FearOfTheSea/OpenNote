@@ -7,8 +7,7 @@ export interface UpdateTagInput {
 }
 
 export interface UpdateTagOutput {
-  success: boolean;
-  tag?: Tag;
+  tag: Tag;
 }
 
 export class UpdateTag {
@@ -17,7 +16,7 @@ export class UpdateTag {
   async execute(input: UpdateTagInput): Promise<UpdateTagOutput> {
     const existingTag = await this.tagRepository.findById(input.id);
     if (!existingTag) {
-      return { success: false };
+      throw new Error(`Tag with id ${input.id} not found`);
     }
 
     const updatedTag: Tag = {
@@ -27,9 +26,6 @@ export class UpdateTag {
 
     await this.tagRepository.save(updatedTag);
 
-    return {
-      success: true,
-      tag: updatedTag,
-    };
+    return { tag: updatedTag };
   }
 }

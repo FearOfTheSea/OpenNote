@@ -4,22 +4,15 @@ export interface DeleteTagInput {
   id: string;
 }
 
-export interface DeleteTagOutput {
-  success: boolean;
-}
-
 export class DeleteTag {
   constructor(private tagRepository: TagRepository) {}
 
-  async execute(input: DeleteTagInput): Promise<DeleteTagOutput> {
-    // Optional: Check if tag exists before deletion
+  async execute(input: DeleteTagInput): Promise<void> {
     const existingTag = await this.tagRepository.findById(input.id);
     if (!existingTag) {
-      return { success: false };
+      throw new Error(`Tag with id ${input.id} not found`);
     }
 
     await this.tagRepository.delete(input.id);
-
-    return { success: true };
   }
 }

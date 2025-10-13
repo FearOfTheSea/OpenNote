@@ -8,8 +8,6 @@ import { GetNoteByIdResponse } from "./GetNoteByIdController.ts";
 
 export interface SearchNotesRequest {
   readonly query?: string;
-  readonly folderId?: string;
-  readonly tagsId?: string[];
 }
 
 export interface SearchNotesResponse {
@@ -24,11 +22,7 @@ export class SearchNotesController {
   }
 
   async apply(request: SearchNotesRequest): Promise<SearchNotesResponse> {
-    const input: SearchNotesInput = {
-      query: request.query,
-      tagsId: request.tagsId,
-      folderId: request.folderId,
-    };
+    const input = request as SearchNotesInput;
     const output: SearchNotesOutput = await this.useCase.execute(input);
     return output as SearchNotesResponse;
   }

@@ -2,14 +2,14 @@ import { Folder } from "../../../domain/entities/Folder";
 import { FolderRepository } from "../../repositories/FolderRepository";
 
 export interface CreateFolderInput {
-  name: string;
-  folderId?: string;
+  readonly name: string;
+  readonly folderId?: string;
 }
 
 export interface CreateFolderOutput {
-  id: string;
-  createdAt: Date;
-  UpdatedAt: Date;
+  readonly id: string;
+  readonly createdAt: Date;
+  readonly UpdatedAt: Date;
 }
 
 export class CreateFolder {
