@@ -1,5 +1,6 @@
 import { Note } from "../../../domain/entities/Note.ts";
 import { NoteRepository } from "../../repositories/NoteRepository.ts";
+import { FolderRepository } from "../../repositories/FolderRepository.ts";
 
 export interface UpdateNoteInput {
     readonly id: string;
@@ -14,21 +15,40 @@ export interface UpdateNoteOutput {
 }
 
 export class UpdateNote {
-    constructor(private noteRepository: NoteRepository) {}
+    constructor(
+        private noteRepository: NoteRepository,
+        private folderRepository: FolderRepository,
+        private tagRepository: TagRepository,
+    ) {}
 
     async execute(input: UpdateNoteInput): Promise<UpdateNoteOutput> {
         const existingNote = await this.noteRepository.findById(input.id);
-
         if (!existingNote) {
             throw new Error(`Note with id ${input.id} not found`);
         }
 
+        if (input.folderId) {
+            if (!await this.folderRepository.findById(input.folderId)) {
+                throw new Error(`Parent folder with id ${parentFolderId} not found`);
+            }
+        }
+
+        if (input.tagsId) {
+            for (const tagId of input.tagsId) {
+                if (!await this.tagRepository.findById(tagId)) {
+                    throw new Error(`Tag with id ${tagId} not found`);
+                }
+            }
+        }
+
         const updatedNote: Note = {
-            ...existingNote,
-            ...(input.name !== undefined && { name: input.name }),
-            ...(input.content !== undefined && { content: input.content }),
-            ...(input.folderId !== undefined && { folderId: input.folderId }),
-            ...(input.tagsId !== undefined && { tagsId: input.tagsId }),
+            id: input.id,
+            name: input.name ? input.name : existingNote.name,
+            content: input.content ? input.content : existingNote.content,
+            folderId: input.folderId ? parentFolderId : existingNote.folderId,
+            tagsId: input.tagsId ? input.tagsId : existingNote.tagsId,
+            createdAt: existingNote.createdAt,
+            updatedAt: new Date(),
         };
 
         await this.noteRepository.save(updatedNote);

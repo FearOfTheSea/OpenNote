@@ -15,10 +15,11 @@ export class SearchNotes {
     async execute(input: SearchNotesInput): Promise<SearchNotesOutput> {
         const allNotes = await this.noteRepository.findAll();
 
+        if (!input.query) {
+            return allNotes;
+        }
+
         const filteredNotes = allNotes.filter((note) => {
-            if (!input.query) {
-                return true;
-            }
             const searchTerm = input.query.toLowerCase();
             return note.name.toLowerCase().includes(searchTerm) ||
                 note.content.toLowerCase().includes(searchTerm);

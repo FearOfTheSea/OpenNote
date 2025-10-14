@@ -3,7 +3,7 @@ import { FolderRepository } from "../../../application/repositories/FolderReposi
 
 export interface CreateFolderRequest {
     readonly name: string;
-    readonly parentFolderId: string;
+    readonly parentFolderId?: string;
 }
 
 export interface CreateFolderResponse {

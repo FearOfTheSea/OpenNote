@@ -12,7 +12,6 @@ export class Note {
         content: string,
         folderId?: string,
         tagsId: string[] = [],
-        id?: string,
         createdAt?: Date,
         updatedAt?: Date,
     ) {
@@ -20,7 +19,7 @@ export class Note {
             throw new Error("Note name cannot be empty");
         }
 
-        this.id = id || crypto.randomUUID();
+        this.id = crypto.randomUUID();
         this.name = name.trim();
         this.content = content;
         this.folderId = folderId;

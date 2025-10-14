@@ -1,5 +1,5 @@
 import { NoteRepository } from "../../../application/repositories/NoteRepository.ts";
-import { CreateNote } from "../../../application/useCases/note/CreateNote.ts";
+import { CreateNote, CreateNoteInput } from "../../../application/useCases/note/CreateNote.ts";
 import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
 import { TagRepository } from "../../../application/repositories/TagRepository.ts";
 
@@ -24,14 +24,7 @@ export class CreateNoteController {
     }
 
     async apply(request: CreateNoteRequest): Promise<CreateNoteResponse> {
-        const folderId = request.folderId ? request.folderId : "root";
-        const input = {
-            name: request.name,
-            content: request.content,
-            folderId: folderId,
-            tagsId: request.tagsId,
-        };
-
+        const input = request as CreateNoteInput;
         try {
             const output = await this.useCase.execute(input);
             return {

@@ -24,16 +24,20 @@ export class UpdateFolder {
             throw new Error(`Folder with id ${input.id} not found`);
         }
 
-        const newParentFolder = await this.folderRepository.findById(input.parentFolderId);
-        if (!newParentFolder) {
-            throw new Error(`New parent folder with id ${input.parentFolderId} not found`);
+        if (input.parentFolderId) {
+            const newParentFolder = await this.folderRepository.findById(input.parentFolderId);
+            if (!newParentFolder) {
+                throw new Error(`New parent folder with id ${input.parentFolderId} not found`);
+            }
         }
 
-        const updatedFolder = new Folder(
-            input.name !== undefined ? input.name : existingFolder.name,
-            input.parentFolderId ? input.parentFolderId : existingFolder.parentFolderId,
-            false,
-        );
+        const updatedFolder = {
+            id: input.id,
+            name: input.name ? input.name : existingFolder.name,
+            parentFolderId: input.parentFolderId ? input.parentFolderId : existingFolder.parentFolderId,
+            createdAt: existingFolder.createdAt,
+            updatedAt: new Date(),
+        };
 
         await this.folderRepository.save(updatedFolder);
         return { folder: updatedFolder };

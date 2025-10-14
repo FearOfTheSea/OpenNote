@@ -42,10 +42,10 @@ app.use((req, res, next) => {
 // NOTE ENDPOINTS
 const createNoteController = new CreateNoteController(noteRepository, folderRepository, tagRepository);
 const getNoteByIdController = new GetNoteByIdController(noteRepository);
-const updateNoteController = new UpdateNoteController(noteRepository);
+const updateNoteController = new UpdateNoteController(noteRepository, folderRepository, tagRepository);
 const deleteNoteController = new DeleteNoteController(noteRepository);
 const searchNotesController = new SearchNotesController(noteRepository);
-const getNotesByTagsController = new GetNotesByTagsController(noteRepository);
+const getNotesByTagsController = new GetNotesByTagsController(noteRepository, tagRepository);
 
 // Create a new note
 app.post("/api/notes", async (req, res) => {
@@ -165,11 +165,10 @@ const searchFoldersController = new SearchFoldersController(folderRepository);
 // Create a new folder
 app.post("/api/folders", async (req, res) => {
     try {
-        const { name, parentFolderId } = req.body;
-        const folderParentFolderId = parentFolderId ? parentFolderId : "root";
+        // const folderParentFolderId = parentFolderId ? parentFolderId : "root";
         const result = await createFolderController.apply({
-            name,
-            parentFolderId: folderParentFolderId,
+            name: req.body.name,
+            parentFolderId: req.body.parentFolderId,
         });
         res.status(201).json(result);
     } catch (error) {
@@ -180,9 +179,8 @@ app.post("/api/folders", async (req, res) => {
 // Get all folders (or filter by parent)
 app.get("/api/folders", async (req, res) => {
     try {
-        let parentFolderId = req.query.parentFolderId as string | undefined;
         const result = await getFoldersController.apply({
-            parentFolderId: parentFolderId,
+            parentFolderId: req.query.parentFolderId,
         });
         res.json(result);
     } catch (error) {

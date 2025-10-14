@@ -3,7 +3,7 @@ import { FolderRepository } from "../../repositories/FolderRepository";
 
 export interface CreateFolderInput {
     readonly name: string;
-    readonly parentFolderId: string;
+    readonly parentFolderId?: string;
 }
 
 export interface CreateFolderOutput {
@@ -17,14 +17,16 @@ export class CreateFolder {
     constructor(private folderRepository: FolderRepository) {}
 
     async execute(input: CreateFolderInput): Promise<CreateFolderOutput> {
-        const parentFolder = await this.folderRepository.findById(input.parentFolderId);
+        const parentFolderId = input.parentFolderId ? input.parentFolderId : "root";
+        const parentFolder = await this.folderRepository.findById(parentFolderId);
         if (!parentFolder) {
             throw new Error("Parent folder not found");
         }
         try {
             const folder = new Folder(
                 input.name,
-                input.parentFolderId,
+                parentFolderId,
+                false,
             );
             await this.folderRepository.save(folder);
             return {

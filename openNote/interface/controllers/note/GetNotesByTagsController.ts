@@ -1,5 +1,6 @@
 import { GetNoteByIdResponse } from "./GetNoteByIdController.ts";
 import { GetNotesByTagInput, GetNotesByTags } from "../../../application/useCases/note/GetNotesByTags.ts";
+import { TagRepository } from "../../../application/repositories/TagRepository.ts";
 
 export interface GetNotesByTagsRequest {
     readonly tagsId: string[];
@@ -12,8 +13,8 @@ export interface GetNotesByTagsResponse {
 export class GetNotesByTagsController {
     private useCase: GetNotesByTags;
 
-    constructor(noteRepository: NoteRepository) {
-        this.useCase = new GetNotesByTags(noteRepository);
+    constructor(noteRepository: NoteRepository, tagRepository: TagRepository) {
+        this.useCase = new GetNotesByTags(noteRepository, tagRepository);
     }
 
     async apply(request: GetNotesByTagsRequest): Promise<GetNotesByTagsResponse> {

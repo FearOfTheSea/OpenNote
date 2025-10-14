@@ -6,7 +6,6 @@ export class Tag {
 
     constructor(
         name: string,
-        id?: string,
         createdAt?: Date,
         updatedAt?: Date,
     ) {
@@ -14,7 +13,7 @@ export class Tag {
             throw new Error("Tag name cannot be empty");
         }
 
-        this.id = id || crypto.randomUUID();
+        this.id = crypto.randomUUID();
         this.name = name.trim();
         this.createdAt = createdAt || new Date();
         this.updatedAt = updatedAt || new Date();
