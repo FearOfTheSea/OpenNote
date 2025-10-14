@@ -2,23 +2,21 @@ import { Folder } from "../../../domain/entities/Folder.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
 
 export interface GetFoldersInput {
-  parentFolderId?: string;
+    parentFolderId?: string;
 }
 
 export interface GetFoldersOutput {
-  folders: Folder[];
+    folders: Folder[];
 }
 
 export class GetFolders {
-  constructor(private folderRepository: FolderRepository) {}
+    constructor(private folderRepository: FolderRepository) {}
 
-  async execute(input: GetFoldersInput): Promise<GetFoldersOutput> {
-    const allFolders = await this.folderRepository.findAll();
+    async execute(input: GetFoldersInput): Promise<GetFoldersOutput> {
+        const allFolders = await this.folderRepository.findAll();
 
-    const filteredFolders = allFolders.filter((folder) =>
-      folder.parentFolderId === input.parentFolderId
-    );
+        const filteredFolders = allFolders.filter((folder) => folder.parentFolderId === input.parentFolderId);
 
-    return { folders: filteredFolders };
-  }
+        return { folders: filteredFolders };
+    }
 }
