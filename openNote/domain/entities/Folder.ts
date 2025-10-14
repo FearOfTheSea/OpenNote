@@ -1,16 +1,18 @@
 export class Folder {
   public readonly id: string;
   public readonly name: string;
+  public readonly userId: string;
   public readonly parentFolderId?: string;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
   constructor(
     name: string,
-    id?: string, // Null id means root folder
+    userId: string,
+    id?: string,
     parentFolderId?: string,
     createdAt?: Date,
-    updatedAt?: Date,
+    updatedAt?: Date
   ) {
     if (!name || name.trim() === "") {
       throw new Error("Folder name cannot be empty");
@@ -18,6 +20,7 @@ export class Folder {
 
     this.id = id || crypto.randomUUID();
     this.name = name.trim();
+    this.userId = userId;
     this.parentFolderId = parentFolderId;
     this.createdAt = createdAt || new Date();
     this.updatedAt = updatedAt || new Date();

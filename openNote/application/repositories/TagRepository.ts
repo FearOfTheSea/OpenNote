@@ -1,10 +1,9 @@
 import { Tag } from "../../domain/entities/Tag";
 
 export interface TagRepository {
-  findById(id: string): Promise<Tag | null>;
-  findByName(name: string): Promise<Tag[]>;
+  findByName(name: string): Promise<Tag[]>; // Primary key is tag's name
   findAll(): Promise<Tag[]>;
   save(tag: Tag): Promise<void>;
   delete(id: string): Promise<void>;
-  searchByKeyword(keyword: string): Promise<Tag[]>;
+  //searchByKeyword(keyword: string): Promise<Tag[]>;
 }
