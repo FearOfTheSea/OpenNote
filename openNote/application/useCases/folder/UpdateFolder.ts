@@ -18,8 +18,8 @@ export class UpdateFolder {
         if (input.id === "root") {
             throw new Error("Cannot update the root folder");
         }
-        const existingFolder = await this.folderRepository.findById(input.id);
 
+        const existingFolder = await this.folderRepository.findById(input.id);
         if (!existingFolder) {
             throw new Error(`Folder with id ${input.id} not found`);
         }

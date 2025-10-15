@@ -22,13 +22,13 @@ export class SearchFoldersController {
         this.useCase = new SearchFolders(folderRepository);
     }
 
-    async apply(
-        request: SearchFoldersRequest,
-    ): Promise<SearchFoldersResponse> {
+    async apply(request: SearchFoldersRequest): Promise<SearchFoldersResponse> {
         const input = request as SearchFoldersInput;
-        const output: SearchFoldersOutput = await this.useCase.execute(input);
-        return {
-            folders: output.folders as GetFolderByIdResponse[],
-        };
+        try {
+            const output: SearchFoldersOutput = await this.useCase.execute(input);
+            return { folders: output.folders as GetFolderByIdResponse[] };
+        } catch (error) {
+            throw error;
+        }
     }
 }

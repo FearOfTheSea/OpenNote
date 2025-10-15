@@ -22,7 +22,13 @@ export class GetTagByIdController {
     async apply(request: GetTagByIdRequest): Promise<GetTagByIdResponse> {
         const input = request as GetTagByIdInput;
         try {
-            return await this.useCase.execute(input).tag as GetTagByIdResponse;
+            const output = await this.useCase.execute(input);
+            return {
+                id: output.tag.id,
+                name: output.tag.name,
+                createdAt: output.tag.createdAt,
+                updatedAt: output.tag.updatedAt,
+            };
         } catch (error) {
             throw error;
         }

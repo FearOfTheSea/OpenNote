@@ -29,7 +29,7 @@ export class CreateNote {
         }
 
         for (const tagId of input.tagsId) {
-            const foundTag = this.tagRepository.findById(tagId);
+            const foundTag = await this.tagRepository.findById(tagId);
             if (!foundTag) {
                 throw new Error(`Tag with id ${tagId} not found`);
             }

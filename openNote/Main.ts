@@ -22,6 +22,8 @@ import { GetTagByIdController } from "./interface/controllers/tag/GetTagByIdCont
 import { UpdateTagController } from "./interface/controllers/tag/UpdateTagController.ts";
 import { DeleteTagController } from "./interface/controllers/tag/DeleteTagController.ts";
 import { SearchTagsController } from "./interface/controllers/tag/SearchTagsController.ts";
+import { GetAllNotesController } from "./interface/controllers/note/GetAllNotesController.ts";
+import { GetAllTagsController } from "./interface/controllers/tag/GetAllTagsController.ts";
 
 const __dirname = dirname(fromFileUrl(import.meta.url));
 
@@ -41,6 +43,7 @@ app.use((req, res, next) => {
 
 // NOTE ENDPOINTS
 const createNoteController = new CreateNoteController(noteRepository, folderRepository, tagRepository);
+const getAllNotesController = new GetAllNotesController(noteRepository);
 const getNoteByIdController = new GetNoteByIdController(noteRepository);
 const updateNoteController = new UpdateNoteController(noteRepository, folderRepository, tagRepository);
 const deleteNoteController = new DeleteNoteController(noteRepository);
@@ -62,11 +65,43 @@ app.post("/api/notes", async (req, res) => {
     }
 });
 
+// Get notes by tags
+app.get("/api/notes", async (req, res) => {
+    try {
+        const tagsParam = req.query.tags as string;
+
+        if (tagsParam) {
+            // Filter by tags
+            const tagsId = tagsParam.split(",");
+            const result = await getNotesByTagsController.apply({ tagsId });
+            res.json(result);
+        } else {
+            // Return all notes
+            const allNotes = await noteRepository.findAll();
+            res.json(allNotes);
+        }
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
 // Get all notes
 app.get("/api/notes", async (req, res) => {
     try {
-        const allNotes = await noteRepository.findAll();
-        res.json(allNotes);
+        const result = await getAllNotesController.apply();
+        res.json(result.notes);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Search notes
+app.get("/api/notes/search", async (req, res) => {
+    try {
+        const result = await searchNotesController.apply({
+            query: req.query.q as string,
+        });
+        res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -108,38 +143,6 @@ app.delete("/api/notes/:id", async (req, res) => {
     }
 });
 
-// Search notes
-app.get("/api/notes/search", async (req, res) => {
-    try {
-        const result = await searchNotesController.apply({
-            query: req.query.q as string,
-        });
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get notes by tags
-app.get("/api/notes", async (req, res) => {
-    try {
-        const tagsParam = req.query.tags as string;
-
-        if (tagsParam) {
-            // Filter by tags
-            const tagsId = tagsParam.split(",");
-            const result = await getNotesByTagsController.apply({ tagsId });
-            res.json(result);
-        } else {
-            // Return all notes
-            const allNotes = await noteRepository.findAll();
-            res.json(allNotes);
-        }
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 // Get notes by folder ID
 app.get("/api/folders/:folderId/notes", async (req, res) => {
     try {
@@ -173,6 +176,19 @@ app.post("/api/folders", async (req, res) => {
         res.status(201).json(result);
     } catch (error) {
         res.status(400).json({ error: error.message });
+    }
+});
+
+// Search folders
+app.get("/api/folders/search", async (req, res) => {
+    try {
+        const result = await searchFoldersController.apply({
+            query: req.query.q as string,
+            parentFolderId: req.query.parentFolderId as string | undefined,
+        });
+        res.json(result);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
     }
 });
 
@@ -234,21 +250,9 @@ app.delete("/api/folders/:id", async (req, res) => {
     }
 });
 
-// Search folders
-app.get("/api/folders/search", async (req, res) => {
-    try {
-        const result = await searchFoldersController.apply({
-            query: req.query.q as string,
-            parentFolderId: req.query.parentFolderId as string | undefined,
-        });
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
 // TAG ENDPOINTS
 const createTagController = new CreateTagController(tagRepository);
+const getAllTagsController = new GetAllTagsController(tagRepository);
 const getTagByIdController = new GetTagByIdController(tagRepository);
 const updateTagController = new UpdateTagController(tagRepository);
 const deleteTagController = new DeleteTagController(tagRepository);
@@ -269,8 +273,20 @@ app.post("/api/tags", async (req, res) => {
 // Get all tags
 app.get("/api/tags", async (req, res) => {
     try {
-        const allTags = await tagRepository.findAll();
-        res.json(allTags);
+        const result = await getAllTagsController.apply();
+        res.json(result.tags);
+    } catch (error) {
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Search tags
+app.get("/api/tags/search", async (req, res) => {
+    try {
+        const result = await searchTagsController.apply({
+            query: req.query.q as string,
+        });
+        res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });
     }
@@ -293,7 +309,7 @@ app.put("/api/tags/:id", async (req, res) => {
             id: req.params.id,
             name: req.body.name,
         });
-        res.json(result);
+        res.json(result.tag);
     } catch (error) {
         res.status(400).json({ error: error.message });
     }
@@ -306,28 +322,6 @@ app.delete("/api/tags/:id", async (req, res) => {
         res.status(204).send();
     } catch (error) {
         res.status(400).json({ error: error.message });
-    }
-});
-
-// Search tags
-app.get("/api/tags/search", async (req, res) => {
-    try {
-        const result = await searchTagsController.apply({
-            query: req.query.q as string,
-        });
-        res.json(result);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
-
-// Get notes by tag ID
-app.get("/api/tags/:id/notes", async (req, res) => {
-    try {
-        const notes = await noteRepository.findByTag(req.params.id);
-        res.json(notes);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
     }
 });
 

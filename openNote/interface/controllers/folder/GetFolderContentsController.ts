@@ -24,14 +24,16 @@ export class GetFolderContentsController {
         this.useCase = new GetFolderContents(folderRepository, noteRepository);
     }
 
-    async apply(
-        request: GetFolderContentsRequest,
-    ): Promise<GetFolderContentsResponse> {
+    async apply(request: GetFolderContentsRequest): Promise<GetFolderContentsResponse> {
         const input = request as GetFolderContentsInput;
-        const output: GetFolderContentsOutput = await this.useCase.execute(input);
-        return {
-            folders: output.folders as GetFolderByIdResponse[],
-            notes: output.notes as GetNoteByIdResponse[],
-        };
+        try {
+            const output: GetFolderContentsOutput = await this.useCase.execute(input);
+            return {
+                folders: output.folders as GetFolderByIdResponse[],
+                notes: output.notes as GetNoteByIdResponse[],
+            };
+        } catch (error) {
+            throw error;
+        }
     }
 }

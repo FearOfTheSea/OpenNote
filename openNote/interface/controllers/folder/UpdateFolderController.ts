@@ -1,4 +1,4 @@
-import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
+ import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
 import { UpdateFolder, UpdateFolderInput } from "../../../application/useCases/folder/UpdateFolder.ts";
 import { GetFolderByIdResponse } from "./GetFolderByIdController.ts";
 

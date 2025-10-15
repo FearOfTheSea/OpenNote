@@ -19,6 +19,10 @@ export class GetFolderContents {
     ) {}
 
     async execute(input: GetFolderContentsInput): Promise<GetFolderContentsOutput> {
+        if (!await this.folderRepository.findById(input.folderId)) {
+            throw new Error(`Folder with ID ${input.folderId} not found`);
+        }
+
         const allFolders = await this.folderRepository.findAll();
         const allNotes = await this.noteRepository.findAll();
 

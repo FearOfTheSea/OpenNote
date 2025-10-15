@@ -15,9 +15,10 @@ export class SearchFolders {
 
     async execute(input: SearchFoldersInput): Promise<SearchFoldersOutput> {
         const parentFolderId = input.parentFolderId ? input.parentFolderId : "root";
-        const parentFolder = await this.folderRepository.findById(input.parentFolderId);
+
+        const parentFolder = await this.folderRepository.findById(parentFolderId);
         if (!parentFolder) {
-            throw new Error(`Parent folder with id ${input.parentFolderId} not found`);
+            throw new Error(`Parent folder with id ${parentFolderId} not found`);
         }
 
         const allFolders = await this.folderRepository.findAll();
