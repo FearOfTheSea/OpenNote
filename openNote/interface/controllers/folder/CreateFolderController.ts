@@ -4,11 +4,14 @@ import { FolderRepository } from "../../../application/repositories/FolderReposi
 export interface CreateFolderRequest {
     readonly name: string;
     readonly parentFolderId?: string;
+    readonly userId: string;
 }
 
 export interface CreateFolderResponse {
     readonly id: string;
-    readonly parentFolderId: string;
+    readonly name: string;
+    readonly userId: string;
+    readonly parentFolderId?: string;
     readonly createdAt: Date;
     readonly updatedAt: Date;
 }

@@ -1,12 +1,11 @@
 import { Note } from "../../domain/entities/Note";
 
 export interface NoteRepository {
-    findById(id: string): Promise<Note | null>;
-    findByName(id: string): Promise<Note[]>;
     findAll(): Promise<Note[]>;
-    findByFolderId(id: string): Promise<Note[]>;
-    findByTag(id: string): Promise<Note[]>;
+    findById(id: string): Promise<Note | null>;
+    findByFolderId(folderId: string): Promise<Note[]>;
     save(note: Note): Promise<void>;
     delete(id: string): Promise<void>;
-    searchByKeyword(keyword: string): Promise<Note[]>;
+    searchByKeyword(keyword: string, folderId?: string): Promise<Note[]>;
+    findNotesByTagsIds(tagsIds: string[]): Promise<Note[]>;
 }

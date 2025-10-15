@@ -1,12 +1,10 @@
 import { Folder } from "../../domain/entities/Folder";
 
 export interface FolderRepository {
-  findById(id: string): Promise<Folder | null>;
-  findByUserId(id: string): Promise<Folder[]>;
-  findByName(name: string): Promise<Folder[]>;
-  findByParentFolderId(parentFolderId: string | undefined): Promise<Folder[]>;
-  findParentFolders(userId: string): Promise<Folder[]>;
-  findAll(): Promise<Folder[]>;
-  save(folder: Folder): Promise<void>;
-  delete(id: string): Promise<void>;
+    findAll(): Promise<Folder[]>;
+    findById(id: string): Promise<Folder | null>;
+    findByUserId(userId: string): Promise<Folder[]>;
+    save(folder: Folder): Promise<void>;
+    delete(id: string): Promise<void>;
+    searchByKeyword(keyword: string, parentFolderId?: string): Promise<Folder[]>;
 }

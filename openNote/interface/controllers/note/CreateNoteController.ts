@@ -6,12 +6,16 @@ import { TagRepository } from "../../../application/repositories/TagRepository.t
 export interface CreateNoteRequest {
     readonly name: string;
     readonly content: string;
-    readonly folderId?: string;
+    readonly folderId: string;
     readonly tagsId?: string[];
 }
 
 export interface CreateNoteResponse {
     readonly id: string;
+    readonly name: string;
+    readonly content: string;
+    readonly folderId: string;
+    readonly tagsId: string[];
     readonly createdAt: Date;
     readonly updatedAt: Date;
 }
@@ -29,6 +33,10 @@ export class CreateNoteController {
             const output = await this.useCase.execute(input);
             return {
                 id: output.note.id,
+                name: output.note.name,
+                content: output.note.content,
+                folderId: output.note.folderId,
+                tagsId: output.note.tagsId,
                 createdAt: output.note.createdAt,
                 updatedAt: output.note.updatedAt,
             };

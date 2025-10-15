@@ -4,17 +4,13 @@ import { Tag } from "../../domain/entities/Tag.ts";
 export class InMemoryTagRepository implements TagRepository {
     private tags: Tag[] = [];
 
-    async findByName(name: string): Promise<Tag[]> {
-        return this.tags.filter((tag) => tag.name === name);
+    async findAll(): Promise<Tag[]> {
+        return this.tags;
     }
 
     async findById(id: string): Promise<Tag | null> {
         const tag = this.tags.find((n) => n.id === id);
         return tag || null;
-    }
-
-    async findAll(): Promise<Tag[]> {
-        return this.tags;
     }
 
     async save(tag: Tag): Promise<void> {
@@ -29,5 +25,9 @@ export class InMemoryTagRepository implements TagRepository {
 
     async delete(id: string): Promise<void> {
         this.tags = this.tags.filter((tag) => tag.id !== id);
+    }
+
+    async searchByKeyword(keyword: string): Promise<Tag[]> {
+        this.tags.filter((tag) => tag.name.toLowerCase().includes(keyword.toLowerCase()));
     }
 }

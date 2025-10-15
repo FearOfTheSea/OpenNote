@@ -1,6 +1,6 @@
-import {GetNoteByIdResponse} from "./GetNoteByIdController.ts";
-import {GetAllNotes} from "../../../application/useCases/note/GetAllNotes.ts";
-import {NoteRepository} from "../../../application/repositories/NoteRepository.ts";
+import { GetNoteByIdResponse } from "./GetNoteByIdController.ts";
+import { GetAllNotes } from "../../../application/useCases/note/GetAllNotes.ts";
+import { NoteRepository } from "../../../application/repositories/NoteRepository.ts";
 
 export interface GetAllNotesResponse {
     readonly notes: GetNoteByIdResponse[];

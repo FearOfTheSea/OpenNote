@@ -4,37 +4,24 @@ import { FolderRepository } from "../../repositories/FolderRepository";
 export interface CreateFolderInput {
     readonly name: string;
     readonly parentFolderId?: string;
+    readonly userId: string;
 }
 
 export interface CreateFolderOutput {
-    readonly id: string;
-    readonly parentFolderId: string;
-    readonly createdAt: Date;
-    readonly UpdatedAt: Date;
+    readonly folder: Folder;
 }
 
 export class CreateFolder {
     constructor(private folderRepository: FolderRepository) {}
 
     async execute(input: CreateFolderInput): Promise<CreateFolderOutput> {
-        const parentFolderId = input.parentFolderId ? input.parentFolderId : "root";
-        const parentFolder = await this.folderRepository.findById(parentFolderId);
-        if (!parentFolder) {
+        if (input.parentFolderId && !await this.folderRepository.findById(input.parentFolderId)) {
             throw new Error("Parent folder not found");
         }
         try {
-            const folder = new Folder(
-                input.name,
-                parentFolderId,
-                false,
-            );
+            const folder = new Folder(input.name, input.parentFolderId, input.userId);
             await this.folderRepository.save(folder);
-            return {
-                id: folder.id,
-                parentFolderId: folder.parentFolderId,
-                createdAt: folder.createdAt,
-                UpdatedAt: folder.updatedAt,
-            };
+            return { folder: folder };
         } catch (error) {
             throw error;
         }

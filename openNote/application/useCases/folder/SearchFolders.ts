@@ -14,22 +14,16 @@ export class SearchFolders {
     constructor(private folderRepository: FolderRepository) {}
 
     async execute(input: SearchFoldersInput): Promise<SearchFoldersOutput> {
-        const parentFolderId = input.parentFolderId ? input.parentFolderId : "root";
+        const { query, parentFolderId } = input;
 
-        const parentFolder = await this.folderRepository.findById(parentFolderId);
-        if (!parentFolder) {
-            throw new Error(`Parent folder with id ${parentFolderId} not found`);
+        if (input.parentFolderId) {
+            const parentFolder = await this.folderRepository.findById(parentFolderId);
+            if (!parentFolder) {
+                throw new Error(`Parent folder with id ${parentFolderId} not found`);
+            }
         }
 
-        const allFolders = await this.folderRepository.findAll();
-        const query = input.query.toLowerCase().trim();
-
-        const filteredFolders = allFolders.filter((folder) => {
-            const matchesQuery = folder.name.toLowerCase().includes(query);
-            const matchesParent = folder.parentFolderId === parentFolderId;
-            return matchesQuery && matchesParent;
-        });
-
-        return { folders: filteredFolders };
+        const matchingFolders = await this.folderRepository.searchByKeyword(query, parentFolderId);
+        return { folders: matchingFolders };
     }
 }

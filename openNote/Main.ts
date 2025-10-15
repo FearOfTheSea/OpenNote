@@ -1,10 +1,9 @@
 // @ts-types="npm:@types/express@4.17.15"
 import express from "express";
 import { dirname, fromFileUrl, join } from "https://deno.land/std@0.214.0/path/mod.ts";
-import { noteRepository } from "./ApplicationContext.ts";
-import { folderRepository } from "./ApplicationContext.ts";
-import { tagRepository } from "./ApplicationContext.ts";
+import { folderRepository, noteRepository, tagRepository } from "./ApplicationContext.ts";
 import { CreateNoteController } from "./interface/controllers/note/CreateNoteController.ts";
+import { GetAllNotesController } from "./interface/controllers/note/GetAllNotesController.ts";
 import { GetNoteByIdController } from "./interface/controllers/note/GetNoteByIdController.ts";
 import { UpdateNoteController } from "./interface/controllers/note/UpdateNoteController.ts";
 import { DeleteNoteController } from "./interface/controllers/note/DeleteNoteController.ts";
@@ -12,18 +11,17 @@ import { SearchNotesController } from "./interface/controllers/note/SearchNotesC
 import { GetNotesByTagsController } from "./interface/controllers/note/GetNotesByTagsController.ts";
 import { CreateFolderController } from "./interface/controllers/folder/CreateFolderController.ts";
 import { GetFolderByIdController } from "./interface/controllers/folder/GetFolderByIdController.ts";
-import { GetFoldersController } from "./interface/controllers/folder/GetFoldersController.ts";
+import { GetAllFoldersController } from "./interface/controllers/folder/GetAllFoldersController.ts";
 import { UpdateFolderController } from "./interface/controllers/folder/UpdateFolderController.ts";
 import { DeleteFolderController } from "./interface/controllers/folder/DeleteFolderController.ts";
 import { GetFolderContentsController } from "./interface/controllers/folder/GetFolderContentsController.ts";
-import { SearchFoldersController } from "./interface/controllers/folder/SearchFoldersController.ts";
 import { CreateTagController } from "./interface/controllers/tag/CreateTagController.ts";
+import { GetAllTagsController } from "./interface/controllers/tag/GetAllTagsController.ts";
 import { GetTagByIdController } from "./interface/controllers/tag/GetTagByIdController.ts";
 import { UpdateTagController } from "./interface/controllers/tag/UpdateTagController.ts";
 import { DeleteTagController } from "./interface/controllers/tag/DeleteTagController.ts";
 import { SearchTagsController } from "./interface/controllers/tag/SearchTagsController.ts";
-import { GetAllNotesController } from "./interface/controllers/note/GetAllNotesController.ts";
-import { GetAllTagsController } from "./interface/controllers/tag/GetAllTagsController.ts";
+import { SearchFoldersController } from "./interface/controllers/folder/SearchFoldersController.ts";
 
 const __dirname = dirname(fromFileUrl(import.meta.url));
 
@@ -49,6 +47,26 @@ const updateNoteController = new UpdateNoteController(noteRepository, folderRepo
 const deleteNoteController = new DeleteNoteController(noteRepository);
 const searchNotesController = new SearchNotesController(noteRepository);
 const getNotesByTagsController = new GetNotesByTagsController(noteRepository, tagRepository);
+
+const newfolder1 = (await folderRepository.searchByKeyword("newfolder1", null)).at(0);
+const newfolder2 = (await folderRepository.searchByKeyword("newfolder2", null)).at(0);
+const newfolder3 = (await folderRepository.searchByKeyword("newfolder3", null)).at(0);
+const subfolder1 = (await folderRepository.searchByKeyword("subfolder1", null)).at(0);
+const subfolder2 = (await folderRepository.searchByKeyword("subfolder2", null)).at(0);
+const subfolder3 = (await folderRepository.searchByKeyword("subfolder3", null)).at(0);
+
+await createNoteController.apply({ name: "f1note1", content: "content", folderId: newfolder1.id, tagsId: [] });
+await createNoteController.apply({ name: "f1note2", content: "content", folderId: newfolder1.id, tagsId: [] });
+await createNoteController.apply({ name: "f1note3", content: "content", folderId: newfolder1.id, tagsId: [] });
+await createNoteController.apply({ name: "f2note1", content: "content", folderId: newfolder2.id, tagsId: [] });
+await createNoteController.apply({ name: "f2note2", content: "content", folderId: newfolder2.id, tagsId: [] });
+await createNoteController.apply({ name: "f2note3", content: "content", folderId: newfolder2.id, tagsId: [] });
+await createNoteController.apply({ name: "f3note1", content: "content", folderId: newfolder3.id, tagsId: [] });
+await createNoteController.apply({ name: "f3note2", content: "content", folderId: newfolder3.id, tagsId: [] });
+await createNoteController.apply({ name: "f3note3", content: "content", folderId: newfolder3.id, tagsId: [] });
+await createNoteController.apply({ name: "sf3note1", content: "content", folderId: subfolder3.id, tagsId: [] });
+await createNoteController.apply({ name: "sf3note2", content: "content", folderId: subfolder3.id, tagsId: [] });
+await createNoteController.apply({ name: "sf3note3", content: "content", folderId: subfolder3.id, tagsId: [] });
 
 // Create a new note
 app.post("/api/notes", async (req, res) => {
@@ -100,6 +118,7 @@ app.get("/api/notes/search", async (req, res) => {
     try {
         const result = await searchNotesController.apply({
             query: req.query.q as string,
+            folderId: req.query.folderId as string,
         });
         res.json(result);
     } catch (error) {
@@ -156,7 +175,7 @@ app.get("/api/folders/:folderId/notes", async (req, res) => {
 // FOLDER ENDPOINTS
 const createFolderController = new CreateFolderController(folderRepository);
 const getFolderByIdController = new GetFolderByIdController(folderRepository);
-const getFoldersController = new GetFoldersController(folderRepository);
+const getAllFoldersController = new GetAllFoldersController(folderRepository);
 const updateFolderController = new UpdateFolderController(folderRepository);
 const deleteFolderController = new DeleteFolderController(folderRepository);
 const getFolderContentsController = new GetFolderContentsController(
@@ -168,10 +187,10 @@ const searchFoldersController = new SearchFoldersController(folderRepository);
 // Create a new folder
 app.post("/api/folders", async (req, res) => {
     try {
-        // const folderParentFolderId = parentFolderId ? parentFolderId : "root";
         const result = await createFolderController.apply({
             name: req.body.name,
             parentFolderId: req.body.parentFolderId,
+            userId: req.body.userId,
         });
         res.status(201).json(result);
     } catch (error) {
@@ -192,12 +211,10 @@ app.get("/api/folders/search", async (req, res) => {
     }
 });
 
-// Get all folders (or filter by parent)
+// Get all folders
 app.get("/api/folders", async (req, res) => {
     try {
-        const result = await getFoldersController.apply({
-            parentFolderId: req.query.parentFolderId,
-        });
+        const result = await getAllFoldersController.apply();
         res.json(result);
     } catch (error) {
         res.status(500).json({ error: error.message });

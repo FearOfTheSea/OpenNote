@@ -5,8 +5,19 @@ export class InMemoryFolderRepository implements FolderRepository {
     private folders: Folder[] = [];
 
     constructor() {
-        const rootFolder = new Folder("root", undefined, true);
-        this.folders.push(rootFolder);
+        const newfolder1 = new Folder("newfolder1", undefined, "user");
+        const newfolder2 = new Folder("newfolder2", undefined, "user");
+        const newfolder3 = new Folder("newfolder3", undefined, "user");
+
+        const subfolder1 = new Folder("subfolder1", newfolder1.id, "user");
+        const subfolder2 = new Folder("subfolder2", newfolder1.id, "user");
+        const subfolder3 = new Folder("subfolder3", newfolder1.id, "user");
+
+        this.folders.push(newfolder1, newfolder2, newfolder3, subfolder1, subfolder2, subfolder3);
+    }
+
+    async findAll(): Promise<Folder[]> {
+        return this.folders;
     }
 
     async findById(id: string): Promise<Folder | null> {
@@ -14,8 +25,8 @@ export class InMemoryFolderRepository implements FolderRepository {
         return folder ? folder : null;
     }
 
-    async findAll(): Promise<Folder[]> {
-        return this.folders;
+    async findByUserId(userId: string): Promise<Folder[]> {
+        return this.folders.filter((folder) => folder.userId === userId);
     }
 
     async save(folder: Folder): Promise<void> {
@@ -32,31 +43,36 @@ export class InMemoryFolderRepository implements FolderRepository {
         this.folders = this.folders.filter((note) => note.id !== id);
     }
 
-    async findByName(name: string): Promise<Folder[]> {
-        return this.folders.filter((folder) => folder.name === name);
+    // Search all folders whose name include the keyword in lowercase, if a parentFolderId is specified, search
+    // through all the descendants of that folder
+    async searchByKeyword(keyword: string, parentFolderId?: string): Promise<Folder[]> {
+        console.log(`[InMemoryFolderRepository] Searching for ${keyword} in "${parentFolderId}"`);
+        const lowerKeyword = keyword.toLowerCase().trim();
+
+        if (!parentFolderId) {
+            return this.folders.filter((folder) => folder.name.toLowerCase().includes(lowerKeyword));
+        }
+
+        const descendantIds = this.getAllDescendantIds(parentFolderId);
+        return this.folders.filter((folder) =>
+            descendantIds.has(folder.id) && folder.name.toLowerCase().includes(lowerKeyword)
+        );
     }
 
-    async findByParentFolderId(
-        parentFolderId: string | undefined,
-    ): Promise<Folder[]> {
-        return this.folders.filter((folder) => folder.parentFolderId === parentFolderId);
-    }
+    private getAllDescendantIds(parentFolderId: string): Set<string> {
+        const descendantIds = new Set<string>();
+        const queue: string[] = [parentFolderId];
 
-    async searchByKeyword(keyword: string): Promise<Folder[]> {
-        const searchRecursive = (parentFolderId: string | undefined): Folder[] => {
-            const result = this.folders.filter((folder) =>
-                folder.name.toLowerCase().includes(keyword.toLowerCase()) &&
-                folder.parentFolderId === parentFolderId
-            );
+        while (queue.length > 0) {
+            const currentId = queue.shift()!;
+            const children = this.folders.filter((folder) => folder.parentFolderId === currentId);
 
-            this.folders
-                .filter((folder) => folder.parentFolderId === parentFolderId)
-                .forEach((folder) => {
-                    result.push(...searchRecursive(folder.id));
-                });
+            for (const child of children) {
+                descendantIds.add(child.id);
+                queue.push(child.id);
+            }
+        }
 
-            return result;
-        };
-        return searchRecursive(undefined);
+        return descendantIds;
     }
 }

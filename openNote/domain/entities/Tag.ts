@@ -4,11 +4,7 @@ export class Tag {
     public readonly createdAt: Date;
     public readonly updatedAt: Date;
 
-    constructor(
-        name: string,
-        createdAt?: Date,
-        updatedAt?: Date,
-    ) {
+    constructor(name: string) {
         if (!name || name.trim() === "") {
             throw new Error("Tag name cannot be empty");
         }

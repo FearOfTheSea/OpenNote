@@ -11,20 +11,20 @@ let tagRepository;
 // Switch repository types based on environment
 switch (env) {
     case "test":
-        noteRepository = new InMemoryNoteRepository();
         folderRepository = new InMemoryFolderRepository();
+        noteRepository = new InMemoryNoteRepository(folderRepository);
         tagRepository = new InMemoryTagRepository();
         break;
     case "production":
         // Change these to real database implementations
-        noteRepository = new InMemoryNoteRepository();
         folderRepository = new InMemoryFolderRepository();
+        noteRepository = new InMemoryNoteRepository(folderRepository);
         tagRepository = new InMemoryTagRepository();
         break;
     case "development":
     default:
-        noteRepository = new InMemoryNoteRepository();
         folderRepository = new InMemoryFolderRepository();
+        noteRepository = new InMemoryNoteRepository(folderRepository);
         tagRepository = new InMemoryTagRepository();
         break;
 }

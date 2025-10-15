@@ -10,11 +10,12 @@ export interface GetFolderByIdRequest {
 }
 
 export interface GetFolderByIdResponse {
-    readonly id?: string;
+    readonly id: string;
     readonly name: string;
+    readonly userId: string;
     readonly parentFolderId?: string;
-    readonly createdAt?: Date;
-    readonly updatedAt?: Date;
+    readonly createdAt: Date;
+    readonly updatedAt: Date;
 }
 
 export class GetFolderByIdController {
@@ -31,6 +32,7 @@ export class GetFolderByIdController {
             return {
                 id: output.folder.id,
                 name: output.folder.name,
+                userId: output.folder.userId,
                 parentFolderId: output.folder.parentFolderId,
                 createdAt: output.folder.createdAt,
                 updatedAt: output.folder.updatedAt,
