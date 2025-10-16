@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID } from "../utils.ts";
 
 export class User {
     public readonly id: string;

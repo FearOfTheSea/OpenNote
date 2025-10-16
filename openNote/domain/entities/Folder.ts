@@ -1,3 +1,5 @@
+import { randomUUID, validateName } from "../utils.ts";
+
 export class Folder {
     public readonly id: string;
     public readonly name: string;
@@ -14,8 +16,11 @@ export class Folder {
         if (!name || name.trim() === "") {
             throw new Error("Folder name cannot be empty");
         }
+        if (!validateName(name)) {
+            throw new Error("Folder name must be 1-255 characters long, uses only 0-9, a-Z, ., _, - and spaces");
+        }
 
-        this.id = crypto.randomUUID();
+        this.id = randomUUID();
         this.name = name.trim();
         this.userId = userId;
         this.parentFolderId = parentFolderId;

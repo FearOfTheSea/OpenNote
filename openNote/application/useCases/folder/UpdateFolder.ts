@@ -25,6 +25,9 @@ export class UpdateFolder {
             if (!newParentFolder) {
                 throw new Error(`New parent folder with id ${input.parentFolderId} not found`);
             }
+            if (input.parentFolderId === existingFolder.id) {
+                throw new Error(`Folder with id ${input.parentFolderId} can't be its own parent`);
+            }
         }
 
         const updatedFolder = {
