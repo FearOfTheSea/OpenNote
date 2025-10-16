@@ -5,16 +5,16 @@ export class InMemoryTagRepository implements TagRepository {
     private tags: Tag[] = [];
 
     async findAll(): Promise<Tag[]> {
-        return this.tags;
+        return await this.tags;
     }
 
     async findById(id: string): Promise<Tag | null> {
-        const tag = this.tags.find((n) => n.id === id);
+        const tag = await this.tags.find((n) => n.id === id);
         return tag || null;
     }
 
     async save(tag: Tag): Promise<void> {
-        const existingTagIndex = this.tags.findIndex((n) => n.id === tag.id);
+        const existingTagIndex = await this.tags.findIndex((n) => n.id === tag.id);
 
         if (existingTagIndex === -1) {
             this.tags.push(tag);
@@ -24,10 +24,10 @@ export class InMemoryTagRepository implements TagRepository {
     }
 
     async delete(id: string): Promise<void> {
-        this.tags = this.tags.filter((tag) => tag.id !== id);
+        this.tags = await this.tags.filter((tag) => tag.id !== id);
     }
 
     async searchByKeyword(keyword: string): Promise<Tag[]> {
-        this.tags.filter((tag) => tag.name.toLowerCase().includes(keyword.toLowerCase()));
+        return await this.tags.filter((tag) => tag.name.toLowerCase().includes(keyword.toLowerCase()));
     }
 }

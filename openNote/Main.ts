@@ -39,7 +39,7 @@ app.use((_req, res, next) => {
     next();
 });
 
-// NOTE ENDPOINTS
+// NOTE CONTROLLERS
 const createNoteController = new CreateNoteController(noteRepository, folderRepository, tagRepository);
 const getAllNotesController = new GetAllNotesController(noteRepository);
 const getNoteByIdController = new GetNoteByIdController(noteRepository);
@@ -48,6 +48,33 @@ const deleteNoteController = new DeleteNoteController(noteRepository);
 const searchNotesController = new SearchNotesController(noteRepository);
 const getNotesByTagsController = new GetNotesByTagsController(noteRepository, tagRepository);
 
+// FOLDER CONTROLLERS
+const createFolderController = new CreateFolderController(folderRepository);
+const getFolderByIdController = new GetFolderByIdController(folderRepository);
+const getAllFoldersController = new GetAllFoldersController(folderRepository);
+const updateFolderController = new UpdateFolderController(folderRepository);
+const deleteFolderController = new DeleteFolderController(folderRepository);
+const getFolderContentsController = new GetFolderContentsController(
+    folderRepository,
+    noteRepository,
+);
+const searchFoldersController = new SearchFoldersController(folderRepository);
+
+// TAG CONTROLLERS
+const createTagController = new CreateTagController(tagRepository);
+const getAllTagsController = new GetAllTagsController(tagRepository);
+const getTagByIdController = new GetTagByIdController(tagRepository);
+const updateTagController = new UpdateTagController(tagRepository);
+const deleteTagController = new DeleteTagController(tagRepository);
+const searchTagsController = new SearchTagsController(tagRepository);
+
+//=============================
+//====MOCK DATA FOR TESTING====
+//=============================
+const tag1Id = (await createTagController.apply({ name: "tag1" })).id;
+const tag2Id = (await createTagController.apply({ name: "tag2" })).id;
+const tag3Id = (await createTagController.apply({ name: "tag3" })).id;
+
 const newfolder1 = (await folderRepository.searchByKeyword("newfolder1")).at(0)!;
 const newfolder2 = (await folderRepository.searchByKeyword("newfolder2")).at(0)!;
 const newfolder3 = (await folderRepository.searchByKeyword("newfolder3")).at(0)!;
@@ -55,18 +82,47 @@ const _subfolder1 = (await folderRepository.searchByKeyword("subfolder1")).at(0)
 const _subfolder2 = (await folderRepository.searchByKeyword("subfolder2")).at(0)!;
 const subfolder3 = (await folderRepository.searchByKeyword("subfolder3")).at(0)!;
 
-await createNoteController.apply({ name: "f1note1", content: "content", folderId: newfolder1.id, tagsId: [] });
-await createNoteController.apply({ name: "f1note2", content: "content", folderId: newfolder1.id, tagsId: [] });
-await createNoteController.apply({ name: "f1note3", content: "content", folderId: newfolder1.id, tagsId: [] });
-await createNoteController.apply({ name: "f2note1", content: "content", folderId: newfolder2.id, tagsId: [] });
-await createNoteController.apply({ name: "f2note2", content: "content", folderId: newfolder2.id, tagsId: [] });
-await createNoteController.apply({ name: "f2note3", content: "content", folderId: newfolder2.id, tagsId: [] });
-await createNoteController.apply({ name: "f3note1", content: "content", folderId: newfolder3.id, tagsId: [] });
-await createNoteController.apply({ name: "f3note2", content: "content", folderId: newfolder3.id, tagsId: [] });
+await createNoteController.apply({
+    name: "f1note1",
+    content: "content",
+    folderId: newfolder1.id,
+    tagsId: [tag1Id, tag2Id, tag3Id],
+});
+await createNoteController.apply({
+    name: "f1note2",
+    content: "content",
+    folderId: newfolder1.id,
+    tagsId: [tag1Id, tag2Id],
+});
+await createNoteController.apply({
+    name: "f1note3",
+    content: "content",
+    folderId: newfolder1.id,
+    tagsId: [tag1Id, tag3Id],
+});
+await createNoteController.apply({
+    name: "f2note1",
+    content: "content",
+    folderId: newfolder2.id,
+    tagsId: [tag2Id, tag3Id],
+});
+await createNoteController.apply({
+    name: "f2note2",
+    content: "content",
+    folderId: newfolder2.id,
+    tagsId: [tag1Id, tag2Id],
+});
+await createNoteController.apply({ name: "f2note3", content: "content", folderId: newfolder2.id, tagsId: [tag1Id] });
+await createNoteController.apply({ name: "f3note1", content: "content", folderId: newfolder3.id, tagsId: [tag2Id] });
+await createNoteController.apply({ name: "f3note2", content: "content", folderId: newfolder3.id, tagsId: [tag3Id] });
 await createNoteController.apply({ name: "f3note3", content: "content", folderId: newfolder3.id, tagsId: [] });
 await createNoteController.apply({ name: "sf3note1", content: "content", folderId: subfolder3.id, tagsId: [] });
 await createNoteController.apply({ name: "sf3note2", content: "content", folderId: subfolder3.id, tagsId: [] });
 await createNoteController.apply({ name: "sf3note3", content: "content", folderId: subfolder3.id, tagsId: [] });
+
+//======================
+//====NOTE ENDPOINTS====
+//======================
 
 // Create a new note
 app.post("/api/notes", async (req, res) => {
@@ -83,7 +139,7 @@ app.post("/api/notes", async (req, res) => {
     }
 });
 
-// Get notes by tags
+// Get notes with tags
 app.get("/api/notes", async (req, res) => {
     try {
         const tagsParam = req.query.tags as string;
@@ -91,7 +147,7 @@ app.get("/api/notes", async (req, res) => {
         if (tagsParam) {
             // Filter by tags
             const tagsId = tagsParam.split(",");
-            const result = await getNotesByTagsController.apply({ tagsId });
+            const result = await getNotesByTagsController.apply({ tagsId: tagsId });
             res.json(result);
         } else {
             // Return all notes
@@ -162,27 +218,9 @@ app.delete("/api/notes/:id", async (req, res) => {
     }
 });
 
-// Get notes by folder ID
-app.get("/api/folders/:folderId/notes", async (req, res) => {
-    try {
-        const notes = await noteRepository.findByFolderId(req.params.folderId);
-        res.json(notes);
-    } catch (error) {
-        res.status(500).json({ error: (error as Error).message });
-    }
-});
-
-// FOLDER ENDPOINTS
-const createFolderController = new CreateFolderController(folderRepository);
-const getFolderByIdController = new GetFolderByIdController(folderRepository);
-const getAllFoldersController = new GetAllFoldersController(folderRepository);
-const updateFolderController = new UpdateFolderController(folderRepository);
-const deleteFolderController = new DeleteFolderController(folderRepository);
-const getFolderContentsController = new GetFolderContentsController(
-    folderRepository,
-    noteRepository,
-);
-const searchFoldersController = new SearchFoldersController(folderRepository);
+//========================
+//====FOLDER ENDPOINTS====
+//========================
 
 // Create a new folder
 app.post("/api/folders", async (req, res) => {
@@ -267,13 +305,9 @@ app.delete("/api/folders/:id", async (req, res) => {
     }
 });
 
-// TAG ENDPOINTS
-const createTagController = new CreateTagController(tagRepository);
-const getAllTagsController = new GetAllTagsController(tagRepository);
-const getTagByIdController = new GetTagByIdController(tagRepository);
-const updateTagController = new UpdateTagController(tagRepository);
-const deleteTagController = new DeleteTagController(tagRepository);
-const searchTagsController = new SearchTagsController(tagRepository);
+//=====================
+//====TAG ENDPOINTS====
+//=====================
 
 // Create a new tag
 app.post("/api/tags", async (req, res) => {

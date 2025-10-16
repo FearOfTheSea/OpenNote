@@ -17,7 +17,7 @@ export class SearchTagsController {
         this.useCase = new SearchTags(tagRepository);
     }
 
-    async apply(request: SearchTagsRequest): Promise<SearchNotesResponse> {
+    async apply(request: SearchTagsRequest): Promise<SearchTagsResponse> {
         const input = request as SearchTagsInput;
         return await this.useCase.execute(input) as SearchTagsResponse;
     }
