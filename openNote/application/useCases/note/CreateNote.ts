@@ -1,5 +1,5 @@
-import { Note } from "../../../domain/entities/Note";
-import { NoteRepository } from "../../repositories/NoteRepository";
+import { Note } from "../../../domain/entities/Note.ts";
+import { NoteRepository } from "../../repositories/NoteRepository.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
 import { TagRepository } from "../../repositories/TagRepository.ts";
 
@@ -26,10 +26,12 @@ export class CreateNote {
             throw new Error(`Folder with id ${input.folderId} not found`);
         }
 
-        for (const tagId of input.tagsId) {
-            const foundTag = await this.tagRepository.findById(tagId);
-            if (!foundTag) {
-                throw new Error(`Tag with id ${tagId} not found`);
+        if (input.tagsId) {
+            for (const tagId of input.tagsId) {
+                const foundTag = await this.tagRepository.findById(tagId);
+                if (!foundTag) {
+                    throw new Error(`Tag with id ${tagId} not found`);
+                }
             }
         }
 

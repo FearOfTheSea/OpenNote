@@ -1,5 +1,5 @@
-import { Folder } from "../../../domain/entities/Folder";
-import { FolderRepository } from "../../repositories/FolderRepository";
+import { Folder } from "../../../domain/entities/Folder.ts";
+import { FolderRepository } from "../../repositories/FolderRepository.ts";
 
 export interface CreateFolderInput {
     readonly name: string;
@@ -19,7 +19,7 @@ export class CreateFolder {
             throw new Error("Parent folder not found");
         }
         try {
-            const folder = new Folder(input.name, input.parentFolderId, input.userId);
+            const folder = new Folder(input.name, input.userId, input.parentFolderId);
             await this.folderRepository.save(folder);
             return { folder: folder };
         } catch (error) {

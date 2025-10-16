@@ -1,6 +1,6 @@
 // @ts-types="npm:@types/express@4.17.15"
 import express from "express";
-import { dirname, fromFileUrl, join } from "https://deno.land/std@0.214.0/path/mod.ts";
+import { dirname, fromFileUrl, join } from "@std/path";
 import { folderRepository, noteRepository, tagRepository } from "./ApplicationContext.ts";
 import { CreateNoteController } from "./interface/controllers/note/CreateNoteController.ts";
 import { GetAllNotesController } from "./interface/controllers/note/GetAllNotesController.ts";
@@ -32,7 +32,7 @@ app.use(express.static(join(__dirname, "interface/web/public")));
 const port = 3000;
 
 // CORS middleware
-app.use((req, res, next) => {
+app.use((_req, res, next) => {
     res.header("Access-Control-Allow-Origin", "*");
     res.header("Access-Control-Allow-Headers", "Content-Type");
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
@@ -48,12 +48,12 @@ const deleteNoteController = new DeleteNoteController(noteRepository);
 const searchNotesController = new SearchNotesController(noteRepository);
 const getNotesByTagsController = new GetNotesByTagsController(noteRepository, tagRepository);
 
-const newfolder1 = (await folderRepository.searchByKeyword("newfolder1", null)).at(0);
-const newfolder2 = (await folderRepository.searchByKeyword("newfolder2", null)).at(0);
-const newfolder3 = (await folderRepository.searchByKeyword("newfolder3", null)).at(0);
-const subfolder1 = (await folderRepository.searchByKeyword("subfolder1", null)).at(0);
-const subfolder2 = (await folderRepository.searchByKeyword("subfolder2", null)).at(0);
-const subfolder3 = (await folderRepository.searchByKeyword("subfolder3", null)).at(0);
+const newfolder1 = (await folderRepository.searchByKeyword("newfolder1")).at(0)!;
+const newfolder2 = (await folderRepository.searchByKeyword("newfolder2")).at(0)!;
+const newfolder3 = (await folderRepository.searchByKeyword("newfolder3")).at(0)!;
+const _subfolder1 = (await folderRepository.searchByKeyword("subfolder1")).at(0)!;
+const _subfolder2 = (await folderRepository.searchByKeyword("subfolder2")).at(0)!;
+const subfolder3 = (await folderRepository.searchByKeyword("subfolder3")).at(0)!;
 
 await createNoteController.apply({ name: "f1note1", content: "content", folderId: newfolder1.id, tagsId: [] });
 await createNoteController.apply({ name: "f1note2", content: "content", folderId: newfolder1.id, tagsId: [] });
@@ -79,7 +79,7 @@ app.post("/api/notes", async (req, res) => {
         });
         res.status(201).json(result);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ error: (error as Error).message });
     }
 });
 
@@ -99,17 +99,17 @@ app.get("/api/notes", async (req, res) => {
             res.json(allNotes);
         }
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
 // Get all notes
-app.get("/api/notes", async (req, res) => {
+app.get("/api/notes", async (_req, res) => {
     try {
         const result = await getAllNotesController.apply();
         res.json(result.notes);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
@@ -122,7 +122,7 @@ app.get("/api/notes/search", async (req, res) => {
         });
         res.json(result);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
@@ -132,7 +132,7 @@ app.get("/api/notes/:id", async (req, res) => {
         const result = await getNoteByIdController.apply({ id: req.params.id });
         res.json(result);
     } catch (error) {
-        res.status(404).json({ error: error.message });
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
@@ -148,7 +148,7 @@ app.put("/api/notes/:id", async (req, res) => {
         });
         res.json(result);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
@@ -158,7 +158,7 @@ app.delete("/api/notes/:id", async (req, res) => {
         await deleteNoteController.apply({ id: req.params.id });
         res.status(204).send();
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ error: (error as Error).message });
     }
 });
 
@@ -168,7 +168,7 @@ app.get("/api/folders/:folderId/notes", async (req, res) => {
         const notes = await noteRepository.findByFolderId(req.params.folderId);
         res.json(notes);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
@@ -194,7 +194,7 @@ app.post("/api/folders", async (req, res) => {
         });
         res.status(201).json(result);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ error: (error as Error).message });
     }
 });
 
@@ -207,17 +207,17 @@ app.get("/api/folders/search", async (req, res) => {
         });
         res.json(result);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
 // Get all folders
-app.get("/api/folders", async (req, res) => {
+app.get("/api/folders", async (_req, res) => {
     try {
         const result = await getAllFoldersController.apply();
         res.json(result);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
@@ -227,7 +227,7 @@ app.get("/api/folders/:id", async (req, res) => {
         const result = await getFolderByIdController.apply({ id: req.params.id });
         res.json(result);
     } catch (error) {
-        res.status(404).json({ error: error.message });
+        res.status(404).json({ error: (error as Error).message });
     }
 });
 
@@ -239,7 +239,7 @@ app.get("/api/folders/:id/contents", async (req, res) => {
         });
         res.json(result);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
@@ -253,7 +253,7 @@ app.put("/api/folders/:id", async (req, res) => {
         });
         res.json(result);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ error: (error as Error).message });
     }
 });
 
@@ -263,7 +263,7 @@ app.delete("/api/folders/:id", async (req, res) => {
         await deleteFolderController.apply({ id: req.params.id });
         res.status(204).send();
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ error: (error as Error).message });
     }
 });
 
@@ -283,17 +283,17 @@ app.post("/api/tags", async (req, res) => {
         });
         res.status(201).json(result);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ error: (error as Error).message });
     }
 });
 
 // Get all tags
-app.get("/api/tags", async (req, res) => {
+app.get("/api/tags", async (_req, res) => {
     try {
         const result = await getAllTagsController.apply();
         res.json(result.tags);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
@@ -305,7 +305,7 @@ app.get("/api/tags/search", async (req, res) => {
         });
         res.json(result);
     } catch (error) {
-        res.status(500).json({ error: error.message });
+        res.status(500).json({ error: (error as Error).message });
     }
 });
 
@@ -315,7 +315,7 @@ app.get("/api/tags/:id", async (req, res) => {
         const result = await getTagByIdController.apply({ id: req.params.id });
         res.json(result);
     } catch (error) {
-        res.status(404).json({ error: error.message });
+        res.status(404).json({ error: (error as Error).message });
     }
 });
 
@@ -328,7 +328,7 @@ app.put("/api/tags/:id", async (req, res) => {
         });
         res.json(result.tag);
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ error: (error as Error).message });
     }
 });
 
@@ -338,11 +338,11 @@ app.delete("/api/tags/:id", async (req, res) => {
         await deleteTagController.apply({ id: req.params.id });
         res.status(204).send();
     } catch (error) {
-        res.status(400).json({ error: error.message });
+        res.status(400).json({ error: (error as Error).message });
     }
 });
 
-app.get("/", (req, res) => {
+app.get("/", (_req, res) => {
     res.sendFile(join(__dirname, "interface/web/views/homepage.html"));
 });
 

@@ -1,6 +1,7 @@
 import { Note } from "../../../domain/entities/Note.ts";
 import { NoteRepository } from "../../repositories/NoteRepository.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
+import { TagRepository } from "../../repositories/TagRepository.ts";
 
 export interface UpdateNoteInput {
     readonly id: string;
@@ -29,7 +30,7 @@ export class UpdateNote {
 
         if (input.folderId) {
             if (!await this.folderRepository.findById(input.folderId)) {
-                throw new Error(`Parent folder with id ${parentFolderId} not found`);
+                throw new Error(`Parent folder with id ${input.folderId} not found`);
             }
         }
 
@@ -45,7 +46,7 @@ export class UpdateNote {
             id: input.id,
             name: input.name ? input.name : existingNote.name,
             content: input.content ? input.content : existingNote.content,
-            folderId: input.folderId ? parentFolderId : existingNote.folderId,
+            folderId: input.folderId ? input.folderId : existingNote.folderId,
             tagsId: input.tagsId ? input.tagsId : existingNote.tagsId,
             createdAt: existingNote.createdAt,
             updatedAt: new Date(),

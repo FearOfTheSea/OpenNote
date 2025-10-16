@@ -22,6 +22,8 @@ export class UpdateTag {
         const updatedTag: Tag = {
             id: input.id,
             name: input.name,
+            createdAt: existingTag.createdAt,
+            updatedAt: new Date(),
         };
 
         await this.tagRepository.save(updatedTag);

@@ -1,5 +1,5 @@
-import { Tag } from "../../../domain/entities/Tag";
-import { TagRepository } from "../../repositories/TagRepository";
+import { Tag } from "../../../domain/entities/Tag.ts";
+import { TagRepository } from "../../repositories/TagRepository.ts";
 
 export interface CreateTagInput {
     name: string;
@@ -8,7 +8,7 @@ export interface CreateTagInput {
 export interface CreateTagOutput {
     id: string;
     createdAt: Date;
-    UpdatedAt: Date;
+    updatedAt: Date;
 }
 
 export class CreateTag {

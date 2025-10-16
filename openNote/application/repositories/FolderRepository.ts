@@ -1,4 +1,4 @@
-import { Folder } from "../../domain/entities/Folder";
+import { Folder } from "../../domain/entities/Folder.ts";
 
 export interface FolderRepository {
     findAll(): Promise<Folder[]>;

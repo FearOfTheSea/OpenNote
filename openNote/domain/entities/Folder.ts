@@ -8,8 +8,8 @@ export class Folder {
 
     constructor(
         name: string,
-        parentFolderId?: string,
         userId: string,
+        parentFolderId?: string,
     ) {
         if (!name || name.trim() === "") {
             throw new Error("Folder name cannot be empty");

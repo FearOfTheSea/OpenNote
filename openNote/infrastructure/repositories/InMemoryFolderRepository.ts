@@ -5,13 +5,13 @@ export class InMemoryFolderRepository implements FolderRepository {
     private folders: Folder[] = [];
 
     constructor() {
-        const newfolder1 = new Folder("newfolder1", undefined, "user");
-        const newfolder2 = new Folder("newfolder2", undefined, "user");
-        const newfolder3 = new Folder("newfolder3", undefined, "user");
+        const newfolder1 = new Folder("newfolder1", "user", undefined);
+        const newfolder2 = new Folder("newfolder2", "user", undefined);
+        const newfolder3 = new Folder("newfolder3", "user", undefined);
 
-        const subfolder1 = new Folder("subfolder1", newfolder1.id, "user");
-        const subfolder2 = new Folder("subfolder2", newfolder1.id, "user");
-        const subfolder3 = new Folder("subfolder3", newfolder1.id, "user");
+        const subfolder1 = new Folder("subfolder1", "user", newfolder1.id);
+        const subfolder2 = new Folder("subfolder2", "user", newfolder1.id);
+        const subfolder3 = new Folder("subfolder3", "user", newfolder1.id);
 
         this.folders.push(newfolder1, newfolder2, newfolder3, subfolder1, subfolder2, subfolder3);
     }
@@ -46,7 +46,6 @@ export class InMemoryFolderRepository implements FolderRepository {
     // Search all folders whose name include the keyword in lowercase, if a parentFolderId is specified, search
     // through all the descendants of that folder
     async searchByKeyword(keyword: string, parentFolderId?: string): Promise<Folder[]> {
-        console.log(`[InMemoryFolderRepository] Searching for ${keyword} in "${parentFolderId}"`);
         const lowerKeyword = keyword.toLowerCase().trim();
 
         if (!parentFolderId) {

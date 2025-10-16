@@ -11,7 +11,7 @@ export class Tag {
 
         this.id = crypto.randomUUID();
         this.name = name.trim();
-        this.createdAt = createdAt || new Date();
-        this.updatedAt = updatedAt || new Date();
+        this.createdAt = new Date();
+        this.updatedAt = new Date();
     }
 }

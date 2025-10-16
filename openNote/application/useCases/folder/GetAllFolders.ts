@@ -1,3 +1,4 @@
+import { Folder } from "../../../domain/entities/Folder.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
 
 export interface GetAllFoldersOutput {

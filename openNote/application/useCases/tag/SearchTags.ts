@@ -13,6 +13,6 @@ export class SearchTags {
     constructor(private tagRepository: TagRepository) {}
 
     async execute(input: SearchTagsInput): Promise<SearchTagsOutput> {
-        return { tags: this.tagRepository.searchByKeyword(input.query) };
+        return { tags: await this.tagRepository.searchByKeyword(input.query) };
     }
 }
