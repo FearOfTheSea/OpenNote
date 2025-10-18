@@ -12,6 +12,9 @@ export class Folder {
         name: string,
         userId: string,
         parentFolderId?: string,
+        id?: string,
+        createdAt?: Date,
+        updatedAt?: Date,
     ) {
         if (!name || name.trim() === "") {
             throw new Error("Folder name cannot be empty");
@@ -20,11 +23,11 @@ export class Folder {
             throw new Error("Folder name must be 1-255 characters long, uses only 0-9, a-Z, ., _, - and spaces");
         }
 
-        this.id = randomUUID();
+        this.id = id || randomUUID();
         this.name = name.trim();
         this.userId = userId;
         this.parentFolderId = parentFolderId;
-        this.createdAt = new Date();
-        this.updatedAt = new Date();
+        this.createdAt = createdAt || new Date();
+        this.updatedAt = updatedAt || new Date();
     }
 }

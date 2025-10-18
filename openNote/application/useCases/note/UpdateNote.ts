@@ -42,15 +42,18 @@ export class UpdateNote {
             }
         }
 
-        const updatedNote: Note = {
-            id: input.id,
-            name: input.name ? input.name : existingNote.name,
-            content: input.content ? input.content : existingNote.content,
-            folderId: input.folderId ? input.folderId : existingNote.folderId,
-            tagsId: input.tagsId ? input.tagsId : existingNote.tagsId,
-            createdAt: existingNote.createdAt,
-            updatedAt: new Date(),
-        };
+        const updatedNote = new Note(
+            input.name ? input.name : existingNote.name,
+            input.content !== undefined ? input.content : existingNote.content,
+            input.folderId ? input.folderId : existingNote.folderId,
+            input.tagsId ? input.tagsId : existingNote.tagsId,
+            input.id,
+            existingNote.createdAt,
+            new Date(),
+        );
+
+        await this.noteRepository.save(updatedNote);
+        return { note: updatedNote };
 
         await this.noteRepository.save(updatedNote);
         return { note: updatedNote };

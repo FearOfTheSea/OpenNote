@@ -14,6 +14,9 @@ export class Note {
         content: string,
         folderId: string,
         tagsId: string[] = [],
+        id?: string,
+        createdAt?: Date,
+        updatedAt?: Date,
     ) {
         if (!name || name.trim() === "") {
             throw new Error("Note name cannot be empty");
@@ -25,12 +28,12 @@ export class Note {
             throw new Error("Parent folder id cannot be null");
         }
 
-        this.id = randomUUID();
+        this.id = id || randomUUID();
         this.name = name.trim();
         this.content = content;
         this.folderId = folderId;
         this.tagsId = tagsId;
-        this.createdAt = new Date();
-        this.updatedAt = new Date();
+        this.createdAt = createdAt || new Date();
+        this.updatedAt = updatedAt || new Date();
     }
 }

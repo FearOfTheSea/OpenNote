@@ -13,7 +13,7 @@ export class DeleteFolderController {
     }
 
     async apply(request: DeleteFolderInput): Promise<void> {
-        const input = request as DeleteFoldersInput;
+        const input = request as DeleteFolderInput;
         try {
             return await this.useCase.execute(input);
         } catch (error) {

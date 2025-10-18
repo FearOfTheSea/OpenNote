@@ -145,7 +145,31 @@ export class PostgreFolderRepository implements FolderRepository {
 
         return result.rows.map((row) => this.mapRowToFolder(row));
     }
+    async searchByKeyword(keyword: string, parentFolderId?: string): Promise<Folder[]> {
+        if (!parentFolderId) {
+            return this.findByName(keyword);
+        }
 
+        // Search within descendants of parentFolderId
+        const result = await dbClient.queryObject(
+            `
+        WITH RECURSIVE folder_tree AS (
+            SELECT folder_id FROM folders WHERE folder_id = $1
+            UNION ALL
+            SELECT f.folder_id FROM folders f
+            INNER JOIN folder_tree ft ON f.parent_folder_id = ft.folder_id
+        )
+        SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
+        FROM folders
+        WHERE folder_id IN (SELECT folder_id FROM folder_tree)
+          AND LOWER(folder_name) LIKE LOWER('%' || $2 || '%')
+        ORDER BY updated_at DESC
+        `,
+            [parentFolderId, keyword],
+        );
+
+        return result.rows.map((row) => this.mapRowToFolder(row));
+    }
     /**
      * Map SQL row to Folder entity
      */
@@ -153,10 +177,11 @@ export class PostgreFolderRepository implements FolderRepository {
         return new Folder(
             row.folder_name,
             row.user_id,
-            row.folder_id,
             row.parent_folder_id,
+            row.folder_id,
             row.created_at,
             row.updated_at,
         );
     }
+
 }

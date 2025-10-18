@@ -162,24 +162,54 @@ export class PostgreNoteRepository implements NoteRepository {
     /**
      * find note by keyword in name and content
      */
-    async searchByKeyword(keyword: string): Promise<Note[]> {
+    async searchByKeyword(keyword: string, folderId?: string): Promise<Note[]> {
+        let query = `
+        SELECT n.*, 
+            COALESCE(ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL), '{}') AS tags
+        FROM notes n
+        LEFT JOIN note_tags nt ON n.note_id = nt.note_id
+        WHERE (LOWER(n.title) LIKE LOWER('%' || $1 || '%')
+           OR LOWER(n.content) LIKE LOWER('%' || $1 || '%'))
+    `;
+
+        const params: any[] = [keyword];
+
+        if (folderId) {
+            query += ` AND n.folder_id = $2`;
+            params.push(folderId);
+        }
+
+        query += ` GROUP BY n.note_id ORDER BY n.updated_at DESC`;
+
+        const result = await dbClient.queryObject(query, params);
+        return result.rows.map((row) => this.mapRowToNote(row));
+    }
+
+    async findNotesByTagsIds(tagsIds: string[]): Promise<Note[]> {
+        if (tagsIds.length === 0) return [];
+
+        const placeholders = tagsIds.map((_, i) => `$${i + 1}`).join(',');
         const result = await dbClient.queryObject(
             `
-      SELECT n.*, 
-        COALESCE(ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL), '{}') AS tags
-      FROM notes n
-      LEFT JOIN note_tags nt ON n.note_id = nt.note_id
-      WHERE LOWER(n.title) LIKE LOWER('%' || $1 || '%')
-         OR LOWER(n.content) LIKE LOWER('%' || $1 || '%')
-      GROUP BY n.note_id
-      ORDER BY n.updated_at DESC
-      `,
-            [keyword],
+        SELECT n.*, 
+            COALESCE(ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL), '{}') AS tags
+        FROM notes n
+        LEFT JOIN note_tags nt ON n.note_id = nt.note_id
+        WHERE n.note_id IN (
+            SELECT note_id 
+            FROM note_tags 
+            WHERE tag_name IN (${placeholders})
+            GROUP BY note_id 
+            HAVING COUNT(DISTINCT tag_name) = $${tagsIds.length + 1}
+        )
+        GROUP BY n.note_id
+        ORDER BY n.updated_at DESC
+        `,
+            [...tagsIds, tagsIds.length]
         );
 
         return result.rows.map((row) => this.mapRowToNote(row));
     }
-
     /**
      * Ánh xạ kết quả SQL sang entity Note
      */

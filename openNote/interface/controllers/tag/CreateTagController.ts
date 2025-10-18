@@ -23,6 +23,7 @@ export class CreateTagController {
         try {
             return await this.useCase.execute(input) as CreateTagResponse;
         } catch (error) {
+            throw error;
         }
     }
 }

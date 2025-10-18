@@ -139,7 +139,7 @@ app.post("/api/notes", async (req, res) => {
     }
 });
 
-// Get notes with tags
+// Get notes with optional tag filtering
 app.get("/api/notes", async (req, res) => {
     try {
         const tagsParam = req.query.tags as string;
@@ -151,19 +151,9 @@ app.get("/api/notes", async (req, res) => {
             res.json(result);
         } else {
             // Return all notes
-            const allNotes = await noteRepository.findAll();
-            res.json(allNotes);
+            const result = await getAllNotesController.apply();
+            res.json(result.notes);
         }
-    } catch (error) {
-        res.status(500).json({ error: (error as Error).message });
-    }
-});
-
-// Get all notes
-app.get("/api/notes", async (_req, res) => {
-    try {
-        const result = await getAllNotesController.apply();
-        res.json(result.notes);
     } catch (error) {
         res.status(500).json({ error: (error as Error).message });
     }
@@ -287,7 +277,7 @@ app.put("/api/folders/:id", async (req, res) => {
         const result = await updateFolderController.apply({
             id: req.params.id,
             name: req.body.name,
-            parentFolderId: req.body.folderId,
+            parentFolderId: req.body.parentFolderId,
         });
         res.json(result);
     } catch (error) {
