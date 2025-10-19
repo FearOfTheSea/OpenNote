@@ -55,7 +55,5 @@ export class UpdateNote {
         await this.noteRepository.save(updatedNote);
         return { note: updatedNote };
 
-        await this.noteRepository.save(updatedNote);
-        return { note: updatedNote };
     }
 }

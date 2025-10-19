@@ -103,52 +103,43 @@ export class PostgreNoteRepository implements NoteRepository {
 
         return result.rows.map((row) => this.mapRowToNote(row));
     }
-
-    /**
-     * create or update note
-     * update tags if change
-     */
     async save(note: Note): Promise<void> {
         // Upsert note
         await dbClient.queryObject(
             `
-      INSERT INTO notes (note_id, title, content, folder_id)
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (note_id) DO UPDATE
-      SET title = EXCLUDED.title,
-          content = EXCLUDED.content,
-          folder_id = EXCLUDED.folder_id,
-          -- updated_at = CURRENT_TIMESTAMP
-      `,
+                INSERT INTO notes (note_id, title, content, folder_id)
+                VALUES ($1, $2, $3, $4)
+                    ON CONFLICT (note_id) DO UPDATE
+                                                 SET title = EXCLUDED.title,
+                                                 content = EXCLUDED.content,
+                                                 folder_id = EXCLUDED.folder_id
+            `,
             [note.id, note.name, note.content, note.folderId],
         );
 
-        const tags = this.extractTags(note.content);
-
-        // delete previous tag
+        // Delete previous tag associations
         await dbClient.queryObject(`DELETE FROM note_tags WHERE note_id = $1`, [
             note.id,
         ]);
 
-        // add new tag
-        for (const tag of tags) {
-            await dbClient.queryObject(
-                `
-        INSERT INTO tags (tag_name)
-        VALUES ($1)
-        ON CONFLICT (tag_name) DO NOTHING
-        `,
-                [tag],
+        // Add new tag associations using tagsId from note entity
+        for (const tagId of note.tagsId) {
+            // Get tag name from tag_id
+            const tagResult = await dbClient.queryObject(
+                `SELECT tag_name FROM tags WHERE tag_name = $1`,
+                [tagId],
             );
 
-            await dbClient.queryObject(
-                `
-        INSERT INTO note_tags (note_id, tag_name)
-        VALUES ($1, $2)
-        ON CONFLICT DO NOTHING
-        `,
-                [note.id, tag],
-            );
+            if (tagResult.rows.length > 0) {
+                await dbClient.queryObject(
+                    `
+                INSERT INTO note_tags (note_id, tag_name)
+                VALUES ($1, $2)
+                ON CONFLICT DO NOTHING
+                `,
+                    [note.id, tagId],
+                );
+            }
         }
     }
 
