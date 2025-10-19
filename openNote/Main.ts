@@ -172,6 +172,14 @@ app.get("/api/notes/search", async (req, res) => {
     }
 });
 
+app.get("/note/:id", (req, res) => {
+    res.sendFile(join(__dirname, "interface/web/views/editor.html"));
+});
+
+app.get("/note/new", (_req, res) => {
+    res.sendFile(join(__dirname, "interface/web/views/editor.html"));
+});
+
 // Get note by ID
 app.get("/api/notes/:id", async (req, res) => {
     try {

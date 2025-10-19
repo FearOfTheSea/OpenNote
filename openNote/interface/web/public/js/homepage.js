@@ -49,7 +49,7 @@ async function loadNotes() {
 
 async function createFolder(name, parentFolderId = null) {
     try {
-        const response = await fetch(`${API_BASE}/folder`, {
+        const response = await fetch(`${API_BASE}/folders`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, folderId: parentFolderId }),
@@ -67,7 +67,7 @@ async function createFolder(name, parentFolderId = null) {
 
 async function createNote(name, content, folderId = null) {
     try {
-        const response = await fetch(`${API_BASE}/note`, {
+        const response = await fetch(`${API_BASE}/notes`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ name, content, folderId }),
@@ -84,7 +84,7 @@ async function createNote(name, content, folderId = null) {
 
 async function deleteFolder(folderId) {
     try {
-        const response = await fetch(`${API_BASE}/folder/${folderId}`, {
+        const response = await fetch(`${API_BASE}/folders/${folderId}`, {
             method: "DELETE",
         });
         if (response.ok) {
@@ -99,7 +99,7 @@ async function deleteFolder(folderId) {
 
 async function deleteNote(noteId) {
     try {
-        const response = await fetch(`${API_BASE}/note/${noteId}`, {
+        const response = await fetch(`${API_BASE}/notes/${noteId}`, {
             method: "DELETE",
         });
         if (response.ok) {
@@ -221,7 +221,7 @@ function goHome() {
 
 function openNote(noteId) {
     // Navigate to note detail page or open modal
-    window.location.href = `/note/${noteId}`;
+    window.location.href = `/notes/${noteId}`;
 }
 
 // Selection
