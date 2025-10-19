@@ -173,3 +173,193 @@ input[type="checkbox"]:checked {
     padding: 6px 10px;
     border-radius: 999px;
 }
+
+/* Additional styles for improved UX */
+
+.sidebar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 18px;
+    border-bottom: 2px solid var(--line);
+}
+
+.sidebar-header h3 {
+    margin: 0;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.sidebar-header button {
+    background: transparent;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    padding: 4px 8px;
+    border-radius: 4px;
+}
+
+.sidebar-header button:hover {
+    background: var(--bg);
+}
+
+.section-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+}
+
+.back-btn {
+    background: var(--white);
+    border: 1px solid var(--line);
+    padding: 8px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 18px;
+}
+
+.back-btn:hover {
+    background: var(--bg);
+}
+
+.row {
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.row:hover {
+    background: rgba(124, 196, 59, 0.05);
+}
+
+.row span {
+    flex: 1;
+    cursor: pointer;
+}
+
+.empty-state {
+    grid-column: 1 / -1;
+    text-align: center;
+    padding: 60px 20px;
+    color: var(--muted);
+}
+
+.empty-state p {
+    font-size: 20px;
+    margin-bottom: 20px;
+}
+
+.empty-state button {
+    background: var(--accent);
+    color: white;
+    border: none;
+    padding: 12px 24px;
+    border-radius: 6px;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.empty-state button:hover {
+    opacity: 0.9;
+}
+
+.note-card {
+    background: var(--white);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    cursor: pointer;
+    transition: box-shadow 0.2s;
+    position: relative;
+}
+
+.note-card:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.card-icon {
+    font-size: 32px;
+}
+
+.note-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.note-preview {
+    font-size: 14px;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.note-meta {
+    font-size: 13px;
+    color: var(--muted);
+    margin-top: auto;
+}
+
+.card-actions {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    gap: 6px;
+    opacity: 0;
+    transition: opacity 0.2s;
+}
+
+.note-card:hover .card-actions,
+.folder-card:hover .card-actions {
+    opacity: 1;
+}
+
+.card-actions button {
+    background: rgba(255, 255, 255, 0.9);
+    border: 1px solid var(--line);
+    padding: 6px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 16px;
+}
+
+.card-actions button:hover {
+    background: white;
+}
+
+.folder-card {
+    cursor: pointer;
+    transition: transform 0.2s;
+    position: relative;
+}
+
+.folder-card:hover {
+    transform: translateY(-4px);
+}
+
+.card-icon {
+    font-size: 40px;
+    margin-bottom: 8px;
+}
+
+/* Loading and error states */
+.loading {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 200px;
+    font-size: 18px;
+    color: var(--muted);
+}
+
+.error {
+    background: #fee;
+    border: 1px solid #fcc;
+    padding: 12px;
+    border-radius: 6px;
+    color: #c00;
+    margin: 20px;
+}

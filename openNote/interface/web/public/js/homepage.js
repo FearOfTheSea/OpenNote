@@ -234,28 +234,48 @@ function toggleSelection(itemId) {
 }
 
 // CRUD Operations UI
-function showCreateFolderDialog() {
-    const name = prompt("Enter folder name:");
-    if (name && name.trim()) {
-        createFolder(name.trim(), state.currentFolderId);
+async function showCreateFolderDialog() {
+    const name = await modal.prompt("Enter folder name:", "", "Create Folder");
+    if (name) {
+        createFolder(name, state.currentFolderId);
     }
 }
 
-function showCreateNoteDialog() {
-    const name = prompt("Enter note name:");
-    if (name && name.trim()) {
-        const content = prompt("Enter note content (or leave empty):") || "";
-        createNote(name.trim(), content, state.currentFolderId);
+
+async function showCreateNoteDialog() {
+    const result = await modal.form({
+        title: 'Create New Note',
+        fields: [
+            {
+                name: 'name',
+                label: 'Note Name',
+                type: 'text',
+                required: true,
+                placeholder: 'Enter note name...'
+            },
+            {
+                name: 'content',
+                label: 'Content',
+                type: 'textarea',
+                rows: 4,
+                placeholder: 'Enter note content (optional)...'
+            }
+        ],
+        submitText: 'Create'
+    });
+
+    if (result) {
+        createNote(result.name, result.content || '', state.currentFolderId);
     }
 }
 
-function editFolder(folderId) {
+async function editFolder(folderId) {
     const folder = state.folders.find((f) => f.id === folderId);
     if (!folder) return;
 
-    const newName = prompt("Enter new folder name:", folder.name);
-    if (newName && newName.trim()) {
-        updateFolder(folderId, newName.trim());
+    const newName = await modal.prompt("Enter new folder name:", folder.name, "Rename Folder");
+    if (newName) {
+        updateFolder(folderId, newName);
     }
 }
 
@@ -281,9 +301,11 @@ async function updateFolder(folderId, name) {
     }
 }
 
-function confirmDelete(type, id) {
+async function confirmDelete(type, id) {
     const message = `Are you sure you want to delete this ${type}?`;
-    if (confirm(message)) {
+    const confirmed = await modal.confirm(message, 'Delete Confirmation');
+
+    if (confirmed) {
         if (type === "folder") {
             deleteFolder(id);
         } else {
@@ -293,10 +315,10 @@ function confirmDelete(type, id) {
 }
 
 // Search functionality
-function handleSearch() {
-    const query = prompt("Search for notes and folders:");
-    if (query && query.trim()) {
-        searchContent(query.trim());
+async function handleSearch() {
+    const query = await modal.prompt("Search for notes and folders:", "", "Search");
+    if (query) {
+        searchContent(query);
     }
 }
 
@@ -383,3 +405,88 @@ window.confirmDelete = confirmDelete;
 window.showCreateNoteDialog = showCreateNoteDialog;
 window.goBack = goBack;
 window.goHome = goHome;
+
+// Add these improvements to the existing homepage.js
+
+// Improved error handling
+async function loadFolders() {
+    try {
+        showLoading();
+        const response = await fetch(`${API_BASE}/folders`);
+        if (response.ok) {
+            const data = await response.json();
+            state.folders = data.folders || data; // Handle both response formats
+        } else {
+            showError('Failed to load folders');
+        }
+    } catch (error) {
+        console.error("Error loading folders:", error);
+        showError('Network error loading folders');
+        state.folders = [];
+    } finally {
+        hideLoading();
+    }
+}
+
+// Loading indicator
+function showLoading() {
+    mainGrid.innerHTML = '<div class="loading">Loading...</div>';
+}
+
+function hideLoading() {
+    // Loading removed when content renders
+}
+
+// Error display
+function showError(message) {
+    const errorDiv = document.createElement('div');
+    errorDiv.className = 'error';
+    errorDiv.textContent = message;
+    mainGrid.prepend(errorDiv);
+
+    setTimeout(() => errorDiv.remove(), 5000);
+}
+
+// Breadcrumb navigation
+function renderBreadcrumb() {
+    const breadcrumb = [];
+    let current = state.currentFolderId;
+
+    while (current) {
+        const folder = state.folders.find(f => f.id === current);
+        if (folder) {
+            breadcrumb.unshift(folder);
+            current = folder.parentFolderId;
+        } else {
+            break;
+        }
+    }
+
+    return breadcrumb;
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', (e) => {
+    // Ctrl/Cmd + N: New note
+    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+        e.preventDefault();
+        showCreateNoteDialog();
+    }
+
+    // Ctrl/Cmd + Shift + N: New folder
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
+        e.preventDefault();
+        showCreateFolderDialog();
+    }
+
+    // Ctrl/Cmd + F: Search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        handleSearch();
+    }
+
+    // Escape: Go back
+    if (e.key === 'Escape' && state.currentFolderId) {
+        goBack();
+    }
+});
