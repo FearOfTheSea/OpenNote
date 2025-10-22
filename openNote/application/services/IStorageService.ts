@@ -23,4 +23,8 @@ export interface UploadedInputFile {
 export interface IStorageService {
     upload(file: UploadedInputFile): Promise<UploadedFile>;
     delete(path: string): Promise<void>;
+    // in case storage service hỗ trợ copy trực tiếp
+    copy?(sourcePath: string, targetFileName: string): Promise<UploadedFile>;
+    // in case cần tải file từ storage về
+    download(path: string): Promise<Uint8Array>;
 }

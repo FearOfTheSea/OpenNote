@@ -37,6 +37,7 @@ export class LocalStorageService implements IStorageService {
         };
     }
 
+    // delete file by its URL path in postgreSQL
     async delete(urlPath: string): Promise<void> {
         try {
             // lấy tên file từ URL
@@ -63,5 +64,20 @@ export class LocalStorageService implements IStorageService {
             console.error(`Error deleting file for path ${urlPath}:`, error);
             throw new Error(`Could not delete file.`);
         }
+    }
+
+    //urlPath là đường dẫn storage service lưu trữ file
+    async download(urlPath: string): Promise<Uint8Array> {
+        // lấy tên file từ URL
+        if (!urlPath.startsWith(this.baseUrl)) {
+            throw new Error(`Path "${path}" is not managed by this service.`);
+        }
+        const fileName = urlPath.substring(this.baseUrl.length + 1);
+
+        // tạo đường dẫn file cục bộ đầy đủ
+        const localFilePath = path.join(this.uploadDir, fileName);
+        // dùng API của Deno để đọc file
+        const fileBuffer = await Deno.readFile(localFilePath);
+        return fileBuffer;
     }
 }

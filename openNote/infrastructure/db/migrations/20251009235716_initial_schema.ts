@@ -54,7 +54,8 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
             note_id UUID REFERENCES notes(note_id) ON DELETE CASCADE,
             path TEXT NOT NULL,
             file_name VARCHAR(255) NOT NULL,
-            size INT,
+            size BIGINT,
+            mime_type TEXT, -- thêm cột này
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
 
