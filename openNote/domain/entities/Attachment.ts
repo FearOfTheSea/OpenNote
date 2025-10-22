@@ -1,9 +1,15 @@
+import { randomUUID } from "crypto";
+
+/**
+ * represents a file attachment belonging to a Note.
+ */
 export class Attachment {
     public readonly id: string;
     public readonly noteId: string;
     public readonly path: string;
     public readonly fileName: string;
-    public readonly size?: number; // size có thể là null trong DB
+    public readonly size?: number;
+    public readonly mimeType?: string;
     public readonly createdAt: Date;
 
     constructor(params: {
@@ -11,10 +17,11 @@ export class Attachment {
         path: string;
         fileName: string;
         size?: number;
+        mimeType?: string;
         id?: string;
         createdAt?: Date;
     }) {
-        const { noteId, path, fileName, size, id, createdAt } = params;
+        const { noteId, path, fileName, size, mimeType, id, createdAt } = params;
 
         if (!noteId) {
             throw new Error("Attachment must belong to a note (noteId is required).");
@@ -29,11 +36,12 @@ export class Attachment {
             throw new Error("Attachment size cannot be negative.");
         }
 
-        this.id = id || crypto.randomUUID();
+        this.id = id || randomUUID();
         this.noteId = noteId;
         this.path = path;
         this.fileName = fileName;
         this.size = size;
+        this.mimeType = mimeType;
         this.createdAt = createdAt || new Date();
     }
 }

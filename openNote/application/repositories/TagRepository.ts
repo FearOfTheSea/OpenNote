@@ -1,9 +1,9 @@
+import { Note } from "../../domain/entities/Note.ts";
 import { Tag } from "../../domain/entities/Tag.ts";
 
 export interface TagRepository {
-    findAll(): Promise<Tag[]>;
-    findById(id: string): Promise<Tag | null>;
+    findByName(name: string): Promise<Note[]>;
+    findAll(): Promise<string[] | null>;
     save(tag: Tag): Promise<void>;
     delete(id: string): Promise<void>;
-    searchByKeyword(keyword: string): Promise<Tag[]>;
 }
