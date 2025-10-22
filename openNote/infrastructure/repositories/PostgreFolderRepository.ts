@@ -6,6 +6,7 @@ import dbClient from "../db/postgresClient.ts";
  * PostgreSQL implementation of FolderRepository.
  */
 export class PostgreFolderRepository implements FolderRepository {
+    constructor(private noteRepository?: any) {} // inject NoteRepository nếu cần
     /**
      * find folder by its id
      */
@@ -21,23 +22,6 @@ export class PostgreFolderRepository implements FolderRepository {
 
         if (result.rows.length === 0) return null;
         return this.mapRowToFolder(result.rows[0]);
-    }
-
-    /**
-     * find folders by user_id
-     */
-    async findByUserId(id: string): Promise<Folder[]> {
-        const result = await dbClient.queryObject(
-            `
-      SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
-      FROM folders
-      WHERE user_id = $1
-      ORDER BY updated_at DESC
-      `,
-            [id],
-        );
-
-        return result.rows.map((row) => this.mapRowToFolder(row));
     }
 
     /**
@@ -89,19 +73,69 @@ export class PostgreFolderRepository implements FolderRepository {
         return result.rows.map((row) => this.mapRowToFolder(row));
     }
 
-    /**
-     * find all folders
-     */
-    async findAll(): Promise<Folder[]> {
+    async cutFolder(
+        folderId: string,
+        newParentFolderId?: string,
+    ): Promise<boolean> {
+        const result = await dbClient.queryObject`
+    UPDATE folders
+    SET parent_folder_id = ${newParentFolderId}, updated_at = NOW()
+    WHERE folder_id = ${folderId}
+    RETURNING folder_id
+  `;
+        return result.rows.length > 0; // true nếu cut thành công
+    }
+
+    // tìm tất cả các thư mục con của một thư mục
+    async findChildren(parentFolderId: string): Promise<Folder[]> {
         const result = await dbClient.queryObject(
             `
-      SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
-      FROM folders
-      ORDER BY updated_at DESC
-      `,
+    SELECT * FROM folders
+    WHERE parent_folder_id = $1
+    ORDER BY name
+    `,
+            [parentFolderId],
         );
 
-        return result.rows.map((row) => this.mapRowToFolder(row));
+        return result.rows.map((r: any) => this.mapRowToFolder(r));
+    }
+
+    async copyFolder(
+        folderId: string,
+        newParentFolderId?: string,
+    ): Promise<Folder> {
+        const originalFolder = await this.findById(folderId);
+        if (!originalFolder) {
+            throw new Error(`Folder with id ${folderId} not found.`);
+        }
+
+        // create new folder with same properties
+        // but new name and parent id
+        const newFolder = new Folder(
+            `${originalFolder.name} (copy)`,
+            originalFolder.userId,
+            undefined,
+            newParentFolderId,
+        );
+
+        await this.save(newFolder);
+
+        // copy all note trong folder gốc sang folder mới (nếu có)
+        if (this.noteRepository) {
+            const notes = await this.noteRepository.findByFolderId(folderId);
+            for (const note of notes) {
+                // noteRepository.copyNote(noteId, targetFolderId) có sẵn
+                // copyNote sẽ copy cả attachments
+                await this.noteRepository.copyNote(note.id, newFolder.id);
+            }
+        }
+        // take children folders and copy recursively
+        const childFolders = await this.findChildren(folderId);
+        for (const child of childFolders) {
+            await this.copyFolder(child.id, newFolder.id);
+        }
+
+        return newFolder;
     }
 
     /**
@@ -132,44 +166,28 @@ export class PostgreFolderRepository implements FolderRepository {
     /**
      * search folders by keyword in folder_name
      */
-    async findByName(keyword: string): Promise<Folder[]> {
-        const result = await dbClient.queryObject(
-            `
-      SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
-      FROM folders
-      WHERE LOWER(folder_name) LIKE LOWER('%' || $1 || '%')
-      ORDER BY updated_at DESC
-      `,
-            [keyword],
-        );
-
-        return result.rows.map((row) => this.mapRowToFolder(row));
-    }
-    async searchByKeyword(keyword: string, parentFolderId?: string): Promise<Folder[]> {
-        if (!parentFolderId) {
-            return this.findByName(keyword);
+    async findByName(keyword: string, userId: string): Promise<Folder[]> {
+        const normalizedKeyword = keyword.trim().toLowerCase();
+        if (!normalizedKeyword) {
+            return [];
         }
 
-        // Search within descendants of parentFolderId
-        const result = await dbClient.queryObject(
-            `
-        WITH RECURSIVE folder_tree AS (
-            SELECT folder_id FROM folders WHERE folder_id = $1
-            UNION ALL
-            SELECT f.folder_id FROM folders f
-            INNER JOIN folder_tree ft ON f.parent_folder_id = ft.folder_id
-        )
-        SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
-        FROM folders
-        WHERE folder_id IN (SELECT folder_id FROM folder_tree)
-          AND LOWER(folder_name) LIKE LOWER('%' || $2 || '%')
-        ORDER BY updated_at DESC
-        `,
-            [parentFolderId, keyword],
-        );
+        const query = `
+    SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
+    FROM folders
+    WHERE user_id = $2
+      AND LOWER(folder_name) LIKE '%' || $1 || '%'
+    ORDER BY updated_at DESC
+  `;
+
+        const result = await dbClient.queryObject(query, [
+            normalizedKeyword,
+            userId,
+        ]);
 
         return result.rows.map((row) => this.mapRowToFolder(row));
     }
+
     /**
      * Map SQL row to Folder entity
      */
@@ -177,11 +195,10 @@ export class PostgreFolderRepository implements FolderRepository {
         return new Folder(
             row.folder_name,
             row.user_id,
-            row.parent_folder_id,
             row.folder_id,
+            row.parent_folder_id,
             row.created_at,
             row.updated_at,
         );
     }
-
 }

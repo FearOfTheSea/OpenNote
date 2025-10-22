@@ -1,11 +1,15 @@
 import { Note } from "../../domain/entities/Note.ts";
+import { Attachment } from "../../domain/entities/Attachment.ts";
 import { NoteRepository } from "../../application/repositories/NoteRepository.ts";
+import { AttachmentService } from "../../application/services/AttachmentService.ts";
+import { UploadedInputFile } from "../../application/services/IStorageService.ts";
 import dbClient from "../db/postgresClient.ts";
 
 /**
  * PostgreSQL implementation of NoteRepository.
  */
 export class PostgreNoteRepository implements NoteRepository {
+    constructor(private attachmentService?: AttachmentService) {}
     /**
      * find note by its id
      */
@@ -24,44 +28,6 @@ export class PostgreNoteRepository implements NoteRepository {
 
         if (result.rows.length === 0) return null;
         return this.mapRowToNote(result.rows[0]);
-    }
-
-    /**
-     * find note by name
-     */
-    async findByName(name: string): Promise<Note[]> {
-        const result = await dbClient.queryObject(
-            `
-      SELECT n.*, 
-        COALESCE(ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL), '{}') AS tags
-      FROM notes n
-      LEFT JOIN note_tags nt ON n.note_id = nt.note_id
-      WHERE LOWER(n.title) LIKE LOWER('%' || $1 || '%')
-      GROUP BY n.note_id
-      ORDER BY n.updated_at DESC
-      `,
-            [name],
-        );
-
-        return result.rows.map((row) => this.mapRowToNote(row));
-    }
-
-    /**
-     * function nay dung vao viec gi z
-     */
-    async findAll(): Promise<Note[]> {
-        const result = await dbClient.queryObject(
-            `
-      SELECT n.*, 
-        COALESCE(ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL), '{}') AS tags
-      FROM notes n
-      LEFT JOIN note_tags nt ON n.note_id = nt.note_id
-      GROUP BY n.note_id
-      ORDER BY n.updated_at DESC
-      `,
-        );
-
-        return result.rows.map((row) => this.mapRowToNote(row));
     }
 
     /**
@@ -85,60 +51,155 @@ export class PostgreNoteRepository implements NoteRepository {
     }
 
     /**
-     * find note by tag
+     * find one user's note by tag name
      */
-    async findByTag(tag: string): Promise<Note[]> {
+    async findByTag(tag: string, userId: string): Promise<Note[]> {
         const result = await dbClient.queryObject(
             `
       SELECT n.*, 
         COALESCE(ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL), '{}') AS tags
       FROM notes n
+      JOIN folders f ON n.folder_id = f.folder_id
       INNER JOIN note_tags nt ON n.note_id = nt.note_id
       WHERE nt.tag_name = $1
+        AND f.user_id = $2
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-            [tag],
+            [tag, userId],
         );
 
         return result.rows.map((row) => this.mapRowToNote(row));
     }
+
+    // copy note to target folder, it means when edit or upload attachments in new copy note
+    // original note wont be affected
+    async copyNote(noteId: string, targetFolderId: string): Promise<Note> {
+        const note = await this.findById(noteId);
+        if (!note) {
+            throw new Error("Note not found");
+        }
+
+        const newNoteId = crypto.randomUUID();
+
+        // copy attachments if any
+        let newAttachments: Attachment[] | undefined = undefined;
+
+        if (this.attachmentService && note.attachments) {
+            const attachments = await this.attachmentService.listAttachments(note.id);
+            //const newAttachments: Attachment[] = [];
+            newAttachments = [];
+            for (const attachment of attachments) {
+                const fileData = await this.attachmentService.copyAttachment(attachment);
+                newAttachments.push(fileData);
+            }
+        }
+        const copiedNote = new Note(
+            note.name,
+            note.content,
+            targetFolderId ?? note.folderId,
+            note.tagsId,
+            newAttachments,
+            newNoteId,
+            new Date(),
+            new Date(),
+        );
+
+        await this.save(copiedNote);
+        return copiedNote;
+    }
+
+    async cutNote(noteId: string, newFolderId: string): Promise<void> {
+        const note = await this.findById(noteId);
+        if (!note) throw new Error("Note not found");
+
+        if (note.folderId === newFolderId) return;
+
+        // update folder_id of the note and updated_at
+        await dbClient.queryObject(
+            `
+      UPDATE notes
+      SET folder_id = $1,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE note_id = $2
+      `,
+            [newFolderId, noteId],
+        );
+    }
+
+    /**
+     * create or update note
+     * update tags if change
+     * save attachments if any
+     */
     async save(note: Note): Promise<void> {
         // Upsert note
         await dbClient.queryObject(
             `
-                INSERT INTO notes (note_id, title, content, folder_id)
-                VALUES ($1, $2, $3, $4)
-                    ON CONFLICT (note_id) DO UPDATE
-                                                 SET title = EXCLUDED.title,
-                                                 content = EXCLUDED.content,
-                                                 folder_id = EXCLUDED.folder_id
-            `,
+      INSERT INTO notes (note_id, title, content, folder_id)
+      VALUES ($1, $2, $3, $4)
+      ON CONFLICT (note_id) DO UPDATE
+      SET title = EXCLUDED.title,
+          content = EXCLUDED.content,
+          folder_id = EXCLUDED.folder_id,
+          -- updated_at = CURRENT_TIMESTAMP
+      `,
             [note.id, note.name, note.content, note.folderId],
         );
 
-        // Delete previous tag associations
+        const tags = this.extractTags(note.content);
+
+        // delete previous tag
         await dbClient.queryObject(`DELETE FROM note_tags WHERE note_id = $1`, [
             note.id,
         ]);
 
-        // Add new tag associations using tagsId from note entity
-        for (const tagId of note.tagsId) {
-            // Get tag name from tag_id
-            const tagResult = await dbClient.queryObject(
-                `SELECT tag_name FROM tags WHERE tag_name = $1`,
-                [tagId],
+        // add new tag
+        for (const tag of tags) {
+            await dbClient.queryObject(
+                `
+        INSERT INTO tags (tag_name)
+        VALUES ($1)
+        ON CONFLICT (tag_name) DO NOTHING
+        `,
+                [tag],
             );
 
-            if (tagResult.rows.length > 0) {
-                await dbClient.queryObject(
-                    `
-                INSERT INTO note_tags (note_id, tag_name)
-                VALUES ($1, $2)
-                ON CONFLICT DO NOTHING
-                `,
-                    [note.id, tagId],
+            await dbClient.queryObject(
+                `
+        INSERT INTO note_tags (note_id, tag_name)
+        VALUES ($1, $2)
+        ON CONFLICT DO NOTHING
+        `,
+                [note.id, tag],
+            );
+
+            // if note has attachments, check new file and upload,
+            // delete files that are not in note.attachments array any more
+            if (this.attachmentService && note.attachments) {
+                const oldAttachments = await this.attachmentService.listAttachments(
+                    note.id,
                 );
+
+                // fileName của note hiện tại sau khi chỉnh sửa
+                const newFileNames = new Set<string>();
+                for (const attachment of note.attachments) {
+                    if (this.isUploadedInputFile(attachment)) {
+                        await this.attachmentService.uploadAttachment(note.id, attachment);
+                        newFileNames.add(attachment.originalname);
+                    } else {
+                        newFileNames.add(attachment.fileName);
+                    }
+                }
+                // Xoá các file không còn trong note.attachments
+                for (const oldAttachment of oldAttachments) {
+                    if (!newFileNames.has(oldAttachment.fileName)) {
+                        await this.attachmentService.deleteAttachment(
+                            note.id,
+                            oldAttachment.fileName,
+                        );
+                    }
+                }
             }
         }
     }
@@ -147,60 +208,47 @@ export class PostgreNoteRepository implements NoteRepository {
      * delete by note_id
      */
     async delete(id: string): Promise<void> {
+        if (this.attachmentService) {
+            await this.attachmentService.deleteAllAttachments(id);
+        }
+
         await dbClient.queryObject(`DELETE FROM notes WHERE note_id = $1`, [id]);
     }
 
     /**
      * find note by keyword in name and content
+     * chỉ tìm kiếm ở dashboard nên ko truyền folder id nữa
      */
-    async searchByKeyword(keyword: string, folderId?: string): Promise<Note[]> {
-        let query = `
-        SELECT n.*, 
-            COALESCE(ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL), '{}') AS tags
-        FROM notes n
-        LEFT JOIN note_tags nt ON n.note_id = nt.note_id
-        WHERE (LOWER(n.title) LIKE LOWER('%' || $1 || '%')
-           OR LOWER(n.content) LIKE LOWER('%' || $1 || '%'))
-    `;
-
-        const params: any[] = [keyword];
-
-        if (folderId) {
-            query += ` AND n.folder_id = $2`;
-            params.push(folderId);
+    async searchByKeyword(keyword: string, userId: string): Promise<Note[]> {
+        const normalizedKeyword = keyword.trim().toLowerCase();
+        if (!normalizedKeyword) {
+            return [];
         }
 
-        query += ` GROUP BY n.note_id ORDER BY n.updated_at DESC`;
+        const query = `
+    SELECT n.*, 
+      COALESCE(
+        ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL),
+        '{}'
+      ) AS tags
+    FROM notes n
+    LEFT JOIN note_tags nt ON n.note_id = nt.note_id
+    WHERE
+      n.user_id = $2
+      AND (
+        LOWER(n.title) LIKE '%' || $1 || '%'
+        OR LOWER(n.content) LIKE '%' || $1 || '%'
+      )
+    GROUP BY n.note_id
+    ORDER BY n.updated_at DESC
+  `;
 
+        const params = [normalizedKeyword, userId];
         const result = await dbClient.queryObject(query, params);
-        return result.rows.map((row) => this.mapRowToNote(row));
-    }
-
-    async findNotesByTagsIds(tagsIds: string[]): Promise<Note[]> {
-        if (tagsIds.length === 0) return [];
-
-        const placeholders = tagsIds.map((_, i) => `$${i + 1}`).join(',');
-        const result = await dbClient.queryObject(
-            `
-        SELECT n.*, 
-            COALESCE(ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL), '{}') AS tags
-        FROM notes n
-        LEFT JOIN note_tags nt ON n.note_id = nt.note_id
-        WHERE n.note_id IN (
-            SELECT note_id 
-            FROM note_tags 
-            WHERE tag_name IN (${placeholders})
-            GROUP BY note_id 
-            HAVING COUNT(DISTINCT tag_name) = $${tagsIds.length + 1}
-        )
-        GROUP BY n.note_id
-        ORDER BY n.updated_at DESC
-        `,
-            [...tagsIds, tagsIds.length]
-        );
 
         return result.rows.map((row) => this.mapRowToNote(row));
     }
+
     /**
      * Ánh xạ kết quả SQL sang entity Note
      */
@@ -222,5 +270,11 @@ export class PostgreNoteRepository implements NoteRepository {
     private extractTags(content: string): string[] {
         const matches = content?.match(/#(\w+)/g);
         return matches ? matches.map((t) => t.substring(1).toLowerCase()) : [];
+    }
+
+    private isUploadedInputFile(
+        obj: Attachment | UploadedInputFile,
+    ): obj is UploadedInputFile {
+        return (obj as UploadedInputFile).originalname !== undefined;
     }
 }

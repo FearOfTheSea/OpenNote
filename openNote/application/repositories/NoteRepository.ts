@@ -1,11 +1,12 @@
 import { Note } from "../../domain/entities/Note.ts";
 
 export interface NoteRepository {
-    findAll(): Promise<Note[]>;
     findById(id: string): Promise<Note | null>;
-    findByFolderId(folderId: string): Promise<Note[]>;
+    findByFolderId(id: string): Promise<Note[]>;
+    findByTag(tag: string, userId: string): Promise<Note[]>;
+    copyNote(noteId: string, targetFolderId: string): Promise<Note>;
+    cutNote(noteId: string, newFolderId: string): Promise<void>;
     save(note: Note): Promise<void>;
     delete(id: string): Promise<void>;
-    searchByKeyword(keyword: string, folderId?: string): Promise<Note[]>;
-    findNotesByTagsIds(tagsIds: string[]): Promise<Note[]>;
+    searchByKeyword(keyword: string, userId: string): Promise<Note[]>;
 }
