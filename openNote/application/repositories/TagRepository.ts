@@ -1,9 +1,9 @@
+import { Transaction } from "pg";
 import { Tag } from "../../domain/entities/Tag.ts";
 
 export interface TagRepository {
-    findAll(): Promise<Tag[]>;
-    findById(id: string): Promise<Tag | null>;
-    findByName(name: string): Promise<Tag>;
-    save(tag: Tag): Promise<void>;
-    delete(id: string): Promise<void>;
+  findAll(userId: string): Promise<Tag[] | null>;
+  findById(id: string): Promise<Tag | null>;
+  save(tag: Tag, noteId: string, tx: Transaction): Promise<void>;
+  delete(id: string, tx: Transaction): Promise<void>;
 }

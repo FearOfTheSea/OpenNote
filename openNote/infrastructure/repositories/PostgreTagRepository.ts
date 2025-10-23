@@ -1,122 +1,122 @@
 import { Tag } from "../../domain/entities/Tag.ts";
-import { Note } from "../../domain/entities/Note.ts";
 import { TagRepository } from "../../application/repositories/TagRepository.ts";
 import dbClient from "../db/postgresClient.ts";
+import { Transaction } from "pg";
 
 /**
  * PostgreSQL implementation of TagRepository.
  */
 export class PostgreTagRepository implements TagRepository {
-    /**
-     * find notes that have a specific tag name
-     */
-    async findByName(name: string): Promise<Note[]> {
-        const formattedName = name.startsWith("#") ? name : `#${name}`;
-
-        const result = await dbClient.queryObject(
-            `
-      SELECT n.note_id, n.title, n.content, n.folder_id, n.created_at, n.updated_at
-      FROM notes n
-      INNER JOIN note_tags nt ON n.note_id = nt.note_id
-      INNER JOIN tags t ON t.tag_name = nt.tag_name
-      WHERE t.tag_name = $1
-      ORDER BY n.updated_at DESC
+  /**
+   * find all tags of a user - return tag names
+   */
+  async findAll(userId: string): Promise<Tag[] | null> {
+    const result = await dbClient.queryObject<{ tag_name: string }>(
+      `
+      SELECT DISTINCT t.tag_name
+      FROM tags t
+      JOIN note_tags nt ON t.tag_name = nt.tag_name
+      JOIN notes n ON nt.note_id = n.note_id
+      JOIN folders f ON n.folder_id = f.folder_id
+      WHERE f.user_id = $1
+      ORDER BY t.tag_name ASC
       `,
-            [formattedName],
-        );
+      [userId]
+    );
 
-        return result.rows.map(
-            (row: any) =>
-                new Note(
-                    row.title,
-                    row.content,
-                    row.folder_id,
-                    Array.isArray(row.tags) ? row.tags : [],
-                    row.note_id,
-                    row.created_at,
-                    row.updated_at,
-                ),
-        );
-    }
+    return result.rows.map((row) => new Tag(row.tag_name));
+  }
 
-    /**
-     * find all tags — only return tag names
-     */
-    async findAll(): Promise<string[] | null> {
-        const result = await dbClient.queryObject<{ tag_name: string }>(
-            `
-      SELECT tag_name
+  /**
+   * find tag by its id
+   */
+  async findById(tagId: string): Promise<Tag | null> {
+    const result = await dbClient.queryObject<{
+      tag_id: string;
+      tag_name: string;
+    }>(
+      `
+      SELECT tag_id, tag_name
       FROM tags
-      ORDER BY tag_name ASC
+      WHERE tag_id = $1
+      LIMIT 1
       `,
-        );
+      [tagId]
+    );
 
-        return result.rows.map((row) => row.tag_name);
-    }
+    if (result.rows.length === 0) return null;
+    const row = result.rows[0];
+    return new Tag(row.tag_name);
+  }
 
-    /**
-     * save tag — insert into tags and note_tags tables
-     */
-    async save(tag: Tag): Promise<void> {
-        const formattedName = tag.tagName.startsWith("#") ? tag.tagName : `#${tag.tagName}`;
+  /**
+   * save tag — insert into tags and note_tags tables for new tag
+   * insert to note_tags only if tag already exists in tags table
+   */
+  async save(tag: Tag, noteId: string, tx: Transaction): Promise<void> {
+    const cleanName = tag.name.replace(/^#/, "").toLowerCase();
+    //use transaction to ensure both inserts succeed or fail together
+    try {
+      await tx.begin();
 
-        const client = dbClient;
-
-        try {
-            // add tag to tags table if not exist
-            await client.queryObject(
-                `
-        INSERT INTO tags (tag_name)
-        VALUES ($1)
-        ON CONFLICT (tag_name) DO NOTHING
+      // insert into tags table if not exists, new tag (global)
+      await tx.queryObject(
+        `
+        INSERT INTO tags (tag_id, tag_name)
+        VALUES ($1, $2)
+        ON CONFLICT (LOWER(tag_name)) DO NOTHING
         `,
-                [formattedName],
-            );
+        [tag.id, cleanName]
+      );
 
-            // link note with tag (if noteId exists)
-            if (tag.noteId) {
-                await client.queryObject(
-                    `
-          INSERT INTO note_tags (note_id, tag_name)
-          VALUES ($1, $2)
-          ON CONFLICT DO NOTHING
+      // link tag with note in note_tags table
+      await tx.queryObject(
+        `
+        INSERT INTO note_tags (note_id, tag_id)
+        SELECT $1, t.tag_id
+        FROM tags t
+        WHERE LOWER(t.tag_name) = $2
+        ON CONFLICT DO NOTHING
+        `,
+        [noteId, cleanName]
+      );
+
+      await tx.commit();
+    } catch (error) {
+      await tx.rollback();
+      console.error("Error saving tag:", error);
+      throw error;
+    }
+  }
+
+  /**
+   * delete tag and its relations in note_tags
+   */
+  async delete(tagId: string, tx: Transaction): Promise<void> {
+    try {
+      await tx.begin();
+
+      // auto remove relation in note_tags by on delete cascade
+
+      // check tag usage in other notes of the same user and global usage
+      const tagUsage = await tx.queryObject<{ count: number }>(
+        `
+          SELECT COUNT(*)::int AS count
+          FROM note_tags
+          WHERE tag_id = $1
           `,
-                    [tag.noteId, formattedName],
-                );
-            }
-        } catch (error) {
-            console.error("Error saving tag:", error);
-            throw error;
-        }
+        [tagId]
+      );
+
+      if (tagUsage.rows[0].count === 0) {
+        await tx.queryObject(`DELETE FROM tags WHERE tag_id = $1`, [tagId]);
+      }
+
+      await tx.commit();
+    } catch (error) {
+      await tx.rollback();
+      console.error("Error deleting tag:", error);
+      throw error;
     }
-
-    /**
-     * delete tag and its relations in note_tags
-     */
-    async delete(tagName: string): Promise<void> {
-        const formattedName = tagName.startsWith("#") ? tagName : `#${tagName}`;
-
-        const client = dbClient;
-
-        try {
-            // delete all relations first
-            await client.queryObject(
-                `
-        DELETE FROM note_tags WHERE tag_name = $1
-        `,
-                [formattedName],
-            );
-
-            // delete tag itself
-            await client.queryObject(
-                `
-        DELETE FROM tags WHERE tag_name = $1
-        `,
-                [formattedName],
-            );
-        } catch (error) {
-            console.error("Error deleting tag:", error);
-            throw error;
-        }
-    }
+  }
 }
