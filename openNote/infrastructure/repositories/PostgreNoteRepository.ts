@@ -1,280 +1,234 @@
 import { Note } from "../../domain/entities/Note.ts";
-import { Attachment } from "../../domain/entities/Attachment.ts";
 import { NoteRepository } from "../../application/repositories/NoteRepository.ts";
-import { AttachmentService } from "../../application/services/AttachmentService.ts";
-import { UploadedInputFile } from "../../application/services/IStorageService.ts";
 import dbClient from "../db/postgresClient.ts";
+import { Tag } from "../../domain/entities/Tag.ts";
+import { TagRepository } from "../../application/repositories/TagRepository.ts";
 
 /**
- * PostgreSQL implementation of NoteRepository.
+ * PostgreSQL implementation of NoteRepository
  */
 export class PostgreNoteRepository implements NoteRepository {
-    constructor(private attachmentService?: AttachmentService) {}
-    /**
-     * find note by its id
-     */
-    async findById(id: string): Promise<Note | null> {
-        const result = await dbClient.queryObject(
-            `
+  constructor(private tagRepository: TagRepository) {}
+
+  /** Find all notes belonging to a user */
+  async findAll(userId: string): Promise<Note[]> {
+    const result = await dbClient.queryObject(
+      `
       SELECT n.*, 
-        COALESCE(ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL), '{}') AS tags
+        COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
+      FROM notes n
+      JOIN folders f ON n.folder_id = f.folder_id
+      LEFT JOIN note_tags nt ON n.note_id = nt.note_id
+      WHERE f.user_id = $1
+      GROUP BY n.note_id
+      ORDER BY n.updated_at DESC
+      `,
+      [userId]
+    );
+
+    return result.rows.map((row) => this.mapRowToNote(row));
+  }
+
+  /** dind note by its id */
+  async findById(id: string): Promise<Note | null> {
+    const result = await dbClient.queryObject(
+      `
+      SELECT n.*, 
+        COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
       FROM notes n
       LEFT JOIN note_tags nt ON n.note_id = nt.note_id
       WHERE n.note_id = $1
       GROUP BY n.note_id
       `,
-            [id],
-        );
+      [id]
+    );
 
-        if (result.rows.length === 0) return null;
-        return this.mapRowToNote(result.rows[0]);
-    }
+    if (result.rows.length === 0) return null;
+    return this.mapRowToNote(result.rows[0]);
+  }
 
-    /**
-     * search by folder_id
-     */
-    async findByFolderId(folderId: string): Promise<Note[]> {
-        const result = await dbClient.queryObject(
-            `
+  /** find notes by folder id */
+  async findByFolderId(folderId: string): Promise<Note[]> {
+    const result = await dbClient.queryObject(
+      `
       SELECT n.*, 
-        COALESCE(ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL), '{}') AS tags
+        COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
       FROM notes n
       LEFT JOIN note_tags nt ON n.note_id = nt.note_id
       WHERE n.folder_id = $1
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-            [folderId],
-        );
+      [folderId]
+    );
 
-        return result.rows.map((row) => this.mapRowToNote(row));
+    return result.rows.map((row) => this.mapRowToNote(row));
+  }
+
+  /** find one user's note by list of tags id */
+  async findByTagIds(tagIds: string[], userId: string): Promise<Note[]> {
+    if (!tagIds || tagIds.length === 0) {
+      return [];
     }
 
-    /**
-     * find one user's note by tag name
-     */
-    async findByTag(tag: string, userId: string): Promise<Note[]> {
-        const result = await dbClient.queryObject(
-            `
-      SELECT n.*, 
-        COALESCE(ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL), '{}') AS tags
+    const result = await dbClient.queryObject(
+      `
+      SELECT n.*,
+        COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
       FROM notes n
       JOIN folders f ON n.folder_id = f.folder_id
-      INNER JOIN note_tags nt ON n.note_id = nt.note_id
-      WHERE nt.tag_name = $1
+      JOIN note_tags nt ON n.note_id = nt.note_id
+      WHERE nt.tag_id = any($1)
         AND f.user_id = $2
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-            [tag, userId],
-        );
+      [tagIds, userId]
+    );
 
-        return result.rows.map((row) => this.mapRowToNote(row));
-    }
+    return result.rows.map((row) => this.mapRowToNote(row));
+  }
 
-    // copy note to target folder, it means when edit or upload attachments in new copy note
-    // original note wont be affected
-    async copyNote(noteId: string, targetFolderId: string): Promise<Note> {
-        const note = await this.findById(noteId);
-        if (!note) {
-            throw new Error("Note not found");
-        }
+  /** Move note to another folder */
+  async cutNote(noteId: string, newFolderId: string): Promise<void> {
+    const note = await this.findById(noteId);
+    if (!note) throw new Error("Note not found");
 
-        const newNoteId = crypto.randomUUID();
+    if (note.parentFolderId === newFolderId) return;
 
-        // copy attachments if any
-        let newAttachments: Attachment[] | undefined = undefined;
-
-        if (this.attachmentService && note.attachments) {
-            const attachments = await this.attachmentService.listAttachments(note.id);
-            //const newAttachments: Attachment[] = [];
-            newAttachments = [];
-            for (const attachment of attachments) {
-                const fileData = await this.attachmentService.copyAttachment(attachment);
-                newAttachments.push(fileData);
-            }
-        }
-        const copiedNote = new Note(
-            note.name,
-            note.content,
-            targetFolderId ?? note.folderId,
-            note.tagsId,
-            newAttachments,
-            newNoteId,
-            new Date(),
-            new Date(),
-        );
-
-        await this.save(copiedNote);
-        return copiedNote;
-    }
-
-    async cutNote(noteId: string, newFolderId: string): Promise<void> {
-        const note = await this.findById(noteId);
-        if (!note) throw new Error("Note not found");
-
-        if (note.folderId === newFolderId) return;
-
-        // update folder_id of the note and updated_at
-        await dbClient.queryObject(
-            `
+    await dbClient.queryObject(
+      `
       UPDATE notes
       SET folder_id = $1,
-          updated_at = CURRENT_TIMESTAMPparentFolderId
+          updated_at = CURRENT_TIMESTAMP
       WHERE note_id = $2
       `,
-            [newFolderId, noteId],
-        );
-    }
+      [newFolderId, noteId]
+    );
+  }
 
-    /**
-     * create or update note
-     * update tags if change
-     * save attachments if any
-     */
-    async save(note: Note): Promise<void> {
-        // Upsert note
-        await dbClient.queryObject(
-            `
-      INSERT INTO notes (note_id, title, content, folder_id)
-      VALUES ($1, $2, $3, $4)
-      ON CONFLICT (note_id) DO UPDATE
-      SET title = EXCLUDED.title,
-          content = EXCLUDED.content,
-          folder_id = EXCLUDED.folder_id,
-          -- updated_at = CURRENT_TIMESTAMP
-      `,
-            [note.id, note.name, note.content, note.folderId],
-        );
+  /** Create or update note, update tags */
+  async save(note: Note): Promise<void> {
+    const tx = dbClient.createTransaction("save_note_tx");
 
-        const tags = this.extractTags(note.content);
+    try {
+      await tx.begin();
 
-        // delete previous tag
-        await dbClient.queryObject(`DELETE FROM note_tags WHERE note_id = $1`, [
-            note.id,
-        ]);
-
-        // add new tag
-        for (const tag of tags) {
-            await dbClient.queryObject(
-                `
-        INSERT INTO tags (tag_name)
-        VALUES ($1)
-        ON CONFLICT (tag_name) DO NOTHING
+      await tx.queryObject(
+        `
+        INSERT INTO notes (note_id, title, content, folder_id)
+        VALUES ($1, $2, $3, $4)
+        ON CONFLICT (note_id) DO UPDATE
+        SET title = EXCLUDED.title,
+            content = EXCLUDED.content,
+            folder_id = EXCLUDED.folder_id,
+            updated_at = CURRENT_TIMESTAMP
         `,
-                [tag],
-            );
+        [note.id, note.name, note.content, note.parentFolderId]
+      );
 
-            await dbClient.queryObject(
-                `
-        INSERT INTO note_tags (note_id, tag_name)
-        VALUES ($1, $2)
-        ON CONFLICT DO NOTHING
-        `,
-                [note.id, tag],
-            );
+      // del previous tags associations in note_tags table
+      await tx.queryObject(`DELETE FROM note_tags WHERE note_id = $1`, [
+        note.id,
+      ]);
 
-            // if note has attachments, check new file and upload,
-            // delete files that are not in note.attachments array any more
-            if (this.attachmentService && note.attachments) {
-                const oldAttachments = await this.attachmentService.listAttachments(
-                    note.id,
-                );
+      // lưu các tag mới
+      const tagNames = this.extractTags(note.content);
+      for (const tagName of tagNames) {
+        const tag = new Tag(tagName);
+        await this.tagRepository.save(tag, note.id, tx);
+      }
 
-                // fileName của note hiện tại sau khi chỉnh sửa
-                const newFileNames = new Set<string>();
-                for (const attachment of note.attachments) {
-                    if (this.isUploadedInputFile(attachment)) {
-                        await this.attachmentService.uploadAttachment(note.id, attachment);
-                        newFileNames.add(attachment.originalname);
-                    } else {
-                        newFileNames.add(attachment.fileName);
-                    }
-                }
-                // Xoá các file không còn trong note.attachments
-                for (const oldAttachment of oldAttachments) {
-                    if (!newFileNames.has(oldAttachment.fileName)) {
-                        await this.attachmentService.deleteAttachment(
-                            note.id,
-                            oldAttachment.fileName,
-                        );
-                    }
-                }
-            }
-        }
+      await tx.commit();
+    } catch (e) {
+      await tx.rollback();
+      console.error("Transaction failed in save note.", e);
+      throw e;
     }
+  }
 
-    /**
-     * delete by note_id
-     */
-    async delete(id: string): Promise<void> {
-        if (this.attachmentService) {
-            await this.attachmentService.deleteAllAttachments(id);
-        }
+  /** Delete note by id */
+  async delete(id: string): Promise<void> {
+    const tx = dbClient.createTransaction("delete_note_tx");
 
-        await dbClient.queryObject(`DELETE FROM notes WHERE note_id = $1`, [id]);
+    try {
+      await tx.begin();
+
+      // lấy danh sách tag liên quan đến note trước khi xóa
+      const tagResult = await tx.queryObject<{ tag_id: string }>(
+        `SELECT nt.tag_id FROM note_tags nt WHERE nt.note_id = $1`,
+        [id]
+      );
+      const tagsToCheck = tagResult.rows;
+
+      // xóa note ở notes và relation in note_tags
+      const deleteNoteResult = await tx.queryObject(
+        `DELETE FROM notes WHERE note_id = $1`,
+        [id]
+      );
+
+      if (deleteNoteResult.rowCount === 0) {
+        // không có note nào bị xóa, rollback và thoát
+        await tx.rollback();
+        return;
+      }
+
+      // del các tag không còn được sử dụng
+      for (const row of tagsToCheck) {
+        await this.tagRepository.delete(row.tag_id, tx);
+      }
+
+      await tx.commit();
+    } catch (e) {
+      await tx.rollback();
+      console.error("Transaction failed in delete note", e);
+      throw e;
     }
+  }
 
-    /**
-     * find note by keyword in name and content
-     * chỉ tìm kiếm ở dashboard nên ko truyền folder id nữa
-     */
-    async searchByKeyword(keyword: string, userId: string): Promise<Note[]> {
-        const normalizedKeyword = keyword.trim().toLowerCase();
-        if (!normalizedKeyword) {
-            return [];
-        }
+  /** Search by keyword in title or content */
+  async searchByKeyword(keyword: string, userId: string): Promise<Note[]> {
+    const normalizedKeyword = keyword.trim().toLowerCase();
+    if (!normalizedKeyword) return [];
 
-        const query = `
-    SELECT n.*, 
-      COALESCE(
-        ARRAY_AGG(nt.tag_name) FILTER (WHERE nt.tag_name IS NOT NULL),
-        '{}'
-      ) AS tags
-    FROM notes n
-    LEFT JOIN note_tags nt ON n.note_id = nt.note_id
-    WHERE
-      n.user_id = $2
-      AND (
-        LOWER(n.title) LIKE '%' || $1 || '%'
-        OR LOWER(n.content) LIKE '%' || $1 || '%'
-      )
-    GROUP BY n.note_id
-    ORDER BY n.updated_at DESC
-  `;
+    const query = `
+      SELECT n.*, 
+        COALESCE(
+          ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL),
+          '{}'
+        ) AS tags
+      FROM notes n
+      JOIN folders f ON n.folder_id = f.folder_id
+      LEFT JOIN note_tags nt ON n.note_id = nt.note_id
+      WHERE f.user_id = $2
+        AND (
+          LOWER(n.title) LIKE '%' || $1 || '%'
+          OR LOWER(n.content) LIKE '%' || $1 || '%'
+        )
+      GROUP BY n.note_id
+      ORDER BY n.updated_at DESC
+    `;
 
-        const params = [normalizedKeyword, userId];
-        const result = await dbClient.queryObject(query, params);
+    const result = await dbClient.queryObject(query, [
+      normalizedKeyword,
+      userId,
+    ]);
+    return result.rows.map((row) => this.mapRowToNote(row));
+  }
 
-        return result.rows.map((row) => this.mapRowToNote(row));
-    }
+  /** Map SQL result row to Note entity */
+  private mapRowToNote(row: any): Note {
+    return new Note(
+      row.title,
+      row.content,
+      row.folder_id,
+      Array.isArray(row.tags) ? row.tags : [] // tagsIds
+    );
+  }
 
-    /**
-     * Ánh xạ kết quả SQL sang entity Note
-     */
-    private mapRowToNote(row: any): Note {
-        return new Note(
-            row.title,
-            row.content,
-            row.folder_id,
-            Array.isArray(row.tags) ? row.tags : [],
-            row.note_id,
-            row.created_at,
-            row.updated_at,
-        );
-    }
-
-    /**
-     * extract tag (#tag) from note
-     */
-    private extractTags(content: string): string[] {
-        const matches = content?.match(/#(\w+)/g);
-        return matches ? matches.map((t) => t.substring(1).toLowerCase()) : [];
-    }
-
-    private isUploadedInputFile(
-        obj: Attachment | UploadedInputFile,
-    ): obj is UploadedInputFile {
-        return (obj as UploadedInputFile).originalname !== undefined;
-    }
+  /** Extract tags (#tag) from note content */
+  private extractTags(content: string): string[] {
+    const matches = content?.match(/#(\w+)/g);
+    return matches ? matches.map((t) => t.substring(1).toLowerCase()) : [];
+  }
 }
