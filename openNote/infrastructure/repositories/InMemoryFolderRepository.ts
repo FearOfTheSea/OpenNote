@@ -16,12 +16,12 @@ export class InMemoryFolderRepository implements FolderRepository {
         this.folders.push(newfolder1, newfolder2, newfolder3, subfolder1, subfolder2, subfolder3);
     }
 
-    async findAll(): Promise<Folder[]> {
-        return this.folders;
+    async findAll(userId: string): Promise<Folder[]> {
+        return this.folders.filter((folder) => folder.userId === userId);
     }
 
     async findById(id: string): Promise<Folder | null> {
-        const folder = this.folders.find((n) => n.id === id);
+        const folder = this.folders.find((folder) => folder.id === id);
         return folder ? folder : null;
     }
 
@@ -29,17 +29,14 @@ export class InMemoryFolderRepository implements FolderRepository {
         return this.folders.filter((folder) => folder.name.includes(name.trim()) && folder.userId === userId);
     }
 
-    async findByParentFolderId(parentFolderId: string | undefined): Promise<Folder[]> {
-        return this.folders.filter((folder) => folder.parentFolderId === parentFolderId);
+    async findByParentFolderId(parentFolderId: string | undefined, userId: string): Promise<Folder[]> {
+        return this.folders.filter((folder) => folder.parentFolderId === parentFolderId && folder.userId === userId);
     }
 
     async findByUserId(userId: string): Promise<Folder[]> {
         return this.folders.filter((folder) => folder.userId === userId);
     }
 
-    async findParentFolders(userId: string): Promise<Folder[]> {
-        return this.folders.filter((folder) => folder.parentFolderId === undefined && folder.userId === userId);
-    }
     async cutFolder(folderId: string, newParentFolderId: string | undefined): Promise<boolean> {
         const folder = this.folders.find((n) => n.id === folderId);
         if (!folder) {

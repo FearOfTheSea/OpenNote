@@ -5,22 +5,20 @@ export class InMemoryTagRepository implements TagRepository {
     private tags: Tag[] = [];
 
     async findAll(): Promise<Tag[]> {
-        return await this.tags;
+        return this.tags;
     }
 
     async findById(id: string): Promise<Tag | null> {
-        const tag = await this.tags.find((n) => n.id === id);
+        const tag = this.tags.find((n) => n.id === id);
         return tag || null;
     }
 
-    async findByName(name: string): Promise<Tag> {
-        return this.tags.filter((tag) => {
-            return tag.name === name;
-        }).at(0) as Tag;
+    async findByName(name: string): Promise<Tag[]> {
+        return this.tags.filter((tag) => tag.name.includes(name));
     }
 
     async save(tag: Tag): Promise<void> {
-        const existingTagIndex = await this.tags.findIndex((n) => n.id === tag.id);
+        const existingTagIndex = this.tags.findIndex((n) => n.id === tag.id);
 
         if (existingTagIndex === -1) {
             this.tags.push(tag);
@@ -30,10 +28,6 @@ export class InMemoryTagRepository implements TagRepository {
     }
 
     async delete(id: string): Promise<void> {
-        this.tags = await this.tags.filter((tag) => tag.id !== id);
-    }
-
-    async searchByKeyword(keyword: string): Promise<Tag[]> {
-        return await this.tags.filter((tag) => tag.name.toLowerCase().includes(keyword.toLowerCase()));
+        this.tags = this.tags.filter((tag) => tag.id !== id);
     }
 }

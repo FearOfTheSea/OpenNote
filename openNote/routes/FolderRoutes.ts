@@ -39,7 +39,7 @@ export function createFolderRoutes(
         try {
             const result = await searchFoldersController.apply({
                 query: req.query.q as string,
-                parentFolderId: req.query.parentFolderId as string | undefined,
+                userId: req.query.userId as string,
             });
             res.json(result);
         } catch (error) {

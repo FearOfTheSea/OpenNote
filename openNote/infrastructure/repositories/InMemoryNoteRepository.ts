@@ -8,20 +8,21 @@ export class InMemoryNoteRepository implements NoteRepository {
     constructor(private readonly folderRepository: FolderRepository) {
     }
 
-    findByTag(tag: string, userId: string): Promise<Note[]> {
-        throw new Error("Method not implemented.");
+    async checkExistenceByName(name: string, folderId: string): Promise<boolean> {
+        const notes = await this.findByFolderId(folderId);
+        if (notes.find((note) => note.name === name)) {
+            return true;
+        }
+        return false;
     }
 
-    copyNote(noteId: string, targetFolderId: string): Promise<Note> {
-        throw new Error("Method not implemented.");
-    }
-
-    cutNote(noteId: string, newFolderId: string): Promise<void> {
-        throw new Error("Method not implemented.");
-    }
-
-    async findAll(): Promise<Note[]> {
-        return this.notes;
+    async findAll(userId: string): Promise<Note[]> {
+        const userFolders = await this.folderRepository.findByUserId(userId);
+        let userNotes: Note[] = [];
+        for (const folder of userFolders) {
+            userNotes.concat(await this.findByFolderId(folder.id));
+        }
+        return userNotes;
     }
 
     async findById(id: string): Promise<Note | null> {
@@ -31,6 +32,33 @@ export class InMemoryNoteRepository implements NoteRepository {
 
     async findByFolderId(folderId: string): Promise<Note[]> {
         return this.notes.filter((note) => note.parentFolderId === folderId);
+    }
+
+    async findByTagsIds(tagIds: string[], userId: string): Promise<Note[]> {
+        const allNotes = this.findAll(userId);
+        return (await allNotes).filter((note) => {
+            return tagIds.every((tag) => note.tagsIds.includes(tag));
+        });
+    }
+
+    async cutNote(noteId: string, newFolderId: string): Promise<boolean> {
+        const note = await this.findById(noteId);
+        if (!note) {
+            return false;
+        }
+
+        const newNote = {
+            ...note,
+            parentFolderId: newFolderId,
+        };
+
+        this.notes.push(newNote);
+
+        const oldNoteIndex = this.notes.findIndex((n) => n.id === noteId);
+        if (oldNoteIndex !== -1) {
+            this.notes.splice(oldNoteIndex, 1);
+        }
+        return true;
     }
 
     async save(note: Note): Promise<void> {
@@ -52,9 +80,5 @@ export class InMemoryNoteRepository implements NoteRepository {
             const folder = await this.folderRepository.findById(note.parentFolderId);
             return note.name.includes(keyword.trim()) && folder?.userId === userId;
         });
-    }
-
-    async findNotesByTagsIds(tagsIds: string[]): Promise<Note[]> {
-        return this.notes.filter((note) => tagsIds.every((tagId) => note.tagsIds.includes(tagId)));
     }
 }

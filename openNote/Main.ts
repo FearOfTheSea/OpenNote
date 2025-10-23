@@ -71,54 +71,70 @@ const searchTagsController = new SearchTagsController(tagRepository);
 //=============================
 //====MOCK DATA FOR TESTING====
 //=============================
-const tag1Id = (await createTagController.apply({ name: "tag1" })).id;
-const tag2Id = (await createTagController.apply({ name: "tag2" })).id;
-const tag3Id = (await createTagController.apply({ name: "tag3" })).id;
+const tag1Id = (await createTagController.apply({ name: "tag1" })).tag.id;
+const tag2Id = (await createTagController.apply({ name: "tag2" })).tag.id;
+const tag3Id = (await createTagController.apply({ name: "tag3" })).tag.id;
 
-const newfolder1 = (await folderRepository.searchByKeyword("newfolder1")).at(0)!;
-const newfolder2 = (await folderRepository.searchByKeyword("newfolder2")).at(0)!;
-const newfolder3 = (await folderRepository.searchByKeyword("newfolder3")).at(0)!;
-const _subfolder1 = (await folderRepository.searchByKeyword("subfolder1")).at(0)!;
-const _subfolder2 = (await folderRepository.searchByKeyword("subfolder2")).at(0)!;
-const subfolder3 = (await folderRepository.searchByKeyword("subfolder3")).at(0)!;
+const newfolder1 = (await folderRepository.findByName("newfolder1", "user")).at(0)!;
+const newfolder2 = (await folderRepository.findByName("newfolder2", "user")).at(0)!;
+const newfolder3 = (await folderRepository.findByName("newfolder3", "user")).at(0)!;
+const _subfolder1 = (await folderRepository.findByName("subfolder1", "user")).at(0)!;
+const _subfolder2 = (await folderRepository.findByName("subfolder2", "user")).at(0)!;
+const subfolder3 = (await folderRepository.findByName("subfolder3", "user")).at(0)!;
 
 await createNoteController.apply({
     name: "f1note1",
     content: "content",
-    folderId: newfolder1.id,
-    tagsId: [tag1Id, tag2Id, tag3Id],
+    parentFolderId: newfolder1.id,
+    tagsIds: [tag1Id, tag2Id, tag3Id],
 });
 await createNoteController.apply({
     name: "f1note2",
     content: "content",
-    folderId: newfolder1.id,
-    tagsId: [tag1Id, tag2Id],
+    parentFolderId: newfolder1.id,
+    tagsIds: [tag1Id, tag2Id],
 });
 await createNoteController.apply({
     name: "f1note3",
     content: "content",
-    folderId: newfolder1.id,
-    tagsId: [tag1Id, tag3Id],
+    parentFolderId: newfolder1.id,
+    tagsIds: [tag1Id, tag3Id],
 });
 await createNoteController.apply({
     name: "f2note1",
     content: "content",
-    folderId: newfolder2.id,
-    tagsId: [tag2Id, tag3Id],
+    parentFolderId: newfolder2.id,
+    tagsIds: [tag2Id, tag3Id],
 });
 await createNoteController.apply({
     name: "f2note2",
     content: "content",
-    folderId: newfolder2.id,
-    tagsId: [tag1Id, tag2Id],
+    parentFolderId: newfolder2.id,
+    tagsIds: [tag1Id, tag2Id],
 });
-await createNoteController.apply({ name: "f2note3", content: "content", folderId: newfolder2.id, tagsId: [tag1Id] });
-await createNoteController.apply({ name: "f3note1", content: "content", folderId: newfolder3.id, tagsId: [tag2Id] });
-await createNoteController.apply({ name: "f3note2", content: "content", folderId: newfolder3.id, tagsId: [tag3Id] });
-await createNoteController.apply({ name: "f3note3", content: "content", folderId: newfolder3.id, tagsId: [] });
-await createNoteController.apply({ name: "sf3note1", content: "content", folderId: subfolder3.id, tagsId: [] });
-await createNoteController.apply({ name: "sf3note2", content: "content", folderId: subfolder3.id, tagsId: [] });
-await createNoteController.apply({ name: "sf3note3", content: "content", folderId: subfolder3.id, tagsId: [] });
+await createNoteController.apply({
+    name: "f2note3",
+    content: "content",
+    parentFolderId: newfolder2.id,
+    tagsIds: [tag1Id],
+});
+await createNoteController.apply({
+    name: "f3note1",
+    content: "content",
+    parentFolderId: newfolder3.id,
+    tagsIds: [tag2Id],
+});
+4;
+await createNoteController.apply({
+    name: "f3note2",
+    content: "content",
+    parentFolderId: newfolder3.id,
+    tagsIds: [tag3Id],
+});
+await createNoteController.apply({ name: "f3note3", content: "content", parentFolderId: newfolder3.id, tagsIds: [] });
+await createNoteController.apply({ name: "sf3note1", content: "content", parentFolderId: subfolder3.id, tagsIds: [] });
+await createNoteController.apply({ name: "sf3note2", content: "content", parentFolderId: subfolder3.id, tagsIds: [] });
+await createNoteController.apply({ name: "sf3note3", content: "content", parentFolderId: subfolder3.id, tagsIds: [] });
 
 //=====================
 //====SETUP ROUTES=====

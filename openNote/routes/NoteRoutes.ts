@@ -26,8 +26,8 @@ export function createNoteRoutes(
             const result = await createNoteController.apply({
                 name: req.body.name,
                 content: req.body.content,
-                folderId: req.body.folderId,
-                tagsId: req.body.tagsId,
+                parentFolderId: req.body.parentFolderId,
+                tagsIds: req.body.tagsId,
             });
             res.status(201).json(result);
         } catch (error) {
@@ -58,7 +58,7 @@ export function createNoteRoutes(
         try {
             const result = await searchNotesController.apply({
                 query: req.query.q as string,
-                folderId: req.query.folderId as string,
+                userId: req.query.userId as string,
             });
             res.json(result);
         } catch (error) {
