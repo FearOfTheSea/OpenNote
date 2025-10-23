@@ -39,8 +39,8 @@ Deno.test("save() should update existing note", async () => {
     const updatedNote = new Note(
         note.name,
         "Updated content #updatedTag",
-        note.folderId,
-        note.tagsId,
+        note.parentFolderId,
+        note.tagsIds,
         note.id,
         note.createdAt,
     );

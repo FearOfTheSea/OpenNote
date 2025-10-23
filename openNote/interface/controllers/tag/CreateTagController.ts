@@ -1,14 +1,13 @@
 import { CreateTag, CreateTagInput } from "../../../application/useCases/tag/CreateTag.ts";
 import { TagRepository } from "../../../application/repositories/TagRepository.ts";
+import { GetTagByIdResponse } from "./GetTagByIdController.ts";
 
 export interface CreateTagRequest {
     name: string;
 }
 
 export interface CreateTagResponse {
-    id: string;
-    createdAt: Date;
-    updatedAt: Date;
+    tag: GetTagByIdResponse;
 }
 
 export class CreateTagController {
@@ -21,7 +20,7 @@ export class CreateTagController {
     async apply(request: CreateTagRequest): Promise<CreateTagResponse> {
         const input = request as CreateTagInput;
         try {
-            return await this.useCase.execute(input) as CreateTagResponse;
+            return { tag: await this.useCase.execute(input) } as CreateTagResponse;
         } catch (error) {
             throw error;
         }

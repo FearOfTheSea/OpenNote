@@ -22,7 +22,7 @@ export class GetNotesByTags {
             }
         }
 
-        const filteredNotes = allNotes.filter((note) => input.tagsId.every((tagId) => note.tagsId.includes(tagId)));
+        const filteredNotes = allNotes.filter((note) => input.tagsId.every((tagId) => note.tagsIds?.includes(tagId)));
 
         return { notes: filteredNotes };
     }

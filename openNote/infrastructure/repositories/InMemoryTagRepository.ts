@@ -13,6 +13,12 @@ export class InMemoryTagRepository implements TagRepository {
         return tag || null;
     }
 
+    async findByName(name: string): Promise<Tag> {
+        return this.tags.filter((tag) => {
+            return tag.name === name;
+        }).at(0) as Tag;
+    }
+
     async save(tag: Tag): Promise<void> {
         const existingTagIndex = await this.tags.findIndex((n) => n.id === tag.id);
 

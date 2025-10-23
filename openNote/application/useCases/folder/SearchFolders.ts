@@ -3,7 +3,7 @@ import { FolderRepository } from "../../repositories/FolderRepository.ts";
 
 export interface SearchFoldersInput {
     readonly query: string;
-    readonly parentFolderId?: string;
+    readonly userId: string;
 }
 
 export interface SearchFoldersOutput {
@@ -14,14 +14,7 @@ export class SearchFolders {
     constructor(private folderRepository: FolderRepository) {}
 
     async execute(input: SearchFoldersInput): Promise<SearchFoldersOutput> {
-        if (input.parentFolderId) {
-            const parentFolder = await this.folderRepository.findById(input.parentFolderId);
-            if (!parentFolder) {
-                throw new Error(`Parent folder with id ${input.parentFolderId} not found`);
-            }
-        }
-
-        const matchingFolders = await this.folderRepository.searchByKeyword(input.query, input.parentFolderId);
+        const matchingFolders = await this.folderRepository.findByName(input.query, input.userId);
         return { folders: matchingFolders };
     }
 }

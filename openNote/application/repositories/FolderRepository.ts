@@ -7,7 +7,7 @@ export interface FolderRepository {
     findByParentFolderId(parentFolderId: string | undefined): Promise<Folder[]>;
     findParentFolders(userId: string): Promise<Folder[]>;
     cutFolder(folderId: string, newParentFolderId: string | undefined): Promise<boolean>;
-    copyFolder(folderId: string, newParentFolderId: string | undefined): Promise<Folder>;
+    copyFolder(folderId: string, newParentFolderId: string | undefined): Promise<boolean>;
     save(folder: Folder): Promise<void>;
     delete(id: string): Promise<void>;
 }

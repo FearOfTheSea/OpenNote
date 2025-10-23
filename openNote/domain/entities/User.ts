@@ -14,7 +14,6 @@ export class User {
     }) {
         const { fullName, email, passwordHash } = params;
 
-        // Validation
         if (!fullName || fullName.trim() === "") {
             throw new Error("User full name cannot be empty.");
         }

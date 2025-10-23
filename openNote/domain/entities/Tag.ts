@@ -1,11 +1,12 @@
 import { randomUUID, validateName } from "../utils.ts";
 
 export class Tag {
-    public readonly id: string;
-    public readonly name: string;
-    public readonly noteId: string;
+    readonly id: string;
+    readonly name: string;
+    readonly createdAt: Date;
+    readonly updatedAt: Date;
 
-    constructor(name: string, noteId: string) {
+    constructor(name: string) {
         if (!name || name.trim() === "") {
             throw new Error("Tag name cannot be empty");
         }
@@ -14,7 +15,8 @@ export class Tag {
         }
 
         this.id = randomUUID();
-        this.noteId = noteId;
         this.name = name.trim();
+        this.createdAt = new Date();
+        this.updatedAt = new Date();
     }
 }

@@ -2,22 +2,18 @@ import { NoteRepository } from "../../../application/repositories/NoteRepository
 import { CreateNote, CreateNoteInput } from "../../../application/useCases/note/CreateNote.ts";
 import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
 import { TagRepository } from "../../../application/repositories/TagRepository.ts";
+import { GetNoteByIdResponse } from "./GetNoteByIdController.ts";
 
 export interface CreateNoteRequest {
     readonly name: string;
     readonly content: string;
-    readonly folderId: string;
-    readonly tagsId?: string[];
+    readonly parentFolderId: string;
+    readonly tagsIds?: string[];
+    readonly attachmentsIds?: string[];
 }
 
 export interface CreateNoteResponse {
-    readonly id: string;
-    readonly name: string;
-    readonly content: string;
-    readonly folderId: string;
-    readonly tagsId: string[];
-    readonly createdAt: Date;
-    readonly updatedAt: Date;
+    readonly note: GetNoteByIdResponse;
 }
 
 export class CreateNoteController {
@@ -31,15 +27,7 @@ export class CreateNoteController {
         const input = request as CreateNoteInput;
         try {
             const output = await this.useCase.execute(input);
-            return {
-                id: output.note.id,
-                name: output.note.name,
-                content: output.note.content,
-                folderId: output.note.folderId,
-                tagsId: output.note.tagsId,
-                createdAt: output.note.createdAt,
-                updatedAt: output.note.updatedAt,
-            };
+            return output as CreateNoteResponse;
         } catch (error) {
             throw error;
         }

@@ -8,6 +8,18 @@ export class InMemoryNoteRepository implements NoteRepository {
     constructor(private readonly folderRepository: FolderRepository) {
     }
 
+    findByTag(tag: string, userId: string): Promise<Note[]> {
+        throw new Error("Method not implemented.");
+    }
+
+    copyNote(noteId: string, targetFolderId: string): Promise<Note> {
+        throw new Error("Method not implemented.");
+    }
+
+    cutNote(noteId: string, newFolderId: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
     async findAll(): Promise<Note[]> {
         return this.notes;
     }
@@ -18,7 +30,7 @@ export class InMemoryNoteRepository implements NoteRepository {
     }
 
     async findByFolderId(folderId: string): Promise<Note[]> {
-        return this.notes.filter((note) => note.folderId === folderId);
+        return this.notes.filter((note) => note.parentFolderId === folderId);
     }
 
     async save(note: Note): Promise<void> {
@@ -35,23 +47,14 @@ export class InMemoryNoteRepository implements NoteRepository {
         this.notes = this.notes.filter((note) => note.id !== id);
     }
 
-    async searchByKeyword(keyword: string, folderId?: string): Promise<Note[]> {
-        let notesToSearch: Note[] = this.notes;
-
-        if (folderId) {
-            const subfolders = await this.folderRepository.searchByKeyword("", folderId);
-            const allFolderIds = [folderId, ...subfolders.map((folder) => folder.id)];
-            notesToSearch = this.notes.filter((note) => allFolderIds.includes(note.folderId));
-        }
-
-        const keywordLower = keyword.toLowerCase();
-        return notesToSearch.filter(
-            (note) =>
-                note.name.toLowerCase().includes(keywordLower) || note.content.toLowerCase().includes(keywordLower),
-        );
+    async searchByKeyword(keyword: string, userId: string): Promise<Note[]> {
+        return this.notes.filter(async (note) => {
+            const folder = await this.folderRepository.findById(note.parentFolderId);
+            return note.name.includes(keyword.trim()) && folder?.userId === userId;
+        });
     }
 
     async findNotesByTagsIds(tagsIds: string[]): Promise<Note[]> {
-        return this.notes.filter((note) => tagsIds.every((tagId) => note.tagsId.includes(tagId)));
+        return this.notes.filter((note) => tagsIds.every((tagId) => note.tagsIds.includes(tagId)));
     }
 }

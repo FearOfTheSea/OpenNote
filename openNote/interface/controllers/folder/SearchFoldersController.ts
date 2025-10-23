@@ -8,7 +8,7 @@ import { GetFolderByIdResponse } from "./GetFolderByIdController.ts";
 
 export interface SearchFoldersRequest {
     readonly query: string;
-    readonly parentFolderId?: string;
+    readonly userId: string;
 }
 
 export interface SearchFoldersResponse {

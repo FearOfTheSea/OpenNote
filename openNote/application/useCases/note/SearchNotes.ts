@@ -3,7 +3,7 @@ import { NoteRepository } from "../../repositories/NoteRepository.ts";
 
 export interface SearchNotesInput {
     readonly query: string;
-    readonly folderId?: string;
+    readonly userId: string;
 }
 
 export interface SearchNotesOutput {
@@ -14,6 +14,6 @@ export class SearchNotes {
     constructor(private noteRepository: NoteRepository) {}
 
     async execute(input: SearchNotesInput): Promise<SearchNotesOutput> {
-        return { notes: await this.noteRepository.searchByKeyword(input.query, input.folderId) };
+        return { notes: await this.noteRepository.searchByKeyword(input.query, input.userId) };
     }
 }

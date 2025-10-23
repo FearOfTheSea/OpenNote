@@ -18,6 +18,10 @@ export class CreateFolder {
         if (input.parentFolderId && !await this.folderRepository.findById(input.parentFolderId)) {
             throw new Error("Parent folder not found");
         }
+        const neighboring_folders = await this.folderRepository.findByParentFolderId(input.parentFolderId);
+        if (neighboring_folders.some((folder) => folder.name === input.name.trim() && folder.userId === input.userId)) {
+            throw new Error("Folder with the same name already exists in the parent folder");
+        }
         try {
             const folder = new Folder(input.name, input.userId, input.parentFolderId);
             await this.folderRepository.save(folder);

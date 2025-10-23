@@ -27,7 +27,7 @@ export class GetFolderContents {
         const allNotes = await this.noteRepository.findAll();
 
         const folders = allFolders.filter((folder) => folder.parentFolderId === input.folderId);
-        const notes = allNotes.filter((note) => note.folderId === input.folderId);
+        const notes = allNotes.filter((note) => note.parentFolderId === input.folderId);
 
         return { folders, notes };
     }

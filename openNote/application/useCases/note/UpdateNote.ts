@@ -7,8 +7,9 @@ export interface UpdateNoteInput {
     readonly id: string;
     readonly name?: string;
     readonly content?: string;
-    readonly folderId?: string;
-    readonly tagsId?: string[];
+    readonly parentFolderId?: string;
+    readonly tagsIds?: string[];
+    readonly attachmentsIds?: string[];
 }
 
 export interface UpdateNoteOutput {
@@ -28,14 +29,14 @@ export class UpdateNote {
             throw new Error(`Note with id ${input.id} not found`);
         }
 
-        if (input.folderId) {
-            if (!await this.folderRepository.findById(input.folderId)) {
-                throw new Error(`Parent folder with id ${input.folderId} not found`);
+        if (input.parentFolderId) {
+            if (!await this.folderRepository.findById(input.parentFolderId)) {
+                throw new Error(`Parent folder with id ${input.parentFolderId} not found`);
             }
         }
 
-        if (input.tagsId) {
-            for (const tagId of input.tagsId) {
+        if (input.tagsIds) {
+            for (const tagId of input.tagsIds) {
                 if (!await this.tagRepository.findById(tagId)) {
                     throw new Error(`Tag with id ${tagId} not found`);
                 }
@@ -45,15 +46,12 @@ export class UpdateNote {
         const updatedNote = new Note(
             input.name ? input.name : existingNote.name,
             input.content !== undefined ? input.content : existingNote.content,
-            input.folderId ? input.folderId : existingNote.folderId,
-            input.tagsId ? input.tagsId : existingNote.tagsId,
-            input.id,
-            existingNote.createdAt,
-            new Date(),
+            input.parentFolderId ? input.parentFolderId : existingNote.parentFolderId,
+            input.tagsIds ? input.tagsIds : existingNote.tagsIds,
+            input.attachmentsIds ? input.attachmentsIds : existingNote.attachmentsIds,
         );
 
         await this.noteRepository.save(updatedNote);
         return { note: updatedNote };
-
     }
 }

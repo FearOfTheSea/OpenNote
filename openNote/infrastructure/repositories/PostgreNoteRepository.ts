@@ -120,7 +120,7 @@ export class PostgreNoteRepository implements NoteRepository {
             `
       UPDATE notes
       SET folder_id = $1,
-          updated_at = CURRENT_TIMESTAMP
+          updated_at = CURRENT_TIMESTAMPparentFolderId
       WHERE note_id = $2
       `,
             [newFolderId, noteId],

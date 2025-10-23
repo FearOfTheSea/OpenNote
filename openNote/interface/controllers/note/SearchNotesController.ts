@@ -4,7 +4,7 @@ import { GetNoteByIdResponse } from "./GetNoteByIdController.ts";
 
 export interface SearchNotesRequest {
     readonly query: string;
-    readonly folderId?: string;
+    readonly userId: string;
 }
 
 export interface SearchNotesResponse {

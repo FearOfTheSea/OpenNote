@@ -6,8 +6,9 @@ import { TagRepository } from "../../repositories/TagRepository.ts";
 export interface CreateNoteInput {
     readonly name: string;
     readonly content: string;
-    readonly folderId: string;
-    readonly tagsId?: string[];
+    readonly parentFolderId: string;
+    readonly tagsIds?: string[];
+    readonly attachmentsIds?: string[];
 }
 
 export interface CreateNoteOutput {
@@ -22,25 +23,26 @@ export class CreateNote {
     ) {}
 
     async execute(input: CreateNoteInput): Promise<CreateNoteOutput> {
-        if (!await this.folderRepository.findById(input.folderId)) {
-            throw new Error(`Folder with id ${input.folderId} not found`);
+        if (!await this.folderRepository.findById(input.parentFolderId)) {
+            throw new Error(`Folder with id ${input.parentFolderId} not found`);
         }
 
-        if (input.tagsId) {
-            for (const tagId of input.tagsId) {
+        if (input.tagsIds) {
+            for (const tagId of input.tagsIds) {
                 const foundTag = await this.tagRepository.findById(tagId);
                 if (!foundTag) {
                     throw new Error(`Tag with id ${tagId} not found`);
                 }
             }
         }
-        
+
         try {
             const note = new Note(
                 input.name,
                 input.content,
-                input.folderId,
-                input.tagsId,
+                input.parentFolderId,
+                input.tagsIds ? input.tagsIds : [],
+                input.attachmentsIds ? input.attachmentsIds : [],
             );
             await this.noteRepository.save(note);
 

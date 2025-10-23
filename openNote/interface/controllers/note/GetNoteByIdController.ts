@@ -9,8 +9,9 @@ export interface GetNoteByIdResponse {
     readonly id: string;
     readonly name: string;
     readonly content: string;
-    readonly folderId?: string;
-    readonly tagsId: string[];
+    readonly parentFolderId: string;
+    readonly tagsIds?: string[];
+    readonly attachmentsIds?: string[];
     readonly createdAt: Date;
     readonly updatedAt: Date;
 }
@@ -26,15 +27,7 @@ export class GetNoteByIdController {
         const input: GetNoteByIdInput = { id: request.id };
         try {
             const output: GetNoteByIdOutput = await this.useCase.execute(input);
-            return {
-                id: output.note.id,
-                name: output.note.name,
-                content: output.note.content,
-                folderId: output.note.folderId,
-                tagsId: output.note.tagsId,
-                createdAt: output.note.createdAt,
-                updatedAt: output.note.updatedAt,
-            };
+            return output.note as GetNoteByIdResponse;
         } catch (error) {
             throw error;
         }

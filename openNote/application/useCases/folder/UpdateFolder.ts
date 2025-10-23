@@ -28,6 +28,18 @@ export class UpdateFolder {
             if (input.parentFolderId === existingFolder.id) {
                 throw new Error(`Folder with id ${input.parentFolderId} can't be its own parent`);
             }
+
+            if (input.name) {
+                const neighboring_folders = await this.folderRepository.findByParentFolderId(input.parentFolderId);
+                if (neighboring_folders.some((folder) => folder.name === input.name?.trim())) {
+                    throw new Error("Folder with the same name already exists in the parent folder");
+                }
+            }
+        } else if (input.name) {
+            const neighboring_folders = await this.folderRepository.findByParentFolderId(input.parentFolderId);
+            if (neighboring_folders.some((folder) => folder.name === input.name?.trim())) {
+                throw new Error("Folder with the same name already exists in the parent folder");
+            }
         }
 
         const updatedFolder = {
