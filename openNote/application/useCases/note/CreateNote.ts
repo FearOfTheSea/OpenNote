@@ -34,7 +34,7 @@ export class CreateNote {
                 }
             }
         }
-
+        
         try {
             const note = new Note(
                 input.name,

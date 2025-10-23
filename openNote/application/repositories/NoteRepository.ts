@@ -1,6 +1,7 @@
 import { Note } from "../../domain/entities/Note.ts";
 
 export interface NoteRepository {
+    findAll(): Promise<Note[]>;
     findById(id: string): Promise<Note | null>;
     findByFolderId(id: string): Promise<Note[]>;
     findByTag(tag: string, userId: string): Promise<Note[]>;

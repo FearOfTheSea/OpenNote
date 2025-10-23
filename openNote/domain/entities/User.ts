@@ -11,10 +11,8 @@ export class User {
         fullName: string;
         email: string;
         passwordHash: string;
-        id?: string;
-        createdAt?: Date;
     }) {
-        const { fullName, email, passwordHash, id, createdAt } = params;
+        const { fullName, email, passwordHash } = params;
 
         // Validation
         if (!fullName || fullName.trim() === "") {
@@ -27,10 +25,10 @@ export class User {
             throw new Error("Password hash cannot be empty.");
         }
 
-        this.id = id || randomUUID();
+        this.id = randomUUID();
         this.fullName = fullName.trim();
         this.email = email;
         this.passwordHash = passwordHash;
-        this.createdAt = createdAt || new Date();
+        this.createdAt = new Date();
     }
 }

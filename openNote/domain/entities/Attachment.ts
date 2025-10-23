@@ -18,10 +18,8 @@ export class Attachment {
         fileName: string;
         size?: number;
         mimeType?: string;
-        id?: string;
-        createdAt?: Date;
     }) {
-        const { noteId, path, fileName, size, mimeType, id, createdAt } = params;
+        const { noteId, path, fileName, size, mimeType } = params;
 
         if (!noteId) {
             throw new Error("Attachment must belong to a note (noteId is required).");
@@ -36,12 +34,12 @@ export class Attachment {
             throw new Error("Attachment size cannot be negative.");
         }
 
-        this.id = id || randomUUID();
+        this.id = randomUUID();
         this.noteId = noteId;
         this.path = path;
         this.fileName = fileName;
         this.size = size;
         this.mimeType = mimeType;
-        this.createdAt = createdAt || new Date();
+        this.createdAt = new Date();
     }
 }

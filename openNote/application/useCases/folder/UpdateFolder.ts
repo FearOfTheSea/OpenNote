@@ -30,14 +30,14 @@ export class UpdateFolder {
             }
         }
 
-        const updatedFolder = new Folder(
-            input.name ? input.name : existingFolder.name,
-            existingFolder.userId,
-            input.parentFolderId !== undefined ? input.parentFolderId : existingFolder.parentFolderId,
-            input.id,
-            existingFolder.createdAt,
-            new Date(),
-        );
+        const updatedFolder = {
+            id: input.id,
+            name: input.name ? input.name : existingFolder.name,
+            userId: existingFolder.userId,
+            parentFolderId: input.parentFolderId,
+            createdAt: existingFolder.createdAt,
+            updatedAt: new Date(),
+        };
 
         await this.folderRepository.save(updatedFolder);
         return { folder: updatedFolder };
