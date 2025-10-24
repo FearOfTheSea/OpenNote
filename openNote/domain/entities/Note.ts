@@ -5,7 +5,7 @@ export class Note {
   readonly name: string;
   readonly content: string;
   readonly parentFolderId: string;
-  readonly tagsIds: string[];
+  readonly tagIds: string[];
   readonly createdAt: Date;
   readonly updatedAt: Date;
 
@@ -13,7 +13,8 @@ export class Note {
     name: string,
     content: string,
     parentFolderId: string,
-    tagsIds: string[]
+    tagIds?: string[],
+    id?: string
   ) {
     if (!name || name.trim() === "") {
       throw new Error("Note name cannot be empty");
@@ -27,11 +28,11 @@ export class Note {
       throw new Error("Parent folder id cannot be null");
     }
 
-    this.id = randomUUID();
+    this.id = id || randomUUID();
     this.name = name.trim();
     this.content = content;
     this.parentFolderId = parentFolderId;
-    this.tagsIds = tagsIds;
+    this.tagIds = tagIds || [];
     this.createdAt = new Date();
     this.updatedAt = new Date();
   }

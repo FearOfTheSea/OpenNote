@@ -22,7 +22,7 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
             folder_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             folder_name VARCHAR(255) NOT NULL,
             user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
-            parent_folder_id UUID REFERENCES folders(folder_id) ON DELETE SET NULL,
+            parent_folder_id UUID REFERENCES folders(folder_id) ON DELETE CASCADE,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
@@ -54,20 +54,8 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
         CREATE TABLE note_tags (
             note_id UUID REFERENCES notes(note_id) ON DELETE CASCADE,
             tag_id UUID REFERENCES tags(tag_id) ON DELETE CASCADE,
-            PRIMARY KEY (note_id, tag_name)
+            PRIMARY KEY (note_id, tag_id)
         );
-
-        CREATE TABLE attachments (
-            attachment_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-            note_id UUID REFERENCES notes(note_id) ON DELETE CASCADE,
-            path TEXT NOT NULL,
-            file_name VARCHAR(255) NOT NULL,
-            size BIGINT,
-            mime_type TEXT, -- thêm cột này
-            created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
-        );
-
-        CREATE INDEX idx_attachments_note_id ON attachments(note_id);
 
         -- trigger function for update_at
         CREATE OR REPLACE FUNCTION set_updated_at()

@@ -1,18 +1,24 @@
 import { Note } from "../../domain/entities/Note.ts";
 import { NoteRepository } from "../../application/repositories/NoteRepository.ts";
 import dbClient from "../db/postgresClient.ts";
-import { Tag } from "../../domain/entities/Tag.ts";
-import { TagRepository } from "../../application/repositories/TagRepository.ts";
+import { Transaction } from "pg";
 
 /**
  * PostgreSQL implementation of NoteRepository
  */
 export class PostgreNoteRepository implements NoteRepository {
-  constructor(private tagRepository: TagRepository) {}
+  constructor(private tx?: Transaction) {}
 
+  // helper for getting the correct query runner
+  private getQueryRunner() {
+    if (this.tx) {
+      return this.tx;
+    }
+    return dbClient;
+  }
   /** Find all notes belonging to a user */
   async findAll(userId: string): Promise<Note[]> {
-    const result = await dbClient.queryObject(
+    const result = await this.getQueryRunner().queryObject(
       `
       SELECT n.*, 
         COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
@@ -31,7 +37,7 @@ export class PostgreNoteRepository implements NoteRepository {
 
   /** dind note by its id */
   async findById(id: string): Promise<Note | null> {
-    const result = await dbClient.queryObject(
+    const result = await this.getQueryRunner().queryObject(
       `
       SELECT n.*, 
         COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
@@ -49,7 +55,7 @@ export class PostgreNoteRepository implements NoteRepository {
 
   /** find notes by folder id */
   async findByFolderId(folderId: string): Promise<Note[]> {
-    const result = await dbClient.queryObject(
+    const result = await this.getQueryRunner().queryObject(
       `
       SELECT n.*, 
         COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
@@ -66,12 +72,12 @@ export class PostgreNoteRepository implements NoteRepository {
   }
 
   /** find one user's note by list of tags id */
-  async findByTagIds(tagIds: string[], userId: string): Promise<Note[]> {
+  async findByTagsIds(tagIds: string[], userId: string): Promise<Note[]> {
     if (!tagIds || tagIds.length === 0) {
       return [];
     }
 
-    const result = await dbClient.queryObject(
+    const result = await this.getQueryRunner().queryObject(
       `
       SELECT n.*,
         COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
@@ -90,13 +96,13 @@ export class PostgreNoteRepository implements NoteRepository {
   }
 
   /** Move note to another folder */
-  async cutNote(noteId: string, newFolderId: string): Promise<void> {
+  async cutNote(noteId: string, newFolderId: string): Promise<boolean> {
     const note = await this.findById(noteId);
     if (!note) throw new Error("Note not found");
 
-    if (note.parentFolderId === newFolderId) return;
+    if (note.parentFolderId === newFolderId) return false;
 
-    await dbClient.queryObject(
+    await this.getQueryRunner().queryObject(
       `
       UPDATE notes
       SET folder_id = $1,
@@ -105,17 +111,16 @@ export class PostgreNoteRepository implements NoteRepository {
       `,
       [newFolderId, noteId]
     );
+    return true;
   }
 
   /** Create or update note, update tags */
   async save(note: Note): Promise<void> {
-    const tx = dbClient.createTransaction("save_note_tx");
-
-    try {
-      await tx.begin();
-
-      await tx.queryObject(
-        `
+    if (!this.tx) {
+      throw new Error("save method must be called within a transaction.");
+    }
+    await this.tx.queryObject(
+      `
         INSERT INTO notes (note_id, title, content, folder_id)
         VALUES ($1, $2, $3, $4)
         ON CONFLICT (note_id) DO UPDATE
@@ -124,66 +129,18 @@ export class PostgreNoteRepository implements NoteRepository {
             folder_id = EXCLUDED.folder_id,
             updated_at = CURRENT_TIMESTAMP
         `,
-        [note.id, note.name, note.content, note.parentFolderId]
-      );
-
-      // del previous tags associations in note_tags table
-      await tx.queryObject(`DELETE FROM note_tags WHERE note_id = $1`, [
-        note.id,
-      ]);
-
-      // lưu các tag mới
-      const tagNames = this.extractTags(note.content);
-      for (const tagName of tagNames) {
-        const tag = new Tag(tagName);
-        await this.tagRepository.save(tag, note.id, tx);
-      }
-
-      await tx.commit();
-    } catch (e) {
-      await tx.rollback();
-      console.error("Transaction failed in save note.", e);
-      throw e;
-    }
+      [note.id, note.name, note.content, note.parentFolderId]
+    );
   }
 
   /** Delete note by id */
+  //
+
   async delete(id: string): Promise<void> {
-    const tx = dbClient.createTransaction("delete_note_tx");
-
-    try {
-      await tx.begin();
-
-      // lấy danh sách tag liên quan đến note trước khi xóa
-      const tagResult = await tx.queryObject<{ tag_id: string }>(
-        `SELECT nt.tag_id FROM note_tags nt WHERE nt.note_id = $1`,
-        [id]
-      );
-      const tagsToCheck = tagResult.rows;
-
-      // xóa note ở notes và relation in note_tags
-      const deleteNoteResult = await tx.queryObject(
-        `DELETE FROM notes WHERE note_id = $1`,
-        [id]
-      );
-
-      if (deleteNoteResult.rowCount === 0) {
-        // không có note nào bị xóa, rollback và thoát
-        await tx.rollback();
-        return;
-      }
-
-      // del các tag không còn được sử dụng
-      for (const row of tagsToCheck) {
-        await this.tagRepository.delete(row.tag_id, tx);
-      }
-
-      await tx.commit();
-    } catch (e) {
-      await tx.rollback();
-      console.error("Transaction failed in delete note", e);
-      throw e;
+    if (!this.tx) {
+      throw new Error("delete method must be called within a transaction.");
     }
+    await this.tx.queryObject(`DELETE FROM notes WHERE note_id = $1`, [id]);
   }
 
   /** Search by keyword in title or content */
@@ -222,13 +179,8 @@ export class PostgreNoteRepository implements NoteRepository {
       row.title,
       row.content,
       row.folder_id,
-      Array.isArray(row.tags) ? row.tags : [] // tagsIds
+      row.tags,
+      row.note_id
     );
-  }
-
-  /** Extract tags (#tag) from note content */
-  private extractTags(content: string): string[] {
-    const matches = content?.match(/#(\w+)/g);
-    return matches ? matches.map((t) => t.substring(1).toLowerCase()) : [];
   }
 }

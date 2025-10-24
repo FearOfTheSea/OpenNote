@@ -7,13 +7,18 @@ import { Transaction } from "pg";
  * PostgreSQL implementation of TagRepository.
  */
 export class PostgreTagRepository implements TagRepository {
+  constructor(private tx: Transaction) {}
+
   /**
    * find all tags of a user - return tag names
    */
   async findAll(userId: string): Promise<Tag[] | null> {
-    const result = await dbClient.queryObject<{ tag_name: string }>(
+    const result = await dbClient.queryObject<{
+      tag_name: string;
+      tag_id: string;
+    }>(
       `
-      SELECT DISTINCT t.tag_name
+      SELECT DISTINCT t.tag_name, t.tag_id
       FROM tags t
       JOIN note_tags nt ON t.tag_name = nt.tag_name
       JOIN notes n ON nt.note_id = n.note_id
@@ -24,99 +29,98 @@ export class PostgreTagRepository implements TagRepository {
       [userId]
     );
 
-    return result.rows.map((row) => new Tag(row.tag_name));
+    return result.rows.map((row) => new Tag(row.tag_name, row.tag_id));
   }
 
-  /**
-   * find tag by its id
+  /*
+   * remove old tags and add new tags for a note
+   * clean up orphan tags (tags not linked to any note)
    */
-  async findById(tagId: string): Promise<Tag | null> {
-    const result = await dbClient.queryObject<{
-      tag_id: string;
-      tag_name: string;
-    }>(
-      `
-      SELECT tag_id, tag_name
-      FROM tags
-      WHERE tag_id = $1
-      LIMIT 1
-      `,
-      [tagId]
+  async syncTagsForNoteUpdate(
+    noteId: string,
+    noteContent: string
+  ): Promise<void> {
+    const oldTagsResult = await this.tx.queryObject<{ tag_id: string }>(
+      `SELECT tag_id FROM note_tags WHERE note_id = $1`,
+      [noteId]
     );
+    const oldTagIds = oldTagsResult.rows.map((row) => row.tag_id);
 
-    if (result.rows.length === 0) return null;
-    const row = result.rows[0];
-    return new Tag(row.tag_name);
+    // delete all existing tag relations for the note
+    await this.tx.queryObject(`DELETE FROM note_tags WHERE note_id = $1`, [
+      noteId,
+    ]);
+
+    const tagNames = this.extractTags(noteContent);
+
+    // add new tag relations
+    for (const name of tagNames) {
+      const tag = new Tag(name);
+      await this.save(tag, noteId);
+    }
+
+    // clean up orphan tags
+    for (const tagId of oldTagIds) {
+      await this.deleteOrphanedTag(tagId);
+    }
   }
 
   /**
    * save tag — insert into tags and note_tags tables for new tag
    * insert to note_tags only if tag already exists in tags table
    */
-  async save(tag: Tag, noteId: string, tx: Transaction): Promise<void> {
+  async save(tag: Tag, noteId: string): Promise<void> {
     const cleanName = tag.name.replace(/^#/, "").toLowerCase();
     //use transaction to ensure both inserts succeed or fail together
-    try {
-      await tx.begin();
 
-      // insert into tags table if not exists, new tag (global)
-      await tx.queryObject(
-        `
+    // insert into tags table if not exists, new tag (global)
+    await this.tx.queryObject(
+      `
         INSERT INTO tags (tag_id, tag_name)
         VALUES ($1, $2)
         ON CONFLICT (LOWER(tag_name)) DO NOTHING
         `,
-        [tag.id, cleanName]
-      );
+      [tag.id, cleanName]
+    );
 
-      // link tag with note in note_tags table
-      await tx.queryObject(
-        `
+    // link tag with note in note_tags table
+    await this.tx.queryObject(
+      `
         INSERT INTO note_tags (note_id, tag_id)
         SELECT $1, t.tag_id
         FROM tags t
         WHERE LOWER(t.tag_name) = $2
         ON CONFLICT DO NOTHING
         `,
-        [noteId, cleanName]
-      );
-
-      await tx.commit();
-    } catch (error) {
-      await tx.rollback();
-      console.error("Error saving tag:", error);
-      throw error;
-    }
+      [noteId, cleanName]
+    );
   }
 
   /**
-   * delete tag and its relations in note_tags
+   * delete tag if not used by any note
    */
-  async delete(tagId: string, tx: Transaction): Promise<void> {
-    try {
-      await tx.begin();
+  async deleteOrphanedTag(tagId: string): Promise<void> {
+    if (tagId === null) return;
+    // auto remove relation in note_tags by on delete cascade
 
-      // auto remove relation in note_tags by on delete cascade
-
-      // check tag usage in other notes of the same user and global usage
-      const tagUsage = await tx.queryObject<{ count: number }>(
-        `
+    // check tag global usage, neu co thi giu o tags
+    const tagUsage = await this.tx.queryObject<{ count: number }>(
+      `
           SELECT COUNT(*)::int AS count
           FROM note_tags
           WHERE tag_id = $1
           `,
-        [tagId]
-      );
+      [tagId]
+    );
 
-      if (tagUsage.rows[0].count === 0) {
-        await tx.queryObject(`DELETE FROM tags WHERE tag_id = $1`, [tagId]);
-      }
-
-      await tx.commit();
-    } catch (error) {
-      await tx.rollback();
-      console.error("Error deleting tag:", error);
-      throw error;
+    if (tagUsage.rows[0].count === 0) {
+      await this.tx.queryObject(`DELETE FROM tags WHERE tag_id = $1`, [tagId]);
     }
+  }
+
+  /** Extract tags (#tag) from note content */
+  private extractTags(content: string): string[] {
+    const matches = content?.match(/#(\w+)/g);
+    return matches ? matches.map((t) => t.substring(1).toLowerCase()) : [];
   }
 }
