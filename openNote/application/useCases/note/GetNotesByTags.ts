@@ -3,27 +3,20 @@ import { NoteRepository } from "../../repositories/NoteRepository.ts";
 import { TagRepository } from "../../repositories/TagRepository.ts";
 
 export interface GetNotesByTagInput {
-    readonly tagsId: string[];
+  readonly userId: string;
+  readonly tagsId: string[];
 }
 
 export interface GetNotesByTagOutput {
-    readonly notes: Note[];
+  readonly notes: Note[];
 }
 
 export class GetNotesByTags {
-    constructor(private noteRepository: NoteRepository, private tagRepository: TagRepository) {}
+  constructor(private noteRepository: NoteRepository) {}
 
-    async execute(input: GetNotesByTagInput): Promise<GetNotesByTagOutput> {
-        const allNotes = await this.noteRepository.findAll();
-
-        for (const tagId of input.tagsId) {
-            if (!await this.tagRepository.findById(tagId)) {
-                throw new Error(`Tag with id ${tagId} not found`);
-            }
-        }
-
-        const filteredNotes = allNotes.filter((note) => input.tagsId.every((tagId) => note.tagsIds?.includes(tagId)));
-
-        return { notes: filteredNotes };
-    }
+  async execute(input: GetNotesByTagInput): Promise<GetNotesByTagOutput> {
+    return await this.noteRepository
+      .findByTagsIds(input.tagsId, input.userId)
+      .then((notes) => ({ notes }));
+  }
 }
