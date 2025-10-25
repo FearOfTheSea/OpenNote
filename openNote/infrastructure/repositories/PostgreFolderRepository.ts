@@ -1,13 +1,24 @@
 import { Folder } from "../../domain/entities/Folder.ts";
 import { FolderRepository } from "../../application/repositories/FolderRepository.ts";
+import { Transaction } from "pg";
 import dbClient from "../db/postgresClient.ts";
 
 /**
  * PostgreSQL implementation of FolderRepository.
  */
 export class PostgreFolderRepository implements FolderRepository {
+    constructor(private tx?: Transaction) {}
+
+    // helper for getting the correct query runner
+    private getQueryRunner() {
+        if (this.tx) {
+            return this.tx;
+        }
+        return dbClient;
+    }
+
     findAll(userId: string): Promise<Folder[]> {
-        return dbClient
+        return this.getQueryRunner()
             .queryObject(
                 `
       SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
@@ -24,7 +35,7 @@ export class PostgreFolderRepository implements FolderRepository {
      * find folder by its id
      */
     async findById(id: string): Promise<Folder | null> {
-        const result = await dbClient.queryObject(
+        const result = await this.getQueryRunner().queryObject(
             `
       SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
       FROM folders
@@ -46,7 +57,7 @@ export class PostgreFolderRepository implements FolderRepository {
     ): Promise<Folder[]> {
         if (!parentFolderId) {
             // return all folders gốc (không có parent)
-            const result = await dbClient.queryObject(
+            const result = await this.getQueryRunner().queryObject(
                 `
       SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
       FROM folders
@@ -73,6 +84,7 @@ export class PostgreFolderRepository implements FolderRepository {
         return result.rows.map((row) => this.mapRowToFolder(row));
     }
 
+    // no need to use unit of work here
     async cutFolder(
         folderId: string,
         userId: string,
@@ -178,9 +190,16 @@ export class PostgreFolderRepository implements FolderRepository {
      * delete folder by id
      */
     async delete(id: string): Promise<void> {
-        await dbClient.queryObject(`DELETE FROM folders WHERE folder_id = $1`, [
-            id,
-        ]);
+        if (!this.tx) {
+            throw new Error("save method must be called within a transaction.");
+        }
+
+        await this.tx.queryObject(`DELETE FROM folders WHERE folder_id = $1`, [id]);
+
+        // cascade delete handled by foreign key constraints in the database
+        // notes in the folder will be deleted automatically
+        // tags associated with those notes will also be cleaned up in note_tags table
+        // orphan tags will be handled in the tag repository
     }
 
     /**

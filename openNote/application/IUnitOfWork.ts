@@ -1,5 +1,6 @@
 import { NoteRepository } from "./repositories/NoteRepository.ts";
 import { TagRepository } from "./repositories/TagRepository.ts";
+import { FolderRepository } from "./repositories/FolderRepository.ts";
 
 export interface IUnitOfWork {
     begin(): Promise<void>;
@@ -11,4 +12,5 @@ export interface IUnitOfWork {
     // related to use case update note, create note
     notes: NoteRepository;
     tags: TagRepository;
+    folders: FolderRepository;
 }

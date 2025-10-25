@@ -16,7 +16,7 @@ export interface CreateNoteOutput {
 export class CreateNote {
     constructor(
         private folderRepository: FolderRepository,
-        private unitOfWork: IUnitOfWork,
+        private readonly createNoteUnitOfWork: () => IUnitOfWork,
     ) {}
 
     async execute(input: CreateNoteInput): Promise<CreateNoteOutput> {
@@ -24,15 +24,21 @@ export class CreateNote {
             throw new Error(`Folder with id ${input.parentFolderId} not found`);
         }
 
+        const unitOfWork = this.createNoteUnitOfWork();
         try {
-            await this.unitOfWork.begin();
-            const note = new Note(input.name, input.content, input.parentFolderId, input.tagIds);
-            await this.unitOfWork.notes.save(note);
-            await this.unitOfWork.tags.syncTagsForNoteUpdate(note.id, note.content);
-            await this.unitOfWork.commit();
+            await unitOfWork.begin();
+            const note = new Note(
+                input.name,
+                input.content,
+                input.parentFolderId,
+                input.tagIds,
+            );
+            await unitOfWork.notes.save(note);
+            await unitOfWork.tags.syncTagsForNoteUpdate(note.id, note.content);
+            await unitOfWork.commit();
             return { note };
         } catch (error) {
-            await this.unitOfWork.rollback();
+            await unitOfWork.rollback();
             throw error;
         }
     }

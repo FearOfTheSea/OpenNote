@@ -1,4 +1,3 @@
-import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
 import { DeleteFolder, DeleteFolderInput } from "../../../application/useCases/folder/DeleteFolder.ts";
 
 export interface DeleteFolderRequest {
@@ -8,8 +7,8 @@ export interface DeleteFolderRequest {
 export class DeleteFolderController {
     private useCase: DeleteFolder;
 
-    constructor(folderRepository: FolderRepository) {
-        this.useCase = new DeleteFolder(folderRepository);
+    constructor(useCase: DeleteFolder) {
+        this.useCase = useCase;
     }
 
     async apply(request: DeleteFolderInput): Promise<void> {

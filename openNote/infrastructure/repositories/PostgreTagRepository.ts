@@ -7,13 +7,20 @@ import { Transaction } from "pg";
  * PostgreSQL implementation of TagRepository.
  */
 export class PostgreTagRepository implements TagRepository {
-    constructor(private tx: Transaction) {}
+    constructor(private tx?: Transaction) {}
+
+    private getQueryRunner() {
+        if (this.tx) {
+            return this.tx;
+        }
+        return dbClient;
+    }
 
     /**
      * find all tags of a user - return tag names
      */
     async findAll(userId: string): Promise<Tag[]> {
-        const result = await dbClient.queryObject<{
+        const result = await this.getQueryRunner().queryObject<{
             tag_name: string;
             tag_id: string;
         }>(
@@ -40,6 +47,12 @@ export class PostgreTagRepository implements TagRepository {
         noteId: string,
         noteContent: string,
     ): Promise<void> {
+        if (!this.tx) {
+            throw new Error(
+                "Transaction is required for syncTagsForNoteUpdate operation",
+            );
+        }
+
         const oldTagsResult = await this.tx.queryObject<{ tag_id: string }>(
             `SELECT tag_id FROM note_tags WHERE note_id = $1`,
             [noteId],
@@ -69,7 +82,12 @@ export class PostgreTagRepository implements TagRepository {
      * save tag — insert into tags and note_tags tables for new tag
      * insert to note_tags only if tag already exists in tags table
      */
+    // before pass Tag entity, need to ensure tag name formated correctly: #tag
+    // use extractTags util function
     async save(tag: Tag, noteId: string): Promise<void> {
+        if (!this.tx) {
+            throw new Error("save method must be called within a transaction.");
+        }
         const cleanName = tag.name.replace(/^#/, "").toLowerCase();
         //use transaction to ensure both inserts succeed or fail together
 
@@ -100,6 +118,12 @@ export class PostgreTagRepository implements TagRepository {
      * delete tag if not used by any note
      */
     async deleteOrphanedTag(tagId: string): Promise<void> {
+        if (!this.tx) {
+            throw new Error(
+                "deleteOrphanedTag method must be called within a transaction.",
+            );
+        }
+
         if (tagId === null) return;
         // auto remove relation in note_tags by on delete cascade
 
@@ -116,6 +140,24 @@ export class PostgreTagRepository implements TagRepository {
         if (tagUsage.rows[0].count === 0) {
             await this.tx.queryObject(`DELETE FROM tags WHERE tag_id = $1`, [tagId]);
         }
+    }
+
+    /**
+     * delete all tags that are no longer linked to any note
+     */
+    async cleanupOrphanTags(): Promise<void> {
+        if (!this.tx) {
+            throw new Error(
+                "cleanupOrphanTags method must be called within a transaction.",
+            );
+        }
+
+        await this.tx.queryObject(`
+    DELETE FROM tags
+    WHERE tag_id NOT IN (
+      SELECT DISTINCT tag_id FROM note_tags
+    )
+  `);
     }
 
     /** Extract tags (#tag) from note content */

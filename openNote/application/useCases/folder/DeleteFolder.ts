@@ -1,3 +1,4 @@
+import { IUnitOfWork } from "../../IUnitOfWork.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
 
 export interface DeleteFolderInput {
@@ -5,7 +6,10 @@ export interface DeleteFolderInput {
 }
 
 export class DeleteFolder {
-    constructor(private folderRepository: FolderRepository) {}
+    constructor(
+        private folderRepository: FolderRepository,
+        private readonly createNoteUnitOfWork: () => IUnitOfWork,
+    ) {}
 
     async execute(input: DeleteFolderInput): Promise<void> {
         const folder = await this.folderRepository.findById(input.id);
@@ -14,6 +18,15 @@ export class DeleteFolder {
             throw new Error(`Folder with id ${input.id} not found`);
         }
 
-        return await this.folderRepository.delete(input.id);
+        const uow = this.createNoteUnitOfWork();
+        try {
+            await uow.begin();
+            await uow.folders.delete(input.id);
+            await uow.tags.cleanupOrphanTags();
+            await uow.commit();
+        } catch (error) {
+            await uow.rollback();
+            throw error;
+        }
     }
 }

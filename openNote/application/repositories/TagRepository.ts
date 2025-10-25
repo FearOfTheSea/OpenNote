@@ -5,4 +5,5 @@ export interface TagRepository {
     save(tag: Tag, noteId: string): Promise<void>;
     syncTagsForNoteUpdate(noteId: string, noteContent: string): Promise<void>;
     deleteOrphanedTag(id: string): Promise<void>;
+    cleanupOrphanTags(): Promise<void>;
 }

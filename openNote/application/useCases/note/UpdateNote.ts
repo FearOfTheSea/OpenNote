@@ -17,9 +17,9 @@ export interface UpdateNoteOutput {
 
 export class UpdateNote {
     constructor(
-        private unitOfWork: IUnitOfWork,
         private folderRepository: FolderRepository,
         private noteRepository: NoteRepository,
+        private readonly createNoteUnitOfWork: () => IUnitOfWork,
     ) {}
 
     async execute(input: UpdateNoteInput): Promise<UpdateNoteOutput> {
@@ -43,17 +43,16 @@ export class UpdateNote {
             input.tagIds ? input.tagIds : existingNote.tagIds,
         );
 
+        const uow = this.createNoteUnitOfWork();
+
         try {
-            await this.unitOfWork.begin();
-            await this.unitOfWork.notes.save(updatedNote);
-            await this.unitOfWork.tags.syncTagsForNoteUpdate(
-                updatedNote.id,
-                updatedNote.content,
-            );
-            await this.unitOfWork.commit();
+            await uow.begin();
+            await uow.notes.save(updatedNote);
+            await uow.tags.syncTagsForNoteUpdate(updatedNote.id, updatedNote.content);
+            await uow.commit();
             return { note: updatedNote };
         } catch (error) {
-            await this.unitOfWork.rollback();
+            await uow.rollback();
             throw error;
         }
     }

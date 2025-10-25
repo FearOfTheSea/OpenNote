@@ -1,7 +1,7 @@
 // @ts-types="npm:@types/express@4.17.15"
 import express from "express";
 import { dirname, fromFileUrl, join } from "@std/path";
-import { folderRepository, noteRepository, tagRepository } from "./ApplicationContext.ts";
+import { createUnitOfWork, folderRepository, noteRepository, tagRepository } from "./ApplicationContext.ts";
 
 import { CreateFolderController } from "./interface/controllers/folder/CreateFolderController.ts";
 import { DeleteFolderController } from "./interface/controllers/folder/DeleteFolderController.ts";
@@ -23,6 +23,9 @@ import { createNoteRoutes } from "./routes/NoteRoutes.ts";
 import { createFolderRoutes } from "./routes/FolderRoutes.ts";
 import { createTagRoutes } from "./routes/TagRoutes.ts";
 import { createViewRoutes } from "./routes/ViewRoutes.ts";
+import { CreateNote } from "./application/useCases/note/CreateNote.ts";
+import { UpdateNote } from "./application/useCases/note/UpdateNote.ts";
+import { DeleteFolder } from "./application/useCases/folder/DeleteFolder.ts";
 
 const __dirname = dirname(fromFileUrl(import.meta.url));
 
@@ -39,21 +42,39 @@ app.use((_req, res, next) => {
     next();
 });
 
+// Initialize use case
+const createNoteUseCase = new CreateNote(folderRepository, createUnitOfWork);
+const updateNoteUseCase = new UpdateNote(
+    folderRepository,
+    noteRepository,
+    createUnitOfWork,
+);
+const deleteFolderUseCase = new DeleteFolder(
+    folderRepository,
+    createUnitOfWork,
+);
+
 // Initialize controllers
-const createNoteController = new CreateNoteController(noteRepository, folderRepository, tagRepository);
+const createNoteController = new CreateNoteController(createNoteUseCase);
 const getAllNotesController = new GetAllNotesController(noteRepository);
 const getNoteByIdController = new GetNoteByIdController(noteRepository);
-const updateNoteController = new UpdateNoteController(noteRepository, folderRepository, tagRepository);
+const updateNoteController = new UpdateNoteController(updateNoteUseCase);
 const deleteNoteController = new DeleteNoteController(noteRepository);
 const searchNotesController = new SearchNotesController(noteRepository);
-const getNotesByTagsController = new GetNotesByTagsController(noteRepository, tagRepository);
+const getNotesByTagsController = new GetNotesByTagsController(
+    noteRepository,
+    tagRepository,
+);
 
 const createFolderController = new CreateFolderController(folderRepository);
 const getFolderByIdController = new GetFolderByIdController(folderRepository);
 const getAllFoldersController = new GetAllFoldersController(folderRepository);
 const updateFolderController = new UpdateFolderController(folderRepository);
-const deleteFolderController = new DeleteFolderController(folderRepository);
-const getFolderContentsController = new GetFolderContentsController(folderRepository, noteRepository);
+const deleteFolderController = new DeleteFolderController(deleteFolderUseCase);
+const getFolderContentsController = new GetFolderContentsController(
+    folderRepository,
+    noteRepository,
+);
 const searchFoldersController = new SearchFoldersController(folderRepository);
 
 const getAllTagsController = new GetAllTagsController(tagRepository);
@@ -61,12 +82,24 @@ const getAllTagsController = new GetAllTagsController(tagRepository);
 //=============================
 //====MOCK DATA FOR TESTING====
 //=============================
-const newfolder1 = (await folderRepository.findByName("newfolder1", "user")).at(0)!;
-const newfolder2 = (await folderRepository.findByName("newfolder2", "user")).at(0)!;
-const newfolder3 = (await folderRepository.findByName("newfolder3", "user")).at(0)!;
-const _subfolder1 = (await folderRepository.findByName("subfolder1", "user")).at(0)!;
-const _subfolder2 = (await folderRepository.findByName("subfolder2", "user")).at(0)!;
-const subfolder3 = (await folderRepository.findByName("subfolder3", "user")).at(0)!;
+const newfolder1 = (await folderRepository.findByName("newfolder1", "user")).at(
+    0,
+)!;
+const newfolder2 = (await folderRepository.findByName("newfolder2", "user")).at(
+    0,
+)!;
+const newfolder3 = (await folderRepository.findByName("newfolder3", "user")).at(
+    0,
+)!;
+const _subfolder1 = (
+    await folderRepository.findByName("subfolder1", "user")
+).at(0)!;
+const _subfolder2 = (
+    await folderRepository.findByName("subfolder2", "user")
+).at(0)!;
+const subfolder3 = (await folderRepository.findByName("subfolder3", "user")).at(
+    0,
+)!;
 
 await createNoteController.apply({
     name: "f1note1",
@@ -116,10 +149,30 @@ await createNoteController.apply({
     parentFolderId: newfolder3.id,
     tagsIds: [],
 });
-await createNoteController.apply({ name: "f3note3", content: "content", parentFolderId: newfolder3.id, tagsIds: [] });
-await createNoteController.apply({ name: "sf3note1", content: "content", parentFolderId: subfolder3.id, tagsIds: [] });
-await createNoteController.apply({ name: "sf3note2", content: "content", parentFolderId: subfolder3.id, tagsIds: [] });
-await createNoteController.apply({ name: "sf3note3", content: "content", parentFolderId: subfolder3.id, tagsIds: [] });
+await createNoteController.apply({
+    name: "f3note3",
+    content: "content",
+    parentFolderId: newfolder3.id,
+    tagsIds: [],
+});
+await createNoteController.apply({
+    name: "sf3note1",
+    content: "content",
+    parentFolderId: subfolder3.id,
+    tagsIds: [],
+});
+await createNoteController.apply({
+    name: "sf3note2",
+    content: "content",
+    parentFolderId: subfolder3.id,
+    tagsIds: [],
+});
+await createNoteController.apply({
+    name: "sf3note3",
+    content: "content",
+    parentFolderId: subfolder3.id,
+    tagsIds: [],
+});
 
 //=====================
 //====SETUP ROUTES=====
@@ -150,12 +203,7 @@ app.use(
     ),
 );
 
-app.use(
-    "/api/tags",
-    createTagRoutes(
-        getAllTagsController,
-    ),
-);
+app.use("/api/tags", createTagRoutes(getAllTagsController));
 
 app.use(createViewRoutes(__dirname));
 

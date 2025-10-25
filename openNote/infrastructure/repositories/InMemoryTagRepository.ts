@@ -18,11 +18,18 @@ export class InMemoryTagRepository implements TagRepository {
         }
     }
 
-    async syncTagsForNoteUpdate(noteId: string, noteContent: string): Promise<void> {
+    async syncTagsForNoteUpdate(
+        noteId: string,
+        noteContent: string,
+    ): Promise<void> {
         throw new Error("Method not implemented.");
     }
 
     async deleteOrphanedTag(id: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    async cleanupOrphanTags(): Promise<void> {
         throw new Error("Method not implemented.");
     }
 }
