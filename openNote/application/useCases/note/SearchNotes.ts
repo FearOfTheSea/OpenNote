@@ -14,6 +14,7 @@ export class SearchNotes {
     constructor(private noteRepository: NoteRepository) {}
 
     async execute(input: SearchNotesInput): Promise<SearchNotesOutput> {
-        return { notes: await this.noteRepository.searchByKeyword(input.keyword, input.userId) };
+        const notes = await this.noteRepository.searchByKeyword(input.keyword, input.userId);
+        return { notes: notes };
     }
 }

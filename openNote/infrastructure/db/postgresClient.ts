@@ -11,7 +11,7 @@ const client = new Client({
     database: Deno.env.get("DB_NAME"),
 });
 
-await client.connect();
+// await client.connect();
 
 console.log("🐘 Connected to PostgreSQL database!");
 

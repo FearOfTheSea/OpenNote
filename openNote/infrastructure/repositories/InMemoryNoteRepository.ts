@@ -21,7 +21,7 @@ export class InMemoryNoteRepository implements NoteRepository {
         const userNotes: Note[] = [];
         for (const folder of userFolders) {
             const notesInFolder = await this.findByFolderId(folder.id);
-            userNotes.concat(notesInFolder);
+            userNotes.push(...notesInFolder);
         }
         return userNotes;
     }
@@ -77,10 +77,18 @@ export class InMemoryNoteRepository implements NoteRepository {
     }
 
     async searchByKeyword(keyword: string, userId: string): Promise<Note[]> {
-        return this.notes.filter(async (note) => {
-            const matchingKeyword = note.name.includes(keyword.trim());
-            const matchingUser = (await this.folderRepository.findById(note.parentFolderId))?.userId === userId;
-            return matchingKeyword && matchingUser;
-        });
+        const trimmed = keyword.trim();
+        const results: Note[] = [];
+
+        for (const note of this.notes) {
+            const parentFolder = await this.folderRepository.findById(note.parentFolderId);
+            const matchingKeyword = note.name.includes(trimmed) || note.content.includes(trimmed);
+            const matchingUser = parentFolder?.userId === userId;
+            const pass = matchingKeyword && matchingUser;
+
+            if (pass) results.push(note);
+        }
+
+        return results;
     }
 }

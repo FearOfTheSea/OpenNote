@@ -8,8 +8,9 @@ import { PostgreNoteRepository } from "./infrastructure/repositories/PostgreNote
 import { PostgreFolderRepository } from "./infrastructure/repositories/PostgreFolderRepository.ts";
 import { PostgreTagRepository } from "./infrastructure/repositories/PostgreTagRepository.ts";
 import { PostgreUnitOfWork } from "./infrastructure/db/PostgreUnitOfWork.ts";
-import dbClient from "./infrastructure/db/postgresClient.ts";
+import { InMemoryUnitOfWork } from "./infrastructure/repositories/InMemoryUnitOfWork.ts";
 import type { IUnitOfWork } from "./application/IUnitOfWork.ts";
+import dbClient from "./infrastructure/db/postgresClient.ts";
 
 const env = Deno.env.get("NODE_ENV") || "development";
 
@@ -25,17 +26,10 @@ switch (env) {
     case "test":
         folderRepository = new InMemoryFolderRepository();
         noteRepository = new InMemoryNoteRepository(folderRepository);
-        tagRepository = new InMemoryTagRepository();
+        tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
 
         createUnitOfWork = () => {
-            return {
-                begin: async () => {},
-                commit: async () => {},
-                rollback: async () => {},
-                notes: noteRepository,
-                tags: tagRepository,
-                folders: folderRepository,
-            } as IUnitOfWork;
+            return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
         };
         break;
 
@@ -57,7 +51,11 @@ switch (env) {
     default:
         folderRepository = new InMemoryFolderRepository();
         noteRepository = new InMemoryNoteRepository(folderRepository);
-        tagRepository = new InMemoryTagRepository();
+        tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
+
+        createUnitOfWork = () => {
+            return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
+        };
         break;
 }
 

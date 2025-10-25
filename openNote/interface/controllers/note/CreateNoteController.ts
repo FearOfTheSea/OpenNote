@@ -1,3 +1,5 @@
+import { IUnitOfWork } from "../../../application/IUnitOfWork.ts";
+import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
 import { CreateNote, CreateNoteInput } from "../../../application/useCases/note/CreateNote.ts";
 import { GetNoteByIdResponse } from "./GetNoteByIdController.ts";
 
@@ -5,7 +7,6 @@ export interface CreateNoteRequest {
     readonly name: string;
     readonly content: string;
     readonly parentFolderId: string;
-    readonly tagsIds?: string[];
 }
 
 export interface CreateNoteResponse {
@@ -15,8 +16,8 @@ export interface CreateNoteResponse {
 export class CreateNoteController {
     private useCase: CreateNote;
 
-    constructor(useCase: CreateNote) {
-        this.useCase = useCase;
+    constructor(folderRepository: FolderRepository, createNoteUnitOfWork: () => IUnitOfWork) {
+        this.useCase = new CreateNote(folderRepository, createNoteUnitOfWork);
     }
 
     async apply(request: CreateNoteRequest): Promise<CreateNoteResponse> {

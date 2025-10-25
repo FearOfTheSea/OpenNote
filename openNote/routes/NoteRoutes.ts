@@ -21,14 +21,12 @@ export function createNoteRoutes(
     const router = Router();
 
     // Create a new note
-    // TODO
     router.post("/", async (req: Request, res: Response) => {
         try {
             const result = await createNoteController.apply({
                 name: req.body.name,
                 content: req.body.content,
-                parentFolderId: req.body.parentFolderId,
-                tagsIds: req.body.tagsId,
+                parentFolderId: req.body.parent_folder_id,
             });
             res.status(201).json(result);
         } catch (error) {
@@ -79,15 +77,13 @@ export function createNoteRoutes(
     });
 
     // Update note
-    // TODO
     router.put("/:id", async (req: Request, res: Response) => {
         try {
             const result = await updateNoteController.apply({
                 id: req.params.id,
-                name: req.body.name,
-                content: req.body.content,
-                folderId: req.body.folderId,
-                tagsId: req.body.tagsId,
+                newName: req.body.name,
+                newContent: req.body.content,
+                newParentFolderId: req.body.folder_id,
             });
             res.json(result);
         } catch (error) {

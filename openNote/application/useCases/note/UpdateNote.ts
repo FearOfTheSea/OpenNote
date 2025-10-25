@@ -5,10 +5,9 @@ import { IUnitOfWork } from "../../IUnitOfWork.ts";
 
 export interface UpdateNoteInput {
     readonly id: string;
-    readonly name?: string;
-    readonly content?: string;
-    readonly parentFolderId?: string;
-    readonly tagIds?: string[];
+    readonly newName?: string;
+    readonly newContent?: string;
+    readonly newParentFolderId?: string;
 }
 
 export interface UpdateNoteOutput {
@@ -28,19 +27,40 @@ export class UpdateNote {
             throw new Error(`Note with id ${input.id} not found`);
         }
 
-        if (input.parentFolderId) {
-            if (!(await this.folderRepository.findById(input.parentFolderId))) {
+        let newName = existingNote.name;
+        if (input.newName) {
+            newName = input.newName.trim();
+        }
+
+        if (input.newParentFolderId) {
+            const parentFolder = await this.folderRepository.findById(input.newParentFolderId);
+            if (!parentFolder) {
                 throw new Error(
-                    `Parent folder with id ${input.parentFolderId} not found`,
+                    `Parent folder with id ${input.newParentFolderId} not found`,
+                );
+            }
+
+            if ((await this.noteRepository.findByFolderId(parentFolder.id)).find((n) => n.name === newName)) {
+                throw new Error(
+                    `Note with name ${newName} already exists in folder with id ${parentFolder.id}`,
+                );
+            }
+        } else if (input.newName) {
+            if (
+                (await this.noteRepository.findByFolderId(existingNote.parentFolderId)).find((n) => n.name === newName)
+            ) {
+                throw new Error(
+                    `Note with name ${newName} already exists in folder with id ${existingNote.parentFolderId}`,
                 );
             }
         }
 
         const updatedNote = new Note(
-            input.name ? input.name : existingNote.name,
-            input.content !== undefined ? input.content : existingNote.content,
-            input.parentFolderId ? input.parentFolderId : existingNote.parentFolderId,
-            input.tagIds ? input.tagIds : existingNote.tagIds,
+            newName,
+            input.newContent ? input.newContent : existingNote.content,
+            input.newParentFolderId ? input.newParentFolderId : existingNote.parentFolderId,
+            existingNote.tagIds,
+            existingNote.id,
         );
 
         const uow = this.createNoteUnitOfWork();

@@ -28,7 +28,7 @@ export class UpdateFolder {
             newName = input.newName.trim();
         }
 
-        if (input.newParentFolderId) {
+        if (input.newParentFolderId && input.newParentFolderId !== "") {
             const newParentFolder = await this.folderRepository.findById(input.newParentFolderId);
             if (!newParentFolder) {
                 throw new Error(`New parent folder with id ${input.newParentFolderId} not found`);
@@ -46,9 +46,11 @@ export class UpdateFolder {
             }
         } else if (input.newName) {
             const neighboring_folders = await this.folderRepository.findByParentFolderId(
-                existingFolder.parentFolderId,
+                // existingFolder.parentFolderId,
+                undefined,
                 existingFolder.userId,
             );
+            
             if (neighboring_folders.some((folder) => folder.name === newName)) {
                 throw new Error("Folder with the same name already exists in the parent folder");
             }

@@ -87,7 +87,7 @@ export function createFolderRoutes(
             const result = await updateFolderController.apply({
                 id: req.params.id,
                 newName: req.body.name,
-                newParentFolderId: req.body.parentFolderId,
+                newParentFolderId: req.body.parent_folder_id,
             });
             res.json(result);
         } catch (error) {
