@@ -11,16 +11,17 @@ import { UpdateNoteController } from "../interface/controllers/note/UpdateNoteCo
 
 export function createNoteRoutes(
     createNoteController: CreateNoteController,
+    deleteNoteController: DeleteNoteController,
     getAllNotesController: GetAllNotesController,
     getNoteByIdController: GetNoteByIdController,
-    updateNoteController: UpdateNoteController,
-    deleteNoteController: DeleteNoteController,
-    searchNotesController: SearchNotesController,
     getNotesByTagsController: GetNotesByTagsController,
+    searchNotesController: SearchNotesController,
+    updateNoteController: UpdateNoteController,
 ) {
     const router = Router();
 
     // Create a new note
+    // TODO
     router.post("/", async (req: Request, res: Response) => {
         try {
             const result = await createNoteController.apply({
@@ -39,13 +40,14 @@ export function createNoteRoutes(
     router.get("/", async (req: Request, res: Response) => {
         try {
             const tagsParam = req.query.tags as string;
+            const userId = req.query.user_id as string;
 
             if (tagsParam) {
-                const tagsId = tagsParam.split(",");
-                const result = await getNotesByTagsController.apply({ tagsId });
+                const tagIds = tagsParam.split(",");
+                const result = await getNotesByTagsController.apply({ userId, tagIds: tagIds });
                 res.json(result);
             } else {
-                const result = await getAllNotesController.apply();
+                const result = await getAllNotesController.apply({ userId });
                 res.json(result.notes);
             }
         } catch (error) {
@@ -57,8 +59,8 @@ export function createNoteRoutes(
     router.get("/search", async (req: Request, res: Response) => {
         try {
             const result = await searchNotesController.apply({
-                query: req.query.q as string,
-                userId: req.query.userId as string,
+                keyword: req.query.q as string,
+                userId: req.query.user_id as string,
             });
             res.json(result);
         } catch (error) {
@@ -77,6 +79,7 @@ export function createNoteRoutes(
     });
 
     // Update note
+    // TODO
     router.put("/:id", async (req: Request, res: Response) => {
         try {
             const result = await updateNoteController.apply({

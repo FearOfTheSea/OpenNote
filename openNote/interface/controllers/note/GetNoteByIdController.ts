@@ -10,8 +10,7 @@ export interface GetNoteByIdResponse {
     readonly name: string;
     readonly content: string;
     readonly parentFolderId: string;
-    readonly tagsIds?: string[];
-    readonly attachmentsIds?: string[];
+    readonly tagIds: string[];
     readonly createdAt: Date;
     readonly updatedAt: Date;
 }

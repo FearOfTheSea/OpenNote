@@ -4,7 +4,8 @@ import { TagRepository } from "../../../application/repositories/TagRepository.t
 import { NoteRepository } from "../../../application/repositories/NoteRepository.ts";
 
 export interface GetNotesByTagsRequest {
-    readonly tagsId: string[];
+    readonly userId: string;
+    readonly tagIds: string[];
 }
 
 export interface GetNotesByTagsResponse {
@@ -20,7 +21,7 @@ export class GetNotesByTagsController {
 
     async apply(request: GetNotesByTagsRequest): Promise<GetNotesByTagsResponse> {
         const input = request as GetNotesByTagInput;
-        
+
         return await this.useCase.execute(input) as GetNotesByTagsResponse;
     }
 }

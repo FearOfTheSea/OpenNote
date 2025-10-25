@@ -241,31 +241,30 @@ async function showCreateFolderDialog() {
     }
 }
 
-
 async function showCreateNoteDialog() {
     const result = await modal.form({
-        title: 'Create New Note',
+        title: "Create New Note",
         fields: [
             {
-                name: 'name',
-                label: 'Note Name',
-                type: 'text',
+                name: "name",
+                label: "Note Name",
+                type: "text",
                 required: true,
-                placeholder: 'Enter note name...'
+                placeholder: "Enter note name...",
             },
             {
-                name: 'content',
-                label: 'Content',
-                type: 'textarea',
+                name: "content",
+                label: "Content",
+                type: "textarea",
                 rows: 4,
-                placeholder: 'Enter note content (optional)...'
-            }
+                placeholder: "Enter note content (optional)...",
+            },
         ],
-        submitText: 'Create'
+        submitText: "Create",
     });
 
     if (result) {
-        createNote(result.name, result.content || '', state.currentFolderId);
+        createNote(result.name, result.content || "", state.currentFolderId);
     }
 }
 
@@ -303,7 +302,7 @@ async function updateFolder(folderId, name) {
 
 async function confirmDelete(type, id) {
     const message = `Are you sure you want to delete this ${type}?`;
-    const confirmed = await modal.confirm(message, 'Delete Confirmation');
+    const confirmed = await modal.confirm(message, "Delete Confirmation");
 
     if (confirmed) {
         if (type === "folder") {
@@ -417,11 +416,11 @@ async function loadFolders() {
             const data = await response.json();
             state.folders = data.folders || data; // Handle both response formats
         } else {
-            showError('Failed to load folders');
+            showError("Failed to load folders");
         }
     } catch (error) {
         console.error("Error loading folders:", error);
-        showError('Network error loading folders');
+        showError("Network error loading folders");
         state.folders = [];
     } finally {
         hideLoading();
@@ -439,8 +438,8 @@ function hideLoading() {
 
 // Error display
 function showError(message) {
-    const errorDiv = document.createElement('div');
-    errorDiv.className = 'error';
+    const errorDiv = document.createElement("div");
+    errorDiv.className = "error";
     errorDiv.textContent = message;
     mainGrid.prepend(errorDiv);
 
@@ -453,7 +452,7 @@ function renderBreadcrumb() {
     let current = state.currentFolderId;
 
     while (current) {
-        const folder = state.folders.find(f => f.id === current);
+        const folder = state.folders.find((f) => f.id === current);
         if (folder) {
             breadcrumb.unshift(folder);
             current = folder.parentFolderId;
@@ -466,27 +465,27 @@ function renderBreadcrumb() {
 }
 
 // Keyboard shortcuts
-document.addEventListener('keydown', (e) => {
+document.addEventListener("keydown", (e) => {
     // Ctrl/Cmd + N: New note
-    if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
+    if ((e.ctrlKey || e.metaKey) && e.key === "n") {
         e.preventDefault();
         showCreateNoteDialog();
     }
 
     // Ctrl/Cmd + Shift + N: New folder
-    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === 'N') {
+    if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key === "N") {
         e.preventDefault();
         showCreateFolderDialog();
     }
 
     // Ctrl/Cmd + F: Search
-    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+    if ((e.ctrlKey || e.metaKey) && e.key === "f") {
         e.preventDefault();
         handleSearch();
     }
 
     // Escape: Go back
-    if (e.key === 'Escape' && state.currentFolderId) {
+    if (e.key === "Escape" && state.currentFolderId) {
         goBack();
     }
 });

@@ -9,7 +9,6 @@ export interface CreateNoteRequest {
     readonly content: string;
     readonly parentFolderId: string;
     readonly tagsIds?: string[];
-    readonly attachmentsIds?: string[];
 }
 
 export interface CreateNoteResponse {

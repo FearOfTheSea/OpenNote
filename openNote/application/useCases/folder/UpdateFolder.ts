@@ -3,8 +3,8 @@ import { FolderRepository } from "../../repositories/FolderRepository.ts";
 
 export interface UpdateFolderInput {
     readonly id: string;
-    readonly name?: string;
-    readonly parentFolderId?: string;
+    readonly newName: string;
+    readonly newParentFolderId?: string;
 }
 
 export interface UpdateFolderOutput {
@@ -19,34 +19,46 @@ export class UpdateFolder {
         if (!existingFolder) {
             throw new Error(`Folder with id ${input.id} not found`);
         }
+        if (!input.newParentFolderId && !input.newName) {
+            return { folder: existingFolder };
+        }
 
-        if (input.parentFolderId) {
-            const newParentFolder = await this.folderRepository.findById(input.parentFolderId);
+        let newName = existingFolder.name;
+        if (input.newName) {
+            newName = input.newName.trim();
+        }
+
+        if (input.newParentFolderId) {
+            const newParentFolder = await this.folderRepository.findById(input.newParentFolderId);
             if (!newParentFolder) {
-                throw new Error(`New parent folder with id ${input.parentFolderId} not found`);
+                throw new Error(`New parent folder with id ${input.newParentFolderId} not found`);
             }
-            if (input.parentFolderId === existingFolder.id) {
-                throw new Error(`Folder with id ${input.parentFolderId} can't be its own parent`);
+            if (input.newParentFolderId === existingFolder.id) {
+                throw new Error(`Folder with id ${input.newParentFolderId} can't be its own parent`);
             }
 
-            if (input.name) {
-                const neighboring_folders = await this.folderRepository.findByParentFolderId(input.parentFolderId);
-                if (neighboring_folders.some((folder) => folder.name === input.name?.trim())) {
-                    throw new Error("Folder with the same name already exists in the parent folder");
-                }
+            const neighboring_folders = await this.folderRepository.findByParentFolderId(
+                input.newParentFolderId,
+                existingFolder.userId,
+            );
+            if (neighboring_folders.some((folder) => folder.name === newName)) {
+                throw new Error("Folder with the same name already exists in the parent folder");
             }
-        } else if (input.name) {
-            const neighboring_folders = await this.folderRepository.findByParentFolderId(input.parentFolderId);
-            if (neighboring_folders.some((folder) => folder.name === input.name?.trim())) {
+        } else if (input.newName) {
+            const neighboring_folders = await this.folderRepository.findByParentFolderId(
+                existingFolder.parentFolderId,
+                existingFolder.userId,
+            );
+            if (neighboring_folders.some((folder) => folder.name === newName)) {
                 throw new Error("Folder with the same name already exists in the parent folder");
             }
         }
 
         const updatedFolder = {
             id: input.id,
-            name: input.name ? input.name : existingFolder.name,
+            name: newName,
             userId: existingFolder.userId,
-            parentFolderId: input.parentFolderId,
+            parentFolderId: input.newParentFolderId,
             createdAt: existingFolder.createdAt,
             updatedAt: new Date(),
         };

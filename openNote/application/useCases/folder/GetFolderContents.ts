@@ -4,40 +4,26 @@ import { FolderRepository } from "../../repositories/FolderRepository.ts";
 import { NoteRepository } from "../../repositories/NoteRepository.ts";
 
 export interface GetFolderContentsInput {
-  readonly userId: string;
-  readonly folderId: string;
+    readonly userId: string;
+    readonly folderId: string;
 }
 
 export interface GetFolderContentsOutput {
-  readonly folders: Folder[];
-  readonly notes: Note[];
+    readonly folders: Folder[];
+    readonly notes: Note[];
 }
 
 export class GetFolderContents {
-  constructor(
-    private folderRepository: FolderRepository,
-    private noteRepository: NoteRepository
-  ) {}
+    constructor(private folderRepository: FolderRepository, private noteRepository: NoteRepository) {}
 
-  // nen dung findByParentFolderId de lay folder con
-  // nen dung findByFolderId de lay note con
-  async execute(
-    input: GetFolderContentsInput
-  ): Promise<GetFolderContentsOutput> {
-    if (!(await this.folderRepository.findById(input.folderId))) {
-      throw new Error(`Folder with ID ${input.folderId} not found`);
+    async execute(input: GetFolderContentsInput): Promise<GetFolderContentsOutput> {
+        if (!(await this.folderRepository.findById(input.folderId))) {
+            throw new Error(`Folder with ID ${input.folderId} not found`);
+        }
+
+        const folders = await this.folderRepository.findByParentFolderId(input.folderId, input.userId);
+        const notes = await this.noteRepository.findByFolderId(input.folderId);
+
+        return { folders, notes } as GetFolderContentsOutput;
     }
-
-    const allFolders = await this.folderRepository.findAll(input.userId);
-    const allNotes = await this.noteRepository.findAll(input.userId);
-
-    const folders = allFolders.filter(
-      (folder) => folder.parentFolderId === input.folderId
-    );
-    const notes = allNotes.filter(
-      (note) => note.parentFolderId === input.folderId
-    );
-
-    return { folders, notes };
-  }
 }

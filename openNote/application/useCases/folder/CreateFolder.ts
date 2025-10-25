@@ -3,8 +3,8 @@ import { FolderRepository } from "../../repositories/FolderRepository.ts";
 
 export interface CreateFolderInput {
     readonly name: string;
-    readonly parentFolderId?: string;
     readonly userId: string;
+    readonly parentFolderId?: string;
 }
 
 export interface CreateFolderOutput {
@@ -18,8 +18,11 @@ export class CreateFolder {
         if (input.parentFolderId && !await this.folderRepository.findById(input.parentFolderId)) {
             throw new Error("Parent folder not found");
         }
-        const neighboring_folders = await this.folderRepository.findByParentFolderId(input.parentFolderId);
-        if (neighboring_folders.some((folder) => folder.name === input.name.trim() && folder.userId === input.userId)) {
+        const neighboring_folders = await this.folderRepository.findByParentFolderId(
+            input.parentFolderId,
+            input.userId,
+        );
+        if (neighboring_folders.some((folder) => folder.name === input.name.trim())) {
             throw new Error("Folder with the same name already exists in the parent folder");
         }
         try {

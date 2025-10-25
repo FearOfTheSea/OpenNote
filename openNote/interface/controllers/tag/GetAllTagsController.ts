@@ -1,9 +1,17 @@
-import { GetTagByIdResponse } from "./GetTagByIdController.ts";
-import { GetAllTags } from "../../../application/useCases/tag/GetAllTags.ts";
+import { GetAllTags, GetAllTagsInput } from "../../../application/useCases/tag/GetAllTags.ts";
 import { TagRepository } from "../../../application/repositories/TagRepository.ts";
 
+export interface TagViewObject {
+    readonly id: string;
+    readonly name: string;
+}
+
+export interface GetAllTagsRequest {
+    readonly userId: string;
+}
+
 export interface GetAllTagsResponse {
-    readonly tags: GetTagByIdResponse[];
+    readonly tags: TagViewObject[];
 }
 
 export class GetAllTagsController {
@@ -13,7 +21,7 @@ export class GetAllTagsController {
         this.useCase = new GetAllTags(tagRepository);
     }
 
-    async apply(): Promise<GetAllTagsResponse> {
-        return await this.useCase.execute() as GetAllTagsResponse;
+    async apply(request: GetAllTagsRequest): Promise<GetAllTagsResponse> {
+        return await this.useCase.execute(request as GetAllTagsInput) as GetAllTagsResponse;
     }
 }

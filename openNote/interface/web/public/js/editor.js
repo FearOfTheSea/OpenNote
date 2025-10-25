@@ -7,20 +7,20 @@ const editorState = {
     folders: [],
     tags: [],
     isDirty: false,
-    autoSaveTimer: null
+    autoSaveTimer: null,
 };
 
 // DOM Elements
-const backBtn = document.getElementById('back-btn');
-const titleInput = document.getElementById('note-title');
-const contentTextarea = document.getElementById('note-content');
-const folderSelect = document.getElementById('folder-select');
-const tagList = document.getElementById('tag-list');
-const addTagBtn = document.getElementById('add-tag-btn');
-const saveBtn = document.getElementById('save-btn');
-const deleteBtn = document.getElementById('delete-btn');
-const createdDate = document.getElementById('created-date');
-const modifiedDate = document.getElementById('modified-date');
+const backBtn = document.getElementById("back-btn");
+const titleInput = document.getElementById("note-title");
+const contentTextarea = document.getElementById("note-content");
+const folderSelect = document.getElementById("folder-select");
+const tagList = document.getElementById("tag-list");
+const addTagBtn = document.getElementById("add-tag-btn");
+const saveBtn = document.getElementById("save-btn");
+const deleteBtn = document.getElementById("delete-btn");
+const createdDate = document.getElementById("created-date");
+const modifiedDate = document.getElementById("modified-date");
 
 // Initialize
 async function init() {
@@ -33,7 +33,7 @@ async function init() {
     await loadFolders();
     await loadAllTags();
 
-    if (editorState.noteId && editorState.noteId !== 'new') {
+    if (editorState.noteId && editorState.noteId !== "new") {
         await loadNote(editorState.noteId);
     } else {
         // New note
@@ -52,12 +52,12 @@ async function loadNote(id) {
             editorState.note = data.note || data;
             renderNote();
         } else {
-            alert('Note not found');
-            window.location.href = '/';
+            alert("Note not found");
+            window.location.href = "/";
         }
     } catch (error) {
-        console.error('Error loading note:', error);
-        await modal.alert('Error loading note', 'Error');
+        console.error("Error loading note:", error);
+        await modal.alert("Error loading note", "Error");
     }
 }
 
@@ -70,7 +70,7 @@ async function loadFolders() {
             renderFolderSelect();
         }
     } catch (error) {
-        console.error('Error loading folders:', error);
+        console.error("Error loading folders:", error);
     }
 }
 
@@ -82,7 +82,7 @@ async function loadAllTags() {
             editorState.tags = data.tags || data;
         }
     } catch (error) {
-        console.error('Error loading tags:', error);
+        console.error("Error loading tags:", error);
     }
 }
 
@@ -91,36 +91,36 @@ async function saveNote() {
         name: titleInput.value.trim(),
         content: contentTextarea.value,
         folderId: folderSelect.value,
-        tagsId: editorState.note?.tagsId || []
+        tagsId: editorState.note?.tagsId || [],
     };
 
     if (!noteData.name) {
-        await modal.alert('Please enter a note title', 'Validation Error');
+        await modal.alert("Please enter a note title", "Validation Error");
         return;
     }
 
     if (!noteData.folderId) {
-        await modal.alert('Please select a folder', 'Validation Error');
+        await modal.alert("Please select a folder", "Validation Error");
         return;
     }
 
     try {
-        showSaveStatus('saving');
+        showSaveStatus("saving");
 
         let response;
-        if (editorState.noteId && editorState.noteId !== 'new') {
+        if (editorState.noteId && editorState.noteId !== "new") {
             // Update existing note
             response = await fetch(`${API_BASE}/notes/${editorState.noteId}`, {
-                method: 'PUT',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(noteData)
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(noteData),
             });
         } else {
             // Create new note
             response = await fetch(`${API_BASE}/notes`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify(noteData)
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(noteData),
             });
         }
 
@@ -131,32 +131,32 @@ async function saveNote() {
             editorState.isDirty = false;
 
             // Update URL if it was a new note
-            if (window.location.pathname.includes('/new')) {
-                window.history.replaceState({}, '', `/note/${editorState.noteId}`);
+            if (window.location.pathname.includes("/new")) {
+                window.history.replaceState({}, "", `/note/${editorState.noteId}`);
             }
 
-            showSaveStatus('saved');
+            showSaveStatus("saved");
             renderNote();
         } else {
-            showSaveStatus('error');
-            alert('Error saving note');
+            showSaveStatus("error");
+            alert("Error saving note");
         }
     } catch (error) {
-        console.error('Error saving note:', error);
-        showSaveStatus('error');
-        alert('Error saving note');
+        console.error("Error saving note:", error);
+        showSaveStatus("error");
+        alert("Error saving note");
     }
 }
 
 async function deleteNote() {
-    if (!editorState.noteId || editorState.noteId === 'new') {
-        window.location.href = '/';
+    if (!editorState.noteId || editorState.noteId === "new") {
+        window.location.href = "/";
         return;
     }
 
     const confirmed = await modal.confirm(
-        'Are you sure you want to delete this note? This action cannot be undone.',
-        'Delete Note'
+        "Are you sure you want to delete this note? This action cannot be undone.",
+        "Delete Note",
     );
 
     if (!confirmed) {
@@ -165,17 +165,17 @@ async function deleteNote() {
 
     try {
         const response = await fetch(`${API_BASE}/notes/${editorState.noteId}`, {
-            method: 'DELETE'
+            method: "DELETE",
         });
 
         if (response.ok) {
-            window.location.href = '/';
+            window.location.href = "/";
         } else {
-            alert('Error deleting note');
+            alert("Error deleting note");
         }
     } catch (error) {
-        console.error('Error deleting note:', error);
-        alert('Error deleting note');
+        console.error("Error deleting note:", error);
+        alert("Error deleting note");
     }
 }
 
@@ -194,8 +194,8 @@ function renderNote() {
 function renderFolderSelect() {
     folderSelect.innerHTML = '<option value="">Select folder...</option>';
 
-    editorState.folders.forEach(folder => {
-        const option = document.createElement('option');
+    editorState.folders.forEach((folder) => {
+        const option = document.createElement("option");
         option.value = folder.id;
         option.textContent = folder.name;
         folderSelect.appendChild(option);
@@ -208,8 +208,8 @@ function renderTags() {
         return;
     }
 
-    tagList.innerHTML = editorState.note.tagsId.map(tagId => {
-        const tag = editorState.tags.find(t => t.id === tagId);
+    tagList.innerHTML = editorState.note.tagsId.map((tagId) => {
+        const tag = editorState.tags.find((t) => t.id === tagId);
         const tagName = tag ? tag.name : tagId;
 
         return `
@@ -218,7 +218,7 @@ function renderTags() {
                 <button onclick="removeTag('${tagId}')" title="Remove tag">×</button>
             </div>
         `;
-    }).join('');
+    }).join("");
 }
 
 function renderMetadata() {
@@ -233,32 +233,32 @@ function renderMetadata() {
 
 function setupNewNote() {
     editorState.note = {
-        name: '',
-        content: '',
-        folderId: '',
-        tagsId: []
+        name: "",
+        content: "",
+        folderId: "",
+        tagsId: [],
     };
 
-    titleInput.value = '';
-    contentTextarea.value = '';
+    titleInput.value = "";
+    contentTextarea.value = "";
     renderTags();
 }
 
 // Tag Management
 async function addTag() {
-    const tagName = await modal.prompt('Enter tag name:', '', 'Add Tag');
+    const tagName = await modal.prompt("Enter tag name:", "", "Add Tag");
     if (!tagName) return;
 
     // Find or create tag
-    let tag = editorState.tags.find(t => t.name.toLowerCase() === tagName.toLowerCase());
+    let tag = editorState.tags.find((t) => t.name.toLowerCase() === tagName.toLowerCase());
 
     if (!tag) {
         // Create new tag
         try {
             const response = await fetch(`${API_BASE}/tags`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name: tagName.trim() })
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: tagName.trim() }),
             });
 
             if (response.ok) {
@@ -267,7 +267,7 @@ async function addTag() {
                 editorState.tags.push(tag);
             }
         } catch (error) {
-            console.error('Error creating tag:', error);
+            console.error("Error creating tag:", error);
             return;
         }
     }
@@ -287,111 +287,111 @@ async function addTag() {
 function removeTag(tagId) {
     if (!editorState.note?.tagsId) return;
 
-    editorState.note.tagsId = editorState.note.tagsId.filter(id => id !== tagId);
+    editorState.note.tagsId = editorState.note.tagsId.filter((id) => id !== tagId);
     renderTags();
     editorState.isDirty = true;
 }
 
 // Event Listeners
 function setupEventListeners() {
-    backBtn.addEventListener('click', async () => {
-        if (editorState.isDirty) {
-            const confirmed = await modal.confirm(
-                'You have unsaved changes. Leave anyway?',
-                'Unsaved Changes'
-            );
-            if (confirmed) {
-                window.location.href = '/';
+    backBtn.addEventListener(
+        "click",
+        async () => {
+            if (editorState.isDirty) {
+                const confirmed = await modal.confirm(
+                    "You have unsaved changes. Leave anyway?",
+                    "Unsaved Changes",
+                );
+                if (confirmed) {
+                    window.location.href = "/";
+                }
+            } else {
+                window.location.href = "/";
             }
-        } else {
-            window.location.href = '/';
-        }
 
-    saveBtn.addEventListener('click', saveNote);
-    deleteBtn.addEventListener('click', deleteNote);
-    addTagBtn.addEventListener('click', addTag);
+            saveBtn.addEventListener("click", saveNote);
+            deleteBtn.addEventListener("click", deleteNote);
+            addTagBtn.addEventListener("click", addTag);
 
-    // Track changes
-    titleInput.addEventListener('input', () => {
-        editorState.isDirty = true;
-        scheduleAutoSave();
-    });
+            // Track changes
+            titleInput.addEventListener("input", () => {
+                editorState.isDirty = true;
+                scheduleAutoSave();
+            });
 
-    contentTextarea.addEventListener('input', () => {
-        editorState.isDirty = true;
-        scheduleAutoSave();
-    });
+            contentTextarea.addEventListener("input", () => {
+                editorState.isDirty = true;
+                scheduleAutoSave();
+            });
 
-    folderSelect.addEventListener('change', () => {
-        editorState.isDirty = true;
-    });
+            folderSelect.addEventListener("change", () => {
+                editorState.isDirty = true;
+            });
 
-    // Keyboard shortcuts
-    document.addEventListener('keydown', (e) => {
-        // Ctrl/Cmd + S: Save
-        if ((e.ctrlKey || e.metaKey) && e.key === 's') {
-            e.preventDefault();
-            saveNote();
-        }
-    });
+            // Keyboard shortcuts
+            document.addEventListener("keydown", (e) => {
+                // Ctrl/Cmd + S: Save
+                if ((e.ctrlKey || e.metaKey) && e.key === "s") {
+                    e.preventDefault();
+                    saveNote();
+                }
+            });
 
-    // Warn before leaving with unsaved changes
-    window.addEventListener('beforeunload', (e) => {
-        if (editorState.isDirty) {
-            e.preventDefault();
-            e.returnValue = '';
-        }
-    });
-}
+            // Warn before leaving with unsaved changes
+            window.addEventListener("beforeunload", (e) => {
+                if (editorState.isDirty) {
+                    e.preventDefault();
+                    e.returnValue = "";
+                }
+            });
+        },
+        // Auto-save
+        function scheduleAutoSave() {
+            clearTimeout(editorState.autoSaveTimer);
+            editorState.autoSaveTimer = setTimeout(() => {
+                if (editorState.isDirty) {
+                    saveNote();
+                }
+            }, 2000); // Auto-save after 2 seconds of inactivity
+        },
+        function showSaveStatus(status) {
+            let statusEl = document.querySelector(".save-status");
 
-// Auto-save
-function scheduleAutoSave() {
-    clearTimeout(editorState.autoSaveTimer);
-    editorState.autoSaveTimer = setTimeout(() => {
-        if (editorState.isDirty) {
-            saveNote();
-        }
-    }, 2000); // Auto-save after 2 seconds of inactivity
-}
+            if (!statusEl) {
+                statusEl = document.createElement("div");
+                statusEl.className = "save-status";
+                document.querySelector(".header-actions").prepend(statusEl);
+            }
 
-function showSaveStatus(status) {
-    let statusEl = document.querySelector('.save-status');
+            statusEl.className = `save-status ${status}`;
 
-    if (!statusEl) {
-        statusEl = document.createElement('div');
-        statusEl.className = 'save-status';
-        document.querySelector('.header-actions').prepend(statusEl);
+            switch (status) {
+                case "saving":
+                    statusEl.textContent = "Saving...";
+                    break;
+                case "saved":
+                    statusEl.textContent = "Saved ✓";
+                    setTimeout(() => statusEl.textContent = "", 2000);
+                    break;
+                case "error":
+                    statusEl.textContent = "Save failed ✗";
+                    break;
+            }
+        },
+        // Utility
+        function escapeHtml(text) {
+            const div = document.createElement("div");
+            div.textContent = text;
+            return div.innerHTML;
+        },
+        // Expose functions for inline handlers
+        window.removeTag = removeTag,
+    );
+
+    // Initialize when DOM is ready
+    if (document.readyState === "loading") {
+        document.addEventListener("DOMContentLoaded", init);
+    } else {
+        init();
     }
-
-    statusEl.className = `save-status ${status}`;
-
-    switch (status) {
-        case 'saving':
-            statusEl.textContent = 'Saving...';
-            break;
-        case 'saved':
-            statusEl.textContent = 'Saved ✓';
-            setTimeout(() => statusEl.textContent = '', 2000);
-            break;
-        case 'error':
-            statusEl.textContent = 'Save failed ✗';
-            break;
-    }
-}
-
-// Utility
-function escapeHtml(text) {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-}
-
-// Expose functions for inline handlers
-window.removeTag = removeTag;
-
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', init);
-} else {
-    init();
 }

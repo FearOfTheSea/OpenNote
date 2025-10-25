@@ -17,12 +17,7 @@ import { GetNoteByIdController } from "./interface/controllers/note/GetNoteByIdC
 import { GetNotesByTagsController } from "./interface/controllers/note/GetNotesByTagsController.ts";
 import { SearchNotesController } from "./interface/controllers/note/SearchNotesController.ts";
 import { UpdateNoteController } from "./interface/controllers/note/UpdateNoteController.ts";
-import { CreateTagController } from "./interface/controllers/tag/CreateTagController.ts";
-import { DeleteTagController } from "./interface/controllers/tag/DeleteTagController.ts";
 import { GetAllTagsController } from "./interface/controllers/tag/GetAllTagsController.ts";
-import { GetTagByIdController } from "./interface/controllers/tag/GetTagByIdController.ts";
-import { SearchTagsController } from "./interface/controllers/tag/SearchTagsController.ts";
-import { UpdateTagController } from "./interface/controllers/tag/UpdateTagController.ts";
 
 import { createNoteRoutes } from "./routes/NoteRoutes.ts";
 import { createFolderRoutes } from "./routes/FolderRoutes.ts";
@@ -61,20 +56,11 @@ const deleteFolderController = new DeleteFolderController(folderRepository);
 const getFolderContentsController = new GetFolderContentsController(folderRepository, noteRepository);
 const searchFoldersController = new SearchFoldersController(folderRepository);
 
-const createTagController = new CreateTagController(tagRepository);
 const getAllTagsController = new GetAllTagsController(tagRepository);
-const getTagByIdController = new GetTagByIdController(tagRepository);
-const updateTagController = new UpdateTagController(tagRepository);
-const deleteTagController = new DeleteTagController(tagRepository);
-const searchTagsController = new SearchTagsController(tagRepository);
 
 //=============================
 //====MOCK DATA FOR TESTING====
 //=============================
-const tag1Id = (await createTagController.apply({ name: "tag1" })).tag.id;
-const tag2Id = (await createTagController.apply({ name: "tag2" })).tag.id;
-const tag3Id = (await createTagController.apply({ name: "tag3" })).tag.id;
-
 const newfolder1 = (await folderRepository.findByName("newfolder1", "user")).at(0)!;
 const newfolder2 = (await folderRepository.findByName("newfolder2", "user")).at(0)!;
 const newfolder3 = (await folderRepository.findByName("newfolder3", "user")).at(0)!;
@@ -86,50 +72,49 @@ await createNoteController.apply({
     name: "f1note1",
     content: "content",
     parentFolderId: newfolder1.id,
-    tagsIds: [tag1Id, tag2Id, tag3Id],
+    tagsIds: [],
 });
 await createNoteController.apply({
     name: "f1note2",
     content: "content",
     parentFolderId: newfolder1.id,
-    tagsIds: [tag1Id, tag2Id],
+    tagsIds: [],
 });
 await createNoteController.apply({
     name: "f1note3",
     content: "content",
     parentFolderId: newfolder1.id,
-    tagsIds: [tag1Id, tag3Id],
+    tagsIds: [],
 });
 await createNoteController.apply({
     name: "f2note1",
     content: "content",
     parentFolderId: newfolder2.id,
-    tagsIds: [tag2Id, tag3Id],
+    tagsIds: [],
 });
 await createNoteController.apply({
     name: "f2note2",
     content: "content",
     parentFolderId: newfolder2.id,
-    tagsIds: [tag1Id, tag2Id],
+    tagsIds: [],
 });
 await createNoteController.apply({
     name: "f2note3",
     content: "content",
     parentFolderId: newfolder2.id,
-    tagsIds: [tag1Id],
+    tagsIds: [],
 });
 await createNoteController.apply({
     name: "f3note1",
     content: "content",
     parentFolderId: newfolder3.id,
-    tagsIds: [tag2Id],
+    tagsIds: [],
 });
-4;
 await createNoteController.apply({
     name: "f3note2",
     content: "content",
     parentFolderId: newfolder3.id,
-    tagsIds: [tag3Id],
+    tagsIds: [],
 });
 await createNoteController.apply({ name: "f3note3", content: "content", parentFolderId: newfolder3.id, tagsIds: [] });
 await createNoteController.apply({ name: "sf3note1", content: "content", parentFolderId: subfolder3.id, tagsIds: [] });
@@ -143,12 +128,12 @@ app.use(
     "/api/notes",
     createNoteRoutes(
         createNoteController,
+        deleteNoteController,
         getAllNotesController,
         getNoteByIdController,
-        updateNoteController,
-        deleteNoteController,
-        searchNotesController,
         getNotesByTagsController,
+        searchNotesController,
+        updateNoteController,
     ),
 );
 
@@ -156,24 +141,19 @@ app.use(
     "/api/folders",
     createFolderRoutes(
         createFolderController,
-        getFolderByIdController,
-        getAllFoldersController,
-        updateFolderController,
         deleteFolderController,
+        getAllFoldersController,
+        getFolderByIdController,
         getFolderContentsController,
         searchFoldersController,
+        updateFolderController,
     ),
 );
 
 app.use(
     "/api/tags",
     createTagRoutes(
-        createTagController,
         getAllTagsController,
-        getTagByIdController,
-        updateTagController,
-        deleteTagController,
-        searchTagsController,
     ),
 );
 

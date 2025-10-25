@@ -3,7 +3,7 @@ import { SearchNotes, SearchNotesInput, SearchNotesOutput } from "../../../appli
 import { GetNoteByIdResponse } from "./GetNoteByIdController.ts";
 
 export interface SearchNotesRequest {
-    readonly query: string;
+    readonly keyword: string;
     readonly userId: string;
 }
 

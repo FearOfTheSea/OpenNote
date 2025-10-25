@@ -33,12 +33,8 @@ export class InMemoryFolderRepository implements FolderRepository {
         return this.folders.filter((folder) => folder.parentFolderId === parentFolderId && folder.userId === userId);
     }
 
-    async findByUserId(userId: string): Promise<Folder[]> {
-        return this.folders.filter((folder) => folder.userId === userId);
-    }
-
-    async cutFolder(folderId: string, newParentFolderId: string | undefined): Promise<boolean> {
-        const folder = this.folders.find((n) => n.id === folderId);
+    async cutFolder(folderId: string, userId: string, newParentFolderId: string | undefined): Promise<boolean> {
+        const folder = this.folders.find((f) => f.id === folderId);
         if (!folder) {
             return false;
         }
@@ -49,32 +45,10 @@ export class InMemoryFolderRepository implements FolderRepository {
         };
 
         this.folders.push(newFolder);
-        const oldFolderIndex = this.folders.findIndex((n) => n.id === folderId);
+        const oldFolderIndex = this.folders.findIndex((f) => f.id === folderId);
         if (oldFolderIndex !== -1) {
             this.folders.splice(oldFolderIndex, 1);
         }
-
-        return true;
-    }
-
-    async copyFolder(folderId: string, newParentFolderId: string | undefined): Promise<boolean> {
-        const folder = this.folders.find((n) => n.id === folderId);
-        if (!folder) {
-            return false;
-        }
-
-        let newName = folder.name;
-        if (folder.parentFolderId === newParentFolderId) {
-            newName = `${folder.name} - Copy`;
-        }
-
-        const newFolder = new Folder(
-            newName,
-            folder.userId,
-            newParentFolderId,
-        );
-
-        this.folders.push(newFolder);
 
         return true;
     }

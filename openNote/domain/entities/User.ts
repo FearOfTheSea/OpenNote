@@ -1,34 +1,34 @@
 import { randomUUID } from "../utils.ts";
 
 export class User {
-  public readonly id: string;
-  public readonly fullName: string;
-  public readonly email: string;
-  public readonly passwordHash: string;
-  public readonly createdAt: Date;
+    public readonly id: string;
+    public readonly fullName: string;
+    public readonly email: string;
+    public readonly passwordHash: string;
+    public readonly createdAt: Date;
 
-  constructor(params: {
-    fullName: string;
-    email: string;
-    passwordHash: string;
-    userId?: string;
-  }) {
-    const { fullName, email, passwordHash, userId } = params;
+    constructor(params: {
+        fullName: string;
+        email: string;
+        passwordHash: string;
+        userId?: string;
+    }) {
+        const { fullName, email, passwordHash, userId } = params;
 
-    if (!fullName || fullName.trim() === "") {
-      throw new Error("User full name cannot be empty.");
-    }
-    if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
-      throw new Error("Invalid email format.");
-    }
-    if (!passwordHash) {
-      throw new Error("Password hash cannot be empty.");
-    }
+        if (!fullName || fullName.trim() === "") {
+            throw new Error("User full name cannot be empty.");
+        }
+        if (!email || !/^\S+@\S+\.\S+$/.test(email)) {
+            throw new Error("Invalid email format.");
+        }
+        if (!passwordHash) {
+            throw new Error("Password hash cannot be empty.");
+        }
 
-    this.id = userId || randomUUID();
-    this.fullName = fullName.trim();
-    this.email = email;
-    this.passwordHash = passwordHash;
-    this.createdAt = new Date();
-  }
+        this.id = userId || randomUUID();
+        this.fullName = fullName.trim();
+        this.email = email;
+        this.passwordHash = passwordHash;
+        this.createdAt = new Date();
+    }
 }

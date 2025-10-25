@@ -4,8 +4,8 @@ import { GetFolderByIdResponse } from "./GetFolderByIdController.ts";
 
 export interface UpdateFolderRequest {
     readonly id: string;
-    readonly name?: string;
-    readonly parentFolderId?: string;
+    readonly newName: string;
+    readonly newParentFolderId?: string;
 }
 
 export interface UpdateFolderResponse {

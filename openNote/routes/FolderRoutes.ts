@@ -11,12 +11,12 @@ import { UpdateFolderController } from "../interface/controllers/folder/UpdateFo
 
 export function createFolderRoutes(
     createFolderController: CreateFolderController,
-    getFolderByIdController: GetFolderByIdController,
-    getAllFoldersController: GetAllFoldersController,
-    updateFolderController: UpdateFolderController,
     deleteFolderController: DeleteFolderController,
+    getAllFoldersController: GetAllFoldersController,
+    getFolderByIdController: GetFolderByIdController,
     getFolderContentsController: GetFolderContentsController,
     searchFoldersController: SearchFoldersController,
+    updateFolderController: UpdateFolderController,
 ) {
     const router = Router();
 
@@ -25,8 +25,8 @@ export function createFolderRoutes(
         try {
             const result = await createFolderController.apply({
                 name: req.body.name,
-                parentFolderId: req.body.parentFolderId,
-                userId: req.body.userId,
+                userId: req.body.user_id,
+                parentFolderId: req.body.parent_folder_id,
             });
             res.status(201).json(result);
         } catch (error) {
@@ -38,8 +38,8 @@ export function createFolderRoutes(
     router.get("/search", async (req: Request, res: Response) => {
         try {
             const result = await searchFoldersController.apply({
-                query: req.query.q as string,
-                userId: req.query.userId as string,
+                keyword: req.query.q as string,
+                userId: req.query.user_id as string,
             });
             res.json(result);
         } catch (error) {
@@ -48,9 +48,10 @@ export function createFolderRoutes(
     });
 
     // Get all folders
-    router.get("/", async (_req: Request, res: Response) => {
+    router.get("/", async (req: Request, res: Response) => {
         try {
-            const result = await getAllFoldersController.apply();
+            const userId = req.query.user_id as string;
+            const result = await getAllFoldersController.apply({ userId });
             res.json(result);
         } catch (error) {
             res.status(500).json({ error: (error as Error).message });
@@ -71,6 +72,7 @@ export function createFolderRoutes(
     router.get("/:id/contents", async (req: Request, res: Response) => {
         try {
             const result = await getFolderContentsController.apply({
+                userId: req.query.user_id as string,
                 folderId: req.params.id,
             });
             res.json(result);
@@ -84,8 +86,8 @@ export function createFolderRoutes(
         try {
             const result = await updateFolderController.apply({
                 id: req.params.id,
-                name: req.body.name,
-                parentFolderId: req.body.parentFolderId,
+                newName: req.body.name,
+                newParentFolderId: req.body.parentFolderId,
             });
             res.json(result);
         } catch (error) {

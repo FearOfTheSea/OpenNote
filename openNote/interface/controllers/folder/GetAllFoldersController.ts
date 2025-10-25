@@ -1,6 +1,10 @@
 import { GetFolderByIdResponse } from "./GetFolderByIdController.ts";
-import { GetAllFolders } from "../../../application/useCases/folder/GetAllFolders.ts";
+import { GetAllFolders, GetAllFoldersInput } from "../../../application/useCases/folder/GetAllFolders.ts";
 import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
+
+export interface GetAllFoldersRequest {
+    readonly userId: string;
+}
 
 export interface GetAllFoldersResponse {
     readonly folders: GetFolderByIdResponse[];
@@ -13,7 +17,7 @@ export class GetAllFoldersController {
         this.useCase = new GetAllFolders(folderRepository);
     }
 
-    async apply(): Promise<GetAllFoldersResponse> {
-        return await this.useCase.execute() as GetAllFoldersResponse;
+    async apply(request: GetAllFoldersRequest): Promise<GetAllFoldersResponse> {
+        return await this.useCase.execute(request as GetAllFoldersInput) as GetAllFoldersResponse;
     }
 }

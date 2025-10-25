@@ -29,14 +29,7 @@ export class GetFolderByIdController {
         const input = request as GetFolderByIdInput;
         try {
             const output: GetFolderByIdOutput = await this.useCase.execute(input);
-            return {
-                id: output.folder.id,
-                name: output.folder.name,
-                userId: output.folder.userId,
-                parentFolderId: output.folder.parentFolderId,
-                createdAt: output.folder.createdAt,
-                updatedAt: output.folder.updatedAt,
-            };
+            return output.folder as GetFolderByIdResponse;
         } catch (error) {
             throw error;
         }

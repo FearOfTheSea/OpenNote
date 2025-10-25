@@ -9,6 +9,7 @@ import { FolderRepository } from "../../../application/repositories/FolderReposi
 import { NoteRepository } from "../../../application/repositories/NoteRepository.ts";
 
 export interface GetFolderContentsRequest {
+    readonly userId: string;
     readonly folderId: string;
 }
 

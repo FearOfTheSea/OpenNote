@@ -3,8 +3,8 @@ import { FolderRepository } from "../../../application/repositories/FolderReposi
 
 export interface CreateFolderRequest {
     readonly name: string;
-    readonly parentFolderId?: string;
     readonly userId: string;
+    readonly parentFolderId?: string;
 }
 
 export interface CreateFolderResponse {
@@ -26,7 +26,7 @@ export class CreateFolderController {
     async apply(request: CreateFolderRequest): Promise<CreateFolderResponse> {
         const input = request as CreateFolderInput;
         try {
-            return await this.useCase.execute(input) as CreateFolderResponse;
+            return (await this.useCase.execute(input)).folder as CreateFolderResponse;
         } catch (error) {
             throw error;
         }

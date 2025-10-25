@@ -7,7 +7,7 @@ import { FolderRepository } from "../../../application/repositories/FolderReposi
 import { GetFolderByIdResponse } from "./GetFolderByIdController.ts";
 
 export interface SearchFoldersRequest {
-    readonly query: string;
+    readonly keyword: string;
     readonly userId: string;
 }
 

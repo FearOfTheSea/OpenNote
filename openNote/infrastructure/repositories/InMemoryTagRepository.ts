@@ -4,17 +4,8 @@ import { Tag } from "../../domain/entities/Tag.ts";
 export class InMemoryTagRepository implements TagRepository {
     private tags: Tag[] = [];
 
-    async findAll(): Promise<Tag[]> {
+    async findAll(userId: string): Promise<Tag[]> {
         return this.tags;
-    }
-
-    async findById(id: string): Promise<Tag | null> {
-        const tag = this.tags.find((n) => n.id === id);
-        return tag || null;
-    }
-
-    async findByName(name: string): Promise<Tag[]> {
-        return this.tags.filter((tag) => tag.name.includes(name));
     }
 
     async save(tag: Tag): Promise<void> {
@@ -27,7 +18,11 @@ export class InMemoryTagRepository implements TagRepository {
         }
     }
 
-    async delete(id: string): Promise<void> {
-        this.tags = this.tags.filter((tag) => tag.id !== id);
+    async syncTagsForNoteUpdate(noteId: string, noteContent: string): Promise<void> {
+        throw new Error("Method not implemented.");
+    }
+
+    async deleteOrphanedTag(id: string): Promise<void> {
+        throw new Error("Method not implemented.");
     }
 }

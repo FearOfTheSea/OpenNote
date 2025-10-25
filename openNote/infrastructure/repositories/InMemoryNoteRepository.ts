@@ -17,10 +17,11 @@ export class InMemoryNoteRepository implements NoteRepository {
     }
 
     async findAll(userId: string): Promise<Note[]> {
-        const userFolders = await this.folderRepository.findByUserId(userId);
-        let userNotes: Note[] = [];
+        const userFolders = await this.folderRepository.findAll(userId);
+        const userNotes: Note[] = [];
         for (const folder of userFolders) {
-            userNotes.concat(await this.findByFolderId(folder.id));
+            const notesInFolder = await this.findByFolderId(folder.id);
+            userNotes.concat(notesInFolder);
         }
         return userNotes;
     }
@@ -37,7 +38,7 @@ export class InMemoryNoteRepository implements NoteRepository {
     async findByTagsIds(tagIds: string[], userId: string): Promise<Note[]> {
         const allNotes = this.findAll(userId);
         return (await allNotes).filter((note) => {
-            return tagIds.every((tag) => note.tagsIds.includes(tag));
+            return tagIds.every((tag) => note.tagIds.includes(tag));
         });
     }
 
@@ -77,8 +78,9 @@ export class InMemoryNoteRepository implements NoteRepository {
 
     async searchByKeyword(keyword: string, userId: string): Promise<Note[]> {
         return this.notes.filter(async (note) => {
-            const folder = await this.folderRepository.findById(note.parentFolderId);
-            return note.name.includes(keyword.trim()) && folder?.userId === userId;
+            const matchingKeyword = note.name.includes(keyword.trim());
+            const matchingUser = (await this.folderRepository.findById(note.parentFolderId))?.userId === userId;
+            return matchingKeyword && matchingUser;
         });
     }
 }
