@@ -2,7 +2,7 @@ import { Folder } from "../../../domain/entities/Folder.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
 
 export interface CreateFolderInput {
-    readonly name: string;
+readonly name: string;
     readonly userId: string;
     readonly parentFolderId?: string;
 }

@@ -4,6 +4,7 @@
         "pg": "https://deno.land/x/postgres@v0.19.3/mod.ts",
         "express": "npm:express@^5.1.0",
         "@std/assert": "https://deno.land/std@0.201.0/assert/mod.ts",
-        "@std/path": "https://deno.land/std@0.214.0/path/mod.ts"
+        "@std/path": "https://deno.land/std@0.214.0/path/mod.ts",
+        "nessie": "https://deno.land/x/nessie@2.0.11/mod.ts"
     }
 }
