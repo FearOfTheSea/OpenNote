@@ -36,8 +36,8 @@ export class InMemoryNoteRepository implements NoteRepository {
     }
 
     async findByTagsIds(tagIds: string[], userId: string): Promise<Note[]> {
-        const allNotes = this.findAll(userId);
-        return (await allNotes).filter((note) => {
+        const allNotes = await this.findAll(userId);
+        return allNotes.filter((note) => {
             return tagIds.every((tag) => note.tagIds.includes(tag));
         });
     }
@@ -48,16 +48,17 @@ export class InMemoryNoteRepository implements NoteRepository {
             return false;
         }
 
-        const newNote = {
-            ...note,
-            parentFolderId: newFolderId,
-        };
-
-        this.notes.push(newNote);
+        const newNote = new Note(
+            note.name,
+            note.content,
+            newFolderId,
+            note.tagIds,
+            note.id,
+        );
 
         const oldNoteIndex = this.notes.findIndex((n) => n.id === noteId);
         if (oldNoteIndex !== -1) {
-            this.notes.splice(oldNoteIndex, 1);
+            this.notes[oldNoteIndex] = newNote;
         }
         return true;
     }

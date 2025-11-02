@@ -39,15 +39,16 @@ export class InMemoryFolderRepository implements FolderRepository {
             return false;
         }
 
-        const newFolder = {
-            ...folder,
-            parentFolderId: newParentFolderId,
-        };
+        const newFolder = new Folder(
+            folder.name,
+            folder.userId,
+            newParentFolderId,
+            folder.id,
+        );
 
-        this.folders.push(newFolder);
         const oldFolderIndex = this.folders.findIndex((f) => f.id === folderId);
         if (oldFolderIndex !== -1) {
-            this.folders.splice(oldFolderIndex, 1);
+            this.folders[oldFolderIndex] = newFolder;
         }
 
         return true;
@@ -64,6 +65,21 @@ export class InMemoryFolderRepository implements FolderRepository {
     }
 
     async delete(id: string): Promise<void> {
-        this.folders = this.folders.filter((note) => note.id !== id);
+        // Find all subfolders recursively
+        const foldersToDelete = new Set<string>([id]);
+        let foundNew = true;
+        
+        while (foundNew) {
+            foundNew = false;
+            for (const folder of this.folders) {
+                if (folder.parentFolderId && foldersToDelete.has(folder.parentFolderId) && !foldersToDelete.has(folder.id)) {
+                    foldersToDelete.add(folder.id);
+                    foundNew = true;
+                }
+            }
+        }
+        
+        // Delete all folders
+        this.folders = this.folders.filter((folder) => !foldersToDelete.has(folder.id));
     }
 }

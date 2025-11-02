@@ -25,7 +25,7 @@ export function createNoteRoutes(
         try {
             const result = await createNoteController.apply({
                 name: req.body.name,
-                content: req.body.content,
+                content: req.body.content || "",
                 parentFolderId: req.body.parent_folder_id,
             });
             res.status(201).json(result);
@@ -38,7 +38,7 @@ export function createNoteRoutes(
     router.get("/", async (req: Request, res: Response) => {
         try {
             const tagsParam = req.query.tags as string;
-            const userId = req.query.user_id as string;
+            const userId = (req.query.user_id as string) || "user";
 
             if (tagsParam) {
                 const tagIds = tagsParam.split(",");
@@ -58,7 +58,7 @@ export function createNoteRoutes(
         try {
             const result = await searchNotesController.apply({
                 keyword: req.query.q as string,
-                userId: req.query.user_id as string,
+                userId: (req.query.user_id as string) || "user",
             });
             res.json(result);
         } catch (error) {
@@ -83,7 +83,7 @@ export function createNoteRoutes(
                 id: req.params.id,
                 newName: req.body.name,
                 newContent: req.body.content,
-                newParentFolderId: req.body.folder_id,
+                newParentFolderId: req.body.parent_folder_id,
             });
             res.json(result);
         } catch (error) {

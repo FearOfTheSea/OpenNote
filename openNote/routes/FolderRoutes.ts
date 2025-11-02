@@ -25,7 +25,7 @@ export function createFolderRoutes(
         try {
             const result = await createFolderController.apply({
                 name: req.body.name,
-                userId: req.body.user_id,
+                userId: req.body.user_id || "user",
                 parentFolderId: req.body.parent_folder_id,
             });
             res.status(201).json(result);
@@ -39,7 +39,7 @@ export function createFolderRoutes(
         try {
             const result = await searchFoldersController.apply({
                 keyword: req.query.q as string,
-                userId: req.query.user_id as string,
+                userId: (req.query.user_id as string) || "user",
             });
             res.json(result);
         } catch (error) {
@@ -50,7 +50,7 @@ export function createFolderRoutes(
     // Get all folders
     router.get("/", async (req: Request, res: Response) => {
         try {
-            const userId = req.query.user_id as string;
+            const userId = (req.query.user_id as string) || "user";
             const result = await getAllFoldersController.apply({ userId });
             res.json(result);
         } catch (error) {
@@ -72,7 +72,7 @@ export function createFolderRoutes(
     router.get("/:id/contents", async (req: Request, res: Response) => {
         try {
             const result = await getFolderContentsController.apply({
-                userId: req.query.user_id as string,
+                userId: (req.query.user_id as string) || "user",
                 folderId: req.params.id,
             });
             res.json(result);
