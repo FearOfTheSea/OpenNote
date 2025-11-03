@@ -1,341 +1,419 @@
 const API_BASE = "http://localhost:3000/api";
 
-// State
-const editorState = {
-    noteId: null,
-    note: null,
+// Application state
+const state = {
+    currentFolderId: null,
     folders: [],
+    notes: [],
     tags: [],
-    isDirty: false,
-    autoSaveTimer: null,
+    navigationStack: []
 };
 
-// DOM Elements
-const backBtn = document.getElementById("back-btn");
-const titleInput = document.getElementById("note-title");
-const contentTextarea = document.getElementById("note-content");
-const folderSelect = document.getElementById("folder-select");
-const tagList = document.getElementById("tag-list");
-const addTagBtn = document.getElementById("add-tag-btn");
-const saveBtn = document.getElementById("save-btn");
-const deleteBtn = document.getElementById("delete-btn");
-const createdDate = document.getElementById("created-date");
-const modifiedDate = document.getElementById("modified-date");
-
-// Initialize
+// Initialize the application
 async function init() {
-    const path = window.location.pathname;
-    const match = path.match(/\/note\/([^\/]+)/);
-    editorState.noteId = match ? match[1] : null;
-
     await loadFolders();
-    await loadAllTags();
-
-    if (editorState.noteId && editorState.noteId !== "new") {
-        await loadNote(editorState.noteId);
-    } else {
-        setupNewNote();
-    }
-
+    await loadTags();
+    await loadContent();
     setupEventListeners();
 }
 
-// API Calls
-async function loadNote(id) {
-    try {
-        const response = await fetch(`${API_BASE}/notes/${id}`);
-        if (response.ok) {
-            const data = await response.json();
-            editorState.note = data.note || data;
-            renderNote();
-        } else {
-            await modal.alert("Note not found", "Error");
-            window.location.href = "/";
-        }
-    } catch (error) {
-        console.error("Error loading note:", error);
-        await modal.alert("Error loading note", "Error");
-    }
-}
-
+// API calls
 async function loadFolders() {
     try {
         const response = await fetch(`${API_BASE}/folders?user_id=user`);
         if (response.ok) {
             const data = await response.json();
-            editorState.folders = data.folders || data;
-            renderFolderSelect();
+            state.folders = data.folders || data || [];
+            renderFolderList();
         }
     } catch (error) {
         console.error("Error loading folders:", error);
+        showError("Failed to load folders");
     }
 }
 
-async function loadAllTags() {
+async function loadTags() {
     try {
         const response = await fetch(`${API_BASE}/tags?user_id=user`);
         if (response.ok) {
             const data = await response.json();
-            editorState.tags = Array.isArray(data) ? data : (data.tags || []);
+            state.tags = Array.isArray(data) ? data : (data.tags || []);
         }
     } catch (error) {
         console.error("Error loading tags:", error);
     }
 }
 
-async function saveNote() {
-    const noteData = {
-        name: titleInput.value.trim(),
-        content: contentTextarea.value,
-        parent_folder_id: folderSelect.value,
-    };
-
-    if (!noteData.name) {
-        await modal.alert("Please enter a note title", "Validation Error");
-        return;
-    }
-
-    if (!noteData.parent_folder_id) {
-        await modal.alert("Please select a folder", "Validation Error");
-        return;
-    }
-
+async function loadContent(folderId = null) {
     try {
-        showSaveStatus("saving");
-
-        let response;
-        if (editorState.noteId && editorState.noteId !== "new") {
-            response = await fetch(`${API_BASE}/notes/${editorState.noteId}`, {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(noteData),
-            });
+        let url;
+        if (folderId) {
+            url = `${API_BASE}/folders/${folderId}/contents?user_id=user`;
         } else {
-            response = await fetch(`${API_BASE}/notes`, {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(noteData),
-            });
-        }
+            // Load root folders and all notes
+            const [foldersRes, notesRes] = await Promise.all([
+                fetch(`${API_BASE}/folders?user_id=user`),
+                fetch(`${API_BASE}/notes?user_id=user`)
+            ]);
 
-        if (response.ok) {
-            const data = await response.json();
-            editorState.note = data.note || data;
-            editorState.noteId = editorState.note.id;
-            editorState.isDirty = false;
+            if (foldersRes.ok && notesRes.ok) {
+                const foldersData = await foldersRes.json();
+                const notesData = await notesRes.json();
 
-            if (window.location.pathname.includes("/new")) {
-                window.history.replaceState({}, "", `/note/${editorState.noteId}`);
+                const allFolders = foldersData.folders || foldersData || [];
+                const allNotes = Array.isArray(notesData) ? notesData : (notesData.notes || []);
+
+                // Filter root folders (no parent)
+                state.folders = allFolders.filter(f => !f.parentFolderId);
+                state.notes = allNotes;
+
+                renderContent();
+                return;
             }
-
-            showSaveStatus("saved");
-            renderNote();
-        } else {
-            const error = await response.json();
-            showSaveStatus("error");
-            await modal.alert(error.error || "Error saving note", "Error");
         }
+
+        if (folderId) {
+            const response = await fetch(url);
+            if (response.ok) {
+                const data = await response.json();
+                state.folders = data.folders || [];
+                state.notes = data.notes || [];
+            }
+        }
+
+        renderContent();
     } catch (error) {
-        console.error("Error saving note:", error);
-        showSaveStatus("error");
-        await modal.alert("Error saving note", "Error");
+        console.error("Error loading content:", error);
+        showError("Failed to load content");
     }
 }
 
-async function deleteNote() {
-    if (!editorState.noteId || editorState.noteId === "new") {
-        window.location.href = "/";
+// Rendering functions
+function renderFolderList() {
+    const list = document.querySelector("aside .list");
+
+    if (state.folders.length === 0) {
+        list.innerHTML = '<li class="row empty">No folders</li>';
         return;
     }
 
-    const confirmed = await modal.confirm(
-        "Are you sure you want to delete this note? This action cannot be undone.",
-        "Delete Note",
-    );
-
-    if (!confirmed) {
-        return;
-    }
-
-    try {
-        const response = await fetch(`${API_BASE}/notes/${editorState.noteId}`, {
-            method: "DELETE",
-        });
-
-        if (response.ok) {
-            window.location.href = "/";
-        } else {
-            await modal.alert("Error deleting note", "Error");
-        }
-    } catch (error) {
-        console.error("Error deleting note:", error);
-        await modal.alert("Error deleting note", "Error");
-    }
+    list.innerHTML = state.folders.map(folder => `
+        <li class="row" onclick="navigateToFolder('${folder.id}')">
+            <span>📁 ${escapeHtml(folder.name)}</span>
+        </li>
+    `).join("");
 }
 
-// Rendering
-function renderNote() {
-    if (!editorState.note) return;
+function renderContent() {
+    const grid = document.querySelector(".grid");
+    const title = document.querySelector(".section-title");
 
-    titleInput.value = editorState.note.name;
-    contentTextarea.value = editorState.note.content;
-    folderSelect.value = editorState.note.parentFolderId;
+    // Update title
+    if (state.currentFolderId) {
+        const currentFolder = state.folders.find(f => f.id === state.currentFolderId);
+        title.textContent = currentFolder ? currentFolder.name : "Folder";
+    } else {
+        title.textContent = "Home";
+    }
 
-    renderTags();
-    renderMetadata();
-}
+    // Render folders and notes
+    const items = [];
 
-function renderFolderSelect() {
-    folderSelect.innerHTML = '<option value="">Select folder...</option>';
-
-    editorState.folders.forEach((folder) => {
-        const option = document.createElement("option");
-        option.value = folder.id;
-        option.textContent = folder.name;
-        folderSelect.appendChild(option);
+    // Add folder cards
+    state.folders.forEach(folder => {
+        items.push(`
+            <div class="folder-card" onclick="navigateToFolder('${folder.id}')">
+                <div class="card-icon">📁</div>
+                <div class="folder-title">${escapeHtml(folder.name)}</div>
+                <div class="folder-meta">Folder</div>
+                <div class="card-actions" onclick="event.stopPropagation()">
+                    <button onclick="editFolder('${folder.id}')">✏️</button>
+                    <button onclick="deleteFolder('${folder.id}')">🗑️</button>
+                </div>
+            </div>
+        `);
     });
-}
 
-function renderTags() {
-    if (!editorState.note?.tagIds || editorState.note.tagIds.length === 0) {
-        tagList.innerHTML = '<div style="color: var(--muted); font-size: 14px;">No tags</div>';
-        return;
-    }
+    // Add note cards
+    state.notes.forEach(note => {
+        const preview = note.content.substring(0, 100) + (note.content.length > 100 ? "..." : "");
+        items.push(`
+            <div class="note-card" onclick="openNote('${note.id}')">
+                <div class="card-icon">📝</div>
+                <div class="note-title">${escapeHtml(note.name)}</div>
+                <div class="note-preview">${escapeHtml(preview)}</div>
+                <div class="note-meta">Note</div>
+                <div class="card-actions" onclick="event.stopPropagation()">
+                    <button onclick="openNote('${note.id}')">✏️</button>
+                    <button onclick="deleteNote('${note.id}')">🗑️</button>
+                </div>
+            </div>
+        `);
+    });
 
-    tagList.innerHTML = editorState.note.tagIds.map((tagId) => {
-        const tag = editorState.tags.find((t) => t.id === tagId);
-        const tagName = tag ? tag.name : tagId;
-
-        return `
-            <div class="tag-item">
-                <span>#${escapeHtml(tagName)}</span>
-                <button onclick="removeTag('${tagId}')" title="Remove tag">×</button>
+    if (items.length === 0) {
+        grid.innerHTML = `
+            <div class="empty-state">
+                <p>No items here yet</p>
+                <button onclick="showCreateNoteDialog()">Create your first note</button>
             </div>
         `;
-    }).join("");
-}
-
-function renderMetadata() {
-    if (editorState.note?.createdAt) {
-        createdDate.textContent = new Date(editorState.note.createdAt).toLocaleString();
-    }
-
-    if (editorState.note?.updatedAt) {
-        modifiedDate.textContent = new Date(editorState.note.updatedAt).toLocaleString();
+    } else {
+        grid.innerHTML = items.join("");
     }
 }
 
-function setupNewNote() {
-    editorState.note = {
-        name: "",
-        content: "",
-        parentFolderId: "",
-        tagIds: [],
-    };
-
-    titleInput.value = "";
-    contentTextarea.value = "";
-    renderTags();
+// Navigation functions
+function navigateToFolder(folderId) {
+    state.navigationStack.push(state.currentFolderId);
+    state.currentFolderId = folderId;
+    loadContent(folderId);
 }
 
-function removeTag(tagId) {
-    if (!editorState.note?.tagIds) return;
-
-    editorState.note.tagIds = editorState.note.tagIds.filter((id) => id !== tagId);
-    renderTags();
-    editorState.isDirty = true;
-}
-
-// Event Listeners
-function setupEventListeners() {
-    backBtn.addEventListener("click", async () => {
-        if (editorState.isDirty) {
-            const confirmed = await modal.confirm(
-                "You have unsaved changes. Leave anyway?",
-                "Unsaved Changes",
-            );
-            if (confirmed) {
-                window.location.href = "/";
-            }
+function goBack() {
+    if (state.navigationStack.length > 0) {
+        state.currentFolderId = state.navigationStack.pop();
+        if (state.currentFolderId) {
+            loadContent(state.currentFolderId);
         } else {
-            window.location.href = "/";
+            loadContent();
         }
-    });
-
-    saveBtn.addEventListener("click", saveNote);
-    deleteBtn.addEventListener("click", deleteNote);
-
-    titleInput.addEventListener("input", () => {
-        editorState.isDirty = true;
-        scheduleAutoSave();
-    });
-
-    contentTextarea.addEventListener("input", () => {
-        editorState.isDirty = true;
-        scheduleAutoSave();
-    });
-
-    folderSelect.addEventListener("change", () => {
-        editorState.isDirty = true;
-    });
-
-    document.addEventListener("keydown", (e) => {
-        if ((e.ctrlKey || e.metaKey) && e.key === "s") {
-            e.preventDefault();
-            saveNote();
-        }
-    });
-
-    window.addEventListener("beforeunload", (e) => {
-        if (editorState.isDirty) {
-            e.preventDefault();
-            e.returnValue = "";
-        }
-    });
-}
-
-function scheduleAutoSave() {
-    clearTimeout(editorState.autoSaveTimer);
-    editorState.autoSaveTimer = setTimeout(() => {
-        if (editorState.isDirty) {
-            saveNote();
-        }
-    }, 2000);
-}
-
-function showSaveStatus(status) {
-    let statusEl = document.querySelector(".save-status");
-
-    if (!statusEl) {
-        statusEl = document.createElement("div");
-        statusEl.className = "save-status";
-        document.querySelector(".header-actions").prepend(statusEl);
-    }
-
-    statusEl.className = `save-status ${status}`;
-
-    switch (status) {
-        case "saving":
-            statusEl.textContent = "Saving...";
-            break;
-        case "saved":
-            statusEl.textContent = "Saved ✓";
-            setTimeout(() => statusEl.textContent = "", 2000);
-            break;
-        case "error":
-            statusEl.textContent = "Save failed ✗";
-            break;
     }
 }
 
+function goHome() {
+    state.navigationStack = [];
+    state.currentFolderId = null;
+    loadContent();
+}
+
+// CRUD operations
+async function showCreateNoteDialog() {
+    // Get folders for selection
+    const folderOptions = state.folders.map(f => ({
+        value: f.id,
+        label: f.name
+    }));
+
+    if (folderOptions.length === 0) {
+        await modal.alert("Please create a folder first", "No Folders");
+        return;
+    }
+
+    const result = await modal.form({
+        title: "Create New Note",
+        fields: [
+            {
+                name: "name",
+                label: "Note Name",
+                type: "text",
+                required: true,
+                placeholder: "My note"
+            },
+            {
+                name: "parent_folder_id",
+                label: "Folder",
+                type: "select",
+                required: true,
+                options: folderOptions,
+                value: state.currentFolderId || folderOptions[0].value
+            }
+        ],
+        submitText: "Create"
+    });
+
+    if (result) {
+        try {
+            const response = await fetch(`${API_BASE}/notes`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: result.name,
+                    content: "",
+                    parent_folder_id: result.parent_folder_id
+                })
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                const noteId = data.note?.id || data.id;
+                window.location.href = `/note/${noteId}`;
+            } else {
+                const error = await response.json();
+                await modal.alert(error.error || "Failed to create note", "Error");
+            }
+        } catch (error) {
+            console.error("Error creating note:", error);
+            await modal.alert("Failed to create note", "Error");
+        }
+    }
+}
+
+async function showCreateFolderDialog() {
+    const result = await modal.prompt("Enter folder name:", "", "Create Folder");
+
+    if (result) {
+        try {
+            const response = await fetch(`${API_BASE}/folders`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    name: result,
+                    user_id: "user",
+                    parent_folder_id: state.currentFolderId
+                })
+            });
+
+            if (response.ok) {
+                await loadFolders();
+                await loadContent(state.currentFolderId);
+            } else {
+                const error = await response.json();
+                await modal.alert(error.error || "Failed to create folder", "Error");
+            }
+        } catch (error) {
+            console.error("Error creating folder:", error);
+            await modal.alert("Failed to create folder", "Error");
+        }
+    }
+}
+
+async function editFolder(folderId) {
+    const folder = state.folders.find(f => f.id === folderId);
+    if (!folder) return;
+
+    const newName = await modal.prompt("Enter new folder name:", folder.name, "Rename Folder");
+
+    if (newName && newName !== folder.name) {
+        try {
+            const response = await fetch(`${API_BASE}/folders/${folderId}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newName })
+            });
+
+            if (response.ok) {
+                await loadFolders();
+                await loadContent(state.currentFolderId);
+            } else {
+                const error = await response.json();
+                await modal.alert(error.error || "Failed to rename folder", "Error");
+            }
+        } catch (error) {
+            console.error("Error renaming folder:", error);
+            await modal.alert("Failed to rename folder", "Error");
+        }
+    }
+}
+
+async function deleteFolder(folderId) {
+    const confirmed = await modal.confirm(
+        "Are you sure you want to delete this folder? All contents will be deleted.",
+        "Delete Folder"
+    );
+
+    if (confirmed) {
+        try {
+            const response = await fetch(`${API_BASE}/folders/${folderId}`, {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                await loadFolders();
+                await loadContent(state.currentFolderId);
+            } else {
+                const error = await response.json();
+                await modal.alert(error.error || "Failed to delete folder", "Error");
+            }
+        } catch (error) {
+            console.error("Error deleting folder:", error);
+            await modal.alert("Failed to delete folder", "Error");
+        }
+    }
+}
+
+async function deleteNote(noteId) {
+    const confirmed = await modal.confirm(
+        "Are you sure you want to delete this note?",
+        "Delete Note"
+    );
+
+    if (confirmed) {
+        try {
+            const response = await fetch(`${API_BASE}/notes/${noteId}`, {
+                method: "DELETE"
+            });
+
+            if (response.ok) {
+                await loadContent(state.currentFolderId);
+            } else {
+                await modal.alert("Failed to delete note", "Error");
+            }
+        } catch (error) {
+            console.error("Error deleting note:", error);
+            await modal.alert("Failed to delete note", "Error");
+        }
+    }
+}
+
+function openNote(noteId) {
+    window.location.href = `/note/${noteId}`;
+}
+
+// Event listeners
+function setupEventListeners() {
+    document.getElementById("new-folder")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        showCreateFolderDialog();
+    });
+
+    document.getElementById("new-note")?.addEventListener("click", (e) => {
+        e.preventDefault();
+        showCreateNoteDialog();
+    });
+
+    document.getElementById("search")?.addEventListener("click", async (e) => {
+        e.preventDefault();
+        const query = await modal.prompt("Search notes:", "", "Search");
+        if (query) {
+            try {
+                const response = await fetch(`${API_BASE}/notes/search?q=${encodeURIComponent(query)}&user_id=user`);
+                if (response.ok) {
+                    const data = await response.json();
+                    state.notes = data.notes || [];
+                    state.folders = [];
+                    renderContent();
+                }
+            } catch (error) {
+                console.error("Error searching:", error);
+            }
+        }
+    });
+}
+
+// Utility functions
 function escapeHtml(text) {
     const div = document.createElement("div");
     div.textContent = text;
     return div.innerHTML;
 }
 
-window.removeTag = removeTag;
+function showError(message) {
+    const grid = document.querySelector(".grid");
+    grid.innerHTML = `<div class="error">${escapeHtml(message)}</div>`;
+}
 
+// Make functions globally available
+window.navigateToFolder = navigateToFolder;
+window.goBack = goBack;
+window.goHome = goHome;
+window.showCreateNoteDialog = showCreateNoteDialog;
+window.editFolder = editFolder;
+window.deleteFolder = deleteFolder;
+window.deleteNote = deleteNote;
+window.openNote = openNote;
+
+// Initialize when DOM is ready
 if (document.readyState === "loading") {
     document.addEventListener("DOMContentLoaded", init);
 } else {
