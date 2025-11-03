@@ -1,5 +1,7 @@
 import { FolderRepository } from "../../application/repositories/FolderRepository.ts";
 import { Folder } from "../../domain/entities/Folder.ts";
+import { NoteRepository } from "../../application/repositories/NoteRepository.ts";
+import { Note } from "../../domain/entities/Note.ts";
 
 export class InMemoryFolderRepository implements FolderRepository {
     private folders: Folder[] = [];
@@ -68,7 +70,7 @@ export class InMemoryFolderRepository implements FolderRepository {
         // Find all subfolders recursively
         const foldersToDelete = new Set<string>([id]);
         let foundNew = true;
-        
+
         while (foundNew) {
             foundNew = false;
             for (const folder of this.folders) {
@@ -78,7 +80,17 @@ export class InMemoryFolderRepository implements FolderRepository {
                 }
             }
         }
-        
+
+        // Delete all notes in these folders if noteRepository is available
+        if (this.noteRepository) {
+            const allNotes = await this.noteRepository.findAll("user");
+            for (const note of allNotes) {
+                if (foldersToDelete.has(note.parentFolderId)) {
+                    await this.noteRepository.delete(note.id);
+                }
+            }
+        }
+
         // Delete all folders
         this.folders = this.folders.filter((folder) => !foldersToDelete.has(folder.id));
     }

@@ -74,7 +74,10 @@ export class InMemoryNoteRepository implements NoteRepository {
     }
 
     async delete(id: string): Promise<void> {
-        this.notes = this.notes.filter((note) => note.id !== id);
+        const noteIndex = this.notes.findIndex((note) => note.id === id);
+        if (noteIndex !== -1) {
+            this.notes.splice(noteIndex, 1);
+        }
     }
 
     async searchByKeyword(keyword: string, userId: string): Promise<Note[]> {

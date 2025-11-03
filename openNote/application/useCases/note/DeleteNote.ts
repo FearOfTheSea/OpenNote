@@ -1,11 +1,15 @@
 import { NoteRepository } from "../../repositories/NoteRepository.ts";
+import { IUnitOfWork } from "../../IUnitOfWork.ts";
 
 export interface DeleteNoteInput {
     readonly id: string;
 }
 
 export class DeleteNote {
-    constructor(private noteRepository: NoteRepository) {}
+    constructor(
+        private noteRepository: NoteRepository,
+        private readonly createNoteUnitOfWork: () => IUnitOfWork,
+    ) {}
 
     async execute(input: DeleteNoteInput): Promise<void> {
         const existingNote = await this.noteRepository.findById(input.id);
@@ -14,6 +18,15 @@ export class DeleteNote {
             throw new Error(`Note with id ${input.id} not found`);
         }
 
-        await this.noteRepository.delete(input.id);
+        const uow = this.createNoteUnitOfWork();
+        try {
+            await uow.begin();
+            await uow.notes.delete(input.id);
+            await uow.tags.cleanupOrphanTags();
+            await uow.commit();
+        } catch (error) {
+            await uow.rollback();
+            throw error;
+        }
     }
 }

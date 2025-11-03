@@ -1,3 +1,4 @@
+import { IUnitOfWork } from "../../../application/IUnitOfWork.ts";
 import { NoteRepository } from "../../../application/repositories/NoteRepository.ts";
 import { DeleteNote } from "../../../application/useCases/note/DeleteNote.ts";
 
@@ -8,8 +9,11 @@ export interface DeleteNoteRequest {
 export class DeleteNoteController {
     private useCase: DeleteNote;
 
-    constructor(noteRepository: NoteRepository) {
-        this.useCase = new DeleteNote(noteRepository);
+    constructor(
+        noteRepository: NoteRepository,
+        createNoteUnitOfWork: () => IUnitOfWork,
+    ) {
+        this.useCase = new DeleteNote(noteRepository, createNoteUnitOfWork);
     }
 
     async apply(request: DeleteNoteRequest): Promise<void> {

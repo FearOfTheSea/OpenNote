@@ -86,12 +86,22 @@ export class InMemoryTagRepository implements TagRepository {
     async deleteOrphanedTag(id: string): Promise<void> {
     }
 
+// openNote/infrastructure/repositories/InMemoryTagRepository.ts
+// Update cleanupOrphanTags method:
+
     async cleanupOrphanTags(): Promise<void> {
-        for (const [tagId, refCount] of this.tagIdRefCountMap.entries()) {
-            if (refCount <= 0) {
-                this.tags = this.tags.filter((tag) => tag.id !== tagId);
-                this.tagIdRefCountMap.delete(tagId);
+        // Recalculate reference counts from scratch
+        const newRefCountMap = new Map<string, number>();
+
+        const allNotes = await this.noteRepository.findAll("user");
+        for (const note of allNotes) {
+            for (const tagId of note.tagIds) {
+                newRefCountMap.set(tagId, (newRefCountMap.get(tagId) || 0) + 1);
             }
         }
+
+        // Remove tags with zero references
+        this.tags = this.tags.filter((tag) => (newRefCountMap.get(tag.id) || 0) > 0);
+        this.tagIdRefCountMap = newRefCountMap;
     }
 }

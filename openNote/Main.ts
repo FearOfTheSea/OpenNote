@@ -44,7 +44,7 @@ const createNoteController = new CreateNoteController(folderRepository, createUn
 const getAllNotesController = new GetAllNotesController(noteRepository);
 const getNoteByIdController = new GetNoteByIdController(noteRepository);
 const updateNoteController = new UpdateNoteController(folderRepository, noteRepository, createUnitOfWork);
-const deleteNoteController = new DeleteNoteController(noteRepository);
+const deleteNoteController = new DeleteNoteController(noteRepository, createUnitOfWork);
 const searchNotesController = new SearchNotesController(noteRepository);
 const getNotesByTagsController = new GetNotesByTagsController(
     noteRepository,

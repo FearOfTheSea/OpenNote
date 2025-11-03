@@ -28,22 +28,11 @@ switch (env) {
         noteRepository = new InMemoryNoteRepository(folderRepository);
         tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
 
+        // Update folderRepository with noteRepository reference
+        (folderRepository as any).noteRepository = noteRepository;
+
         createUnitOfWork = () => {
             return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
-        };
-        break;
-
-    case "production":
-        folderRepository = new PostgreFolderRepository();
-        noteRepository = new PostgreNoteRepository();
-        tagRepository = new PostgreTagRepository();
-
-        createUnitOfWork = () => {
-            const tx = dbClient.createTransaction("unit_of_work_tx");
-            const noteRepo = new PostgreNoteRepository(tx);
-            const folderRepo = new PostgreFolderRepository(tx);
-            const tagRepo = new PostgreTagRepository(tx);
-            return new PostgreUnitOfWork(tx, noteRepo, tagRepo, folderRepo);
         };
         break;
 
@@ -52,6 +41,9 @@ switch (env) {
         folderRepository = new InMemoryFolderRepository();
         noteRepository = new InMemoryNoteRepository(folderRepository);
         tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
+
+        // Update folderRepository with noteRepository reference
+        (folderRepository as any).noteRepository = noteRepository;
 
         createUnitOfWork = () => {
             return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
