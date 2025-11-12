@@ -28,6 +28,9 @@ export function createFolderRoutes(
                 userId: req.body.user_id || "user",
                 parentFolderId: req.body.parent_folder_id,
             });
+
+            console.log("[FolderRoutes] Create folder: User id: ", req.body.user_id);
+
             res.status(201).json(result);
         } catch (error) {
             res.status(400).json({ error: (error as Error).message });
@@ -50,6 +53,8 @@ export function createFolderRoutes(
     // Get all folders
     router.get("/", async (req: Request, res: Response) => {
         try {
+            console.log(`[FolderRoutes] Getting all folders from user ${req.query.user_id}`);
+
             const userId = (req.query.user_id as string) || "user";
             const result = await getAllFoldersController.apply({ userId });
             res.json(result);
@@ -71,6 +76,7 @@ export function createFolderRoutes(
     // Get folder contents (subfolders and notes)
     router.get("/:id/contents", async (req: Request, res: Response) => {
         try {
+            console.log(`[FolderRoutes] Getting a folder's content from user ${req.query.user_id}`);
             const result = await getFolderContentsController.apply({
                 userId: (req.query.user_id as string) || "user",
                 folderId: req.params.id,

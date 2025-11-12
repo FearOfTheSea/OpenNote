@@ -40,6 +40,8 @@ export class CreateNote {
             await unitOfWork.notes.save(note);
             await unitOfWork.tags.syncTagsForNoteUpdate(note.id, note.content);
             await unitOfWork.commit();
+
+            console.log(`[CreateNote] Created note with name = "${note.name}"`);
             return { note };
         } catch (error) {
             await unitOfWork.rollback();

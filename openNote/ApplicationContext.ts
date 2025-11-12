@@ -1,16 +1,16 @@
+import { NoteRepository } from "./application/repositories/NoteRepository.ts";
+import { FolderRepository } from "./application/repositories/FolderRepository.ts";
+import { TagRepository } from "./application/repositories/TagRepository.ts";
 import { InMemoryNoteRepository } from "./infrastructure/repositories/InMemoryNoteRepository.ts";
 import { InMemoryFolderRepository } from "./infrastructure/repositories/InMemoryFolderRepository.ts";
 import { InMemoryTagRepository } from "./infrastructure/repositories/InMemoryTagRepository.ts";
-import { FolderRepository } from "./application/repositories/FolderRepository.ts";
-import { TagRepository } from "./application/repositories/TagRepository.ts";
-import { NoteRepository } from "./application/repositories/NoteRepository.ts";
+import { InMemoryUnitOfWork } from "./infrastructure/repositories/InMemoryUnitOfWork.ts";
+import type { IUnitOfWork } from "./application/IUnitOfWork.ts";
+import client from "./infrastructure/db/postgresClient.ts";
 import { PostgreNoteRepository } from "./infrastructure/repositories/PostgreNoteRepository.ts";
 import { PostgreFolderRepository } from "./infrastructure/repositories/PostgreFolderRepository.ts";
 import { PostgreTagRepository } from "./infrastructure/repositories/PostgreTagRepository.ts";
 import { PostgreUnitOfWork } from "./infrastructure/db/PostgreUnitOfWork.ts";
-import { InMemoryUnitOfWork } from "./infrastructure/repositories/InMemoryUnitOfWork.ts";
-import type { IUnitOfWork } from "./application/IUnitOfWork.ts";
-import dbClient from "./infrastructure/db/postgresClient.ts";
 
 const env = Deno.env.get("NODE_ENV") || "development";
 
@@ -34,6 +34,22 @@ switch (env) {
         createUnitOfWork = () => {
             return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
         };
+        break;
+
+    case "production":
+        folderRepository = new PostgreFolderRepository();
+        noteRepository = new PostgreNoteRepository();
+        tagRepository = new PostgreTagRepository();
+
+        createUnitOfWork = () => {
+            const tx = client.createTransaction("unit_of_work_tx");
+            const noteRepo = new PostgreNoteRepository(tx);
+            const folderRepo = new PostgreFolderRepository(tx);
+            const tagRepo = new PostgreTagRepository(tx);
+            return new PostgreUnitOfWork(tx, noteRepo, tagRepo, folderRepo);
+        };
+        console.log("Running in production mode!");
+
         break;
 
     case "development":

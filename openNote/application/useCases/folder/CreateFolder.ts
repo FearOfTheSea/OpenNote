@@ -2,7 +2,7 @@ import { Folder } from "../../../domain/entities/Folder.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
 
 export interface CreateFolderInput {
-readonly name: string;
+    readonly name: string;
     readonly userId: string;
     readonly parentFolderId?: string;
 }
@@ -28,6 +28,8 @@ export class CreateFolder {
         try {
             const folder = new Folder(input.name, input.userId, input.parentFolderId);
             await this.folderRepository.save(folder);
+            console.log(`[CreateFolder] Created folder with name = "${folder.name}"`);
+
             return { folder: folder };
         } catch (error) {
             throw error;

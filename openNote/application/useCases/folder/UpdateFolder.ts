@@ -50,7 +50,7 @@ export class UpdateFolder {
                 undefined,
                 existingFolder.userId,
             );
-            
+
             if (neighboring_folders.some((folder) => folder.name === newName)) {
                 throw new Error("Folder with the same name already exists in the parent folder");
             }
@@ -66,6 +66,10 @@ export class UpdateFolder {
         };
 
         await this.folderRepository.save(updatedFolder);
+        console.log(
+            `Updated folder: id: ${updatedFolder.id}, name: ${updatedFolder.name}, parentFolderId: ${updatedFolder.parentFolderId}, userId: ${updatedFolder.userId}`,
+        );
+
         return { folder: updatedFolder };
     }
 }

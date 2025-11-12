@@ -70,6 +70,11 @@ export class UpdateNote {
             await uow.notes.save(updatedNote);
             await uow.tags.syncTagsForNoteUpdate(updatedNote.id, updatedNote.content);
             await uow.commit();
+
+            console.log(
+                `Updated note: id: ${updatedNote.id}, name: ${updatedNote.name}, content: ${updatedNote.content}, parentFolderId: ${updatedNote.parentFolderId}, tags: ${updatedNote.tagIds}`,
+            );
+
             return { note: updatedNote };
         } catch (error) {
             await uow.rollback();

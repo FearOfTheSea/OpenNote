@@ -23,6 +23,11 @@ export function createNoteRoutes(
     // Create a new note
     router.post("/", async (req: Request, res: Response) => {
         try {
+            console.log(
+                `[NoteRoutes] Creating new note: name: ${req.body.name}, content: ${
+                    req.body.content || ""
+                }, parentFolderId: ${req.body.parent_folder_id}`,
+            );
             const result = await createNoteController.apply({
                 name: req.body.name,
                 content: req.body.content || "",
@@ -37,6 +42,7 @@ export function createNoteRoutes(
     // Get notes with optional tag filtering
     router.get("/", async (req: Request, res: Response) => {
         try {
+            console.log(`[NoteRoutes] Getting all notes from user ${req.query.user_id}`);
             const tagsParam = req.query.tags as string;
             const userId = (req.query.user_id as string) || "user";
 

@@ -1,4 +1,4 @@
-import { AbstractMigration, ClientPostgreSQL, Info } from "nessie";
+import { AbstractMigration, ClientPostgreSQL, Info } from "https://deno.land/x/nessie@2.0.11/mod.ts";
 
 export default class extends AbstractMigration<ClientPostgreSQL> {
     /** Runs on migrate */
