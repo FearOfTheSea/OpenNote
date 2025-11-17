@@ -1,9 +1,11 @@
 import { IUnitOfWork } from "../../../application/IUnitOfWork.ts";
 import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
+import { NoteRepository } from "../../../application/repositories/NoteRepository.ts";
 import { DeleteFolder, DeleteFolderInput } from "../../../application/useCases/folder/DeleteFolder.ts";
 
 export interface DeleteFolderRequest {
     id: string;
+    noteRepository: NoteRepository;
 }
 
 export class DeleteFolderController {

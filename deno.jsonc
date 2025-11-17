@@ -1,6 +1,6 @@
 {
     "tasks": {
-        "dev": "deno run --watch --allow-net --allow-env --allow-read openNote/Main.ts",
+        "dev": "deno run --watch --allow-net --allow-env --allow-read --env-file openNote/Main.ts",
         "rollback-all": "deno run -A https://deno.land/x/nessie/cli.ts rollback all --config ./openNote/infrastructure/db/nessie.config.ts",
         "migrate": "deno run -A https://deno.land/x/nessie/cli.ts migrate --config ./openNote/infrastructure/db/nessie.config.ts",
         "reset-db": "deno task rollback-all && deno task migrate"

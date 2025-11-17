@@ -28,9 +28,6 @@ switch (env) {
         noteRepository = new InMemoryNoteRepository(folderRepository);
         tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
 
-        // Update folderRepository with noteRepository reference
-        (folderRepository as any).noteRepository = noteRepository;
-
         createUnitOfWork = () => {
             return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
         };
@@ -57,9 +54,6 @@ switch (env) {
         folderRepository = new InMemoryFolderRepository();
         noteRepository = new InMemoryNoteRepository(folderRepository);
         tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
-
-        // Update folderRepository with noteRepository reference
-        (folderRepository as any).noteRepository = noteRepository;
 
         createUnitOfWork = () => {
             return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);

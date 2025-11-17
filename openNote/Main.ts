@@ -68,12 +68,25 @@ const getAllTagsController = new GetAllTagsController(tagRepository);
 //====MOCKED DATA FOR TESTING====
 //===============================
 const mocked_user_id = "d1e931d0-24bd-43d4-a3b7-61594efc909c";
-const newfolder1 = (await folderRepository.findByName("newfolder1", mocked_user_id)).at(0);
-const newfolder2 = (await folderRepository.findByName("newfolder2", mocked_user_id)).at(0);
-const newfolder3 = (await folderRepository.findByName("newfolder3", mocked_user_id)).at(0);
-const subfolder1 = (await folderRepository.findByName("subfolder1", mocked_user_id)).at(0);
-const subfolder2 = (await folderRepository.findByName("subfolder2", mocked_user_id)).at(0);
-const subfolder3 = (await folderRepository.findByName("subfolder3", mocked_user_id)).at(0);
+
+const newfolder1 = await createFolderController.apply({ name: "newfolder1", userId: mocked_user_id });
+const newfolder2 = await createFolderController.apply({ name: "newfolder2", userId: mocked_user_id });
+const newfolder3 = await createFolderController.apply({ name: "newfolder3", userId: mocked_user_id });
+const subfolder1 = await createFolderController.apply({
+    name: "subfolder1",
+    userId: mocked_user_id,
+    parentFolderId: newfolder1.id,
+});
+const subfolder2 = await createFolderController.apply({
+    name: "subfolder2",
+    userId: mocked_user_id,
+    parentFolderId: newfolder1.id,
+});
+const subfolder3 = await createFolderController.apply({
+    name: "subfolder3",
+    userId: mocked_user_id,
+    parentFolderId: newfolder1.id,
+});
 
 if (newfolder1 && newfolder2 && newfolder3 && subfolder1 && subfolder2 && subfolder3) {
     await createNoteController.apply({

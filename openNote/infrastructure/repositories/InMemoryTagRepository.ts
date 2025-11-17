@@ -86,8 +86,8 @@ export class InMemoryTagRepository implements TagRepository {
     async deleteOrphanedTag(id: string): Promise<void> {
     }
 
-// openNote/infrastructure/repositories/InMemoryTagRepository.ts
-// Update cleanupOrphanTags method:
+    // openNote/infrastructure/repositories/InMemoryTagRepository.ts
+    // Update cleanupOrphanTags method:
 
     async cleanupOrphanTags(): Promise<void> {
         // Recalculate reference counts from scratch

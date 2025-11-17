@@ -1,4 +1,8 @@
+// import modal from "./modal.js";
+
 const API_BASE = "http://localhost:3000/api";
+
+const mocked_user_id = "d1e931d0-24bd-43d4-a3b7-61594efc909c";
 
 // Application state
 const state = {
@@ -6,7 +10,7 @@ const state = {
     folders: [],
     notes: [],
     tags: [],
-    navigationStack: []
+    navigationStack: [],
 };
 
 // Initialize the application
@@ -20,7 +24,7 @@ async function init() {
 // API calls
 async function loadFolders() {
     try {
-        const response = await fetch(`${API_BASE}/folders?user_id=user`);
+        const response = await fetch(`${API_BASE}/folders?user_id=${mocked_user_id}`);
         if (response.ok) {
             const data = await response.json();
             state.folders = data.folders || data || [];
@@ -34,7 +38,7 @@ async function loadFolders() {
 
 async function loadTags() {
     try {
-        const response = await fetch(`${API_BASE}/tags?user_id=user`);
+        const response = await fetch(`${API_BASE}/tags?user_id=${mocked_user_id}`);
         if (response.ok) {
             const data = await response.json();
             state.tags = Array.isArray(data) ? data : (data.tags || []);
@@ -48,12 +52,12 @@ async function loadContent(folderId = null) {
     try {
         let url;
         if (folderId) {
-            url = `${API_BASE}/folders/${folderId}/contents?user_id=user`;
+            url = `${API_BASE}/folders/${folderId}/contents?user_id=${mocked_user_id}`;
         } else {
             // Load root folders and all notes
             const [foldersRes, notesRes] = await Promise.all([
-                fetch(`${API_BASE}/folders?user_id=user`),
-                fetch(`${API_BASE}/notes?user_id=user`)
+                fetch(`${API_BASE}/folders?user_id=${mocked_user_id}`),
+                fetch(`${API_BASE}/notes?user_id=${mocked_user_id}`),
             ]);
 
             if (foldersRes.ok && notesRes.ok) {
@@ -64,7 +68,7 @@ async function loadContent(folderId = null) {
                 const allNotes = Array.isArray(notesData) ? notesData : (notesData.notes || []);
 
                 // Filter root folders (no parent)
-                state.folders = allFolders.filter(f => !f.parentFolderId);
+                state.folders = allFolders.filter((f) => !f.parentFolderId);
                 state.notes = allNotes;
 
                 renderContent();
@@ -97,7 +101,7 @@ function renderFolderList() {
         return;
     }
 
-    list.innerHTML = state.folders.map(folder => `
+    list.innerHTML = state.folders.map((folder) => `
         <li class="row" onclick="navigateToFolder('${folder.id}')">
             <span>📁 ${escapeHtml(folder.name)}</span>
         </li>
@@ -110,7 +114,7 @@ function renderContent() {
 
     // Update title
     if (state.currentFolderId) {
-        const currentFolder = state.folders.find(f => f.id === state.currentFolderId);
+        const currentFolder = state.folders.find((f) => f.id === state.currentFolderId);
         title.textContent = currentFolder ? currentFolder.name : "Folder";
     } else {
         title.textContent = "Home";
@@ -120,7 +124,7 @@ function renderContent() {
     const items = [];
 
     // Add folder cards
-    state.folders.forEach(folder => {
+    state.folders.forEach((folder) => {
         items.push(`
             <div class="folder-card" onclick="navigateToFolder('${folder.id}')">
                 <div class="card-icon">📁</div>
@@ -135,7 +139,7 @@ function renderContent() {
     });
 
     // Add note cards
-    state.notes.forEach(note => {
+    state.notes.forEach((note) => {
         const preview = note.content.substring(0, 100) + (note.content.length > 100 ? "..." : "");
         items.push(`
             <div class="note-card" onclick="openNote('${note.id}')">
@@ -190,9 +194,9 @@ function goHome() {
 // CRUD operations
 async function showCreateNoteDialog() {
     // Get folders for selection
-    const folderOptions = state.folders.map(f => ({
+    const folderOptions = state.folders.map((f) => ({
         value: f.id,
-        label: f.name
+        label: f.name,
     }));
 
     if (folderOptions.length === 0) {
@@ -208,7 +212,7 @@ async function showCreateNoteDialog() {
                 label: "Note Name",
                 type: "text",
                 required: true,
-                placeholder: "My note"
+                placeholder: "My note",
             },
             {
                 name: "parent_folder_id",
@@ -216,10 +220,10 @@ async function showCreateNoteDialog() {
                 type: "select",
                 required: true,
                 options: folderOptions,
-                value: state.currentFolderId || folderOptions[0].value
-            }
+                value: state.currentFolderId || folderOptions[0].value,
+            },
         ],
-        submitText: "Create"
+        submitText: "Create",
     });
 
     if (result) {
@@ -230,14 +234,14 @@ async function showCreateNoteDialog() {
                 body: JSON.stringify({
                     name: result.name,
                     content: "",
-                    parent_folder_id: result.parent_folder_id
-                })
+                    parent_folder_id: result.parent_folder_id,
+                }),
             });
 
             if (response.ok) {
                 const data = await response.json();
                 const noteId = data.note?.id || data.id;
-                window.location.href = `/note/${noteId}`;
+                globalThis.location.href = `/note/${noteId}`;
             } else {
                 const error = await response.json();
                 await modal.alert(error.error || "Failed to create note", "Error");
@@ -251,6 +255,7 @@ async function showCreateNoteDialog() {
 
 async function showCreateFolderDialog() {
     const result = await modal.prompt("Enter folder name:", "", "Create Folder");
+    console.log(result);
 
     if (result) {
         try {
@@ -259,9 +264,9 @@ async function showCreateFolderDialog() {
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     name: result,
-                    user_id: "user",
-                    parent_folder_id: state.currentFolderId
-                })
+                    user_id: mocked_user_id,
+                    parent_folder_id: state.currentFolderId,
+                }),
             });
 
             if (response.ok) {
@@ -279,7 +284,7 @@ async function showCreateFolderDialog() {
 }
 
 async function editFolder(folderId) {
-    const folder = state.folders.find(f => f.id === folderId);
+    const folder = state.folders.find((f) => f.id === folderId);
     if (!folder) return;
 
     const newName = await modal.prompt("Enter new folder name:", folder.name, "Rename Folder");
@@ -289,7 +294,7 @@ async function editFolder(folderId) {
             const response = await fetch(`${API_BASE}/folders/${folderId}`, {
                 method: "PUT",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ name: newName })
+                body: JSON.stringify({ name: newName }),
             });
 
             if (response.ok) {
@@ -309,13 +314,13 @@ async function editFolder(folderId) {
 async function deleteFolder(folderId) {
     const confirmed = await modal.confirm(
         "Are you sure you want to delete this folder? All contents will be deleted.",
-        "Delete Folder"
+        "Delete Folder",
     );
 
     if (confirmed) {
         try {
             const response = await fetch(`${API_BASE}/folders/${folderId}`, {
-                method: "DELETE"
+                method: "DELETE",
             });
 
             if (response.ok) {
@@ -335,13 +340,13 @@ async function deleteFolder(folderId) {
 async function deleteNote(noteId) {
     const confirmed = await modal.confirm(
         "Are you sure you want to delete this note?",
-        "Delete Note"
+        "Delete Note",
     );
 
     if (confirmed) {
         try {
             const response = await fetch(`${API_BASE}/notes/${noteId}`, {
-                method: "DELETE"
+                method: "DELETE",
             });
 
             if (response.ok) {
@@ -357,7 +362,7 @@ async function deleteNote(noteId) {
 }
 
 function openNote(noteId) {
-    window.location.href = `/note/${noteId}`;
+    globalThis.location.href = `/note/${noteId}`;
 }
 
 // Event listeners
@@ -377,7 +382,9 @@ function setupEventListeners() {
         const query = await modal.prompt("Search notes:", "", "Search");
         if (query) {
             try {
-                const response = await fetch(`${API_BASE}/notes/search?q=${encodeURIComponent(query)}&user_id=user`);
+                const response = await fetch(
+                    `${API_BASE}/notes/search?q=${encodeURIComponent(query)}&user_id=${mocked_user_id}`,
+                );
                 if (response.ok) {
                     const data = await response.json();
                     state.notes = data.notes || [];
@@ -404,14 +411,14 @@ function showError(message) {
 }
 
 // Make functions globally available
-window.navigateToFolder = navigateToFolder;
-window.goBack = goBack;
-window.goHome = goHome;
-window.showCreateNoteDialog = showCreateNoteDialog;
-window.editFolder = editFolder;
-window.deleteFolder = deleteFolder;
-window.deleteNote = deleteNote;
-window.openNote = openNote;
+globalThis.navigateToFolder = navigateToFolder;
+globalThis.goBack = goBack;
+globalThis.goHome = goHome;
+globalThis.showCreateNoteDialog = showCreateNoteDialog;
+globalThis.editFolder = editFolder;
+globalThis.deleteFolder = deleteFolder;
+globalThis.deleteNote = deleteNote;
+globalThis.openNote = openNote;
 
 // Initialize when DOM is ready
 if (document.readyState === "loading") {

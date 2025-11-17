@@ -1,22 +1,9 @@
 import { FolderRepository } from "../../application/repositories/FolderRepository.ts";
 import { Folder } from "../../domain/entities/Folder.ts";
 import { NoteRepository } from "../../application/repositories/NoteRepository.ts";
-import { Note } from "../../domain/entities/Note.ts";
 
 export class InMemoryFolderRepository implements FolderRepository {
     private folders: Folder[] = [];
-
-    constructor() {
-        const newfolder1 = new Folder("newfolder1", "user", undefined);
-        const newfolder2 = new Folder("newfolder2", "user", undefined);
-        const newfolder3 = new Folder("newfolder3", "user", undefined);
-
-        const subfolder1 = new Folder("subfolder1", "user", newfolder1.id);
-        const subfolder2 = new Folder("subfolder2", "user", newfolder1.id);
-        const subfolder3 = new Folder("subfolder3", "user", newfolder1.id);
-
-        this.folders.push(newfolder1, newfolder2, newfolder3, subfolder1, subfolder2, subfolder3);
-    }
 
     async findAll(userId: string): Promise<Folder[]> {
         return this.folders.filter((folder) => folder.userId === userId);
@@ -66,7 +53,7 @@ export class InMemoryFolderRepository implements FolderRepository {
         }
     }
 
-    async delete(id: string): Promise<void> {
+    async delete(id: string, noteRepository: NoteRepository): Promise<void> {
         // Find all subfolders recursively
         const foldersToDelete = new Set<string>([id]);
         let foundNew = true;
@@ -74,7 +61,10 @@ export class InMemoryFolderRepository implements FolderRepository {
         while (foundNew) {
             foundNew = false;
             for (const folder of this.folders) {
-                if (folder.parentFolderId && foldersToDelete.has(folder.parentFolderId) && !foldersToDelete.has(folder.id)) {
+                if (
+                    folder.parentFolderId && foldersToDelete.has(folder.parentFolderId) &&
+                    !foldersToDelete.has(folder.id)
+                ) {
                     foldersToDelete.add(folder.id);
                     foundNew = true;
                 }
@@ -82,11 +72,11 @@ export class InMemoryFolderRepository implements FolderRepository {
         }
 
         // Delete all notes in these folders if noteRepository is available
-        if (this.noteRepository) {
-            const allNotes = await this.noteRepository.findAll("user");
+        if (noteRepository) {
+            const allNotes = await noteRepository.findAll("user");
             for (const note of allNotes) {
                 if (foldersToDelete.has(note.parentFolderId)) {
-                    await this.noteRepository.delete(note.id);
+                    await noteRepository.delete(note.id);
                 }
             }
         }

@@ -15,6 +15,9 @@ class Modal {
      * @returns {Promise} Resolves with button value or input value
      */
     show(config) {
+        // Ensure any existing modal is cleaned up before showing the next one
+        this.close(null);
+
         return new Promise((resolve) => {
             this.currentResolve = resolve;
             this.render(config);
@@ -22,9 +25,6 @@ class Modal {
     }
 
     render(config) {
-        // Remove existing modal if any
-        this.close();
-
         // Create overlay
         this.overlay = document.createElement("div");
         this.overlay.className = "modal-overlay";

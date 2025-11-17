@@ -1,8 +1,10 @@
 import { IUnitOfWork } from "../../IUnitOfWork.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
+import { NoteRepository } from "../../repositories/NoteRepository.ts";
 
 export interface DeleteFolderInput {
     id: string;
+    noteRepository: NoteRepository;
 }
 
 export class DeleteFolder {
@@ -21,7 +23,7 @@ export class DeleteFolder {
         const uow = this.createNoteUnitOfWork();
         try {
             await uow.begin();
-            await uow.folders.delete(input.id);
+            await uow.folders.delete(input.id, input.noteRepository);
             await uow.tags.cleanupOrphanTags();
             await uow.commit();
         } catch (error) {
