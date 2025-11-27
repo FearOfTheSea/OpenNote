@@ -1,9 +1,9 @@
 import { AbstractMigration, ClientPostgreSQL, Info } from "nessie";
 
 export default class extends AbstractMigration<ClientPostgreSQL> {
-    /** Runs on migrate */
-    async up(_info: Info): Promise<void> {
-        await this.client.queryArray(`
+  /** Runs on migrate */
+  async up(_info: Info): Promise<void> {
+    await this.client.queryArray(`
         CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
         CREATE TABLE users (
@@ -22,14 +22,14 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
-        
+
         CREATE INDEX idx_folders_user_id ON folders(user_id);
-        
+
         CREATE TABLE tags (
             tag_id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
             tag_name VARCHAR(255) not null
         );
-        
+
         CREATE UNIQUE INDEX unique_tag_name_lower
         ON tags (LOWER(tag_name));
 
@@ -38,7 +38,7 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
             title VARCHAR(255) NOT NULL,
             content TEXT,
             -- khong dung ref user_id cuz
-            -- Open Note yeu cau note phai thuoc mot folder 
+            -- Open Note yeu cau note phai thuoc mot folder
             -- user_id UUID REFERENCES users(user_id) ON DELETE CASCADE,
             folder_id UUID REFERENCES folders(folder_id) ON DELETE CASCADE,
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
@@ -74,22 +74,22 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
         EXECUTE FUNCTION set_updated_at();
 
     `);
-    }
+  }
 
-    /** Runs on rollback */
-    async down(_info: Info): Promise<void> {
-        await this.client.queryArray(
-            "DROP TRIGGER IF EXISTS trigger_update_notes_updated_at ON notes;",
-        );
-        await this.client.queryArray(
-            "DROP TRIGGER IF EXISTS trigger_update_folders_updated_at ON folders;",
-        );
-        await this.client.queryArray("DROP FUNCTION IF EXISTS set_updated_at;");
-        await this.client.queryArray("DROP TABLE IF EXISTS attachments;");
-        await this.client.queryArray("DROP TABLE IF EXISTS note_tags;");
-        await this.client.queryArray("DROP TABLE IF EXISTS notes;");
-        await this.client.queryArray("DROP TABLE IF EXISTS tags;");
-        await this.client.queryArray("DROP TABLE IF EXISTS folders;");
-        await this.client.queryArray("DROP TABLE IF EXISTS users;");
-    }
+  /** Runs on rollback */
+  async down(_info: Info): Promise<void> {
+    await this.client.queryArray(
+      "DROP TRIGGER IF EXISTS trigger_update_notes_updated_at ON notes;",
+    );
+    await this.client.queryArray(
+      "DROP TRIGGER IF EXISTS trigger_update_folders_updated_at ON folders;",
+    );
+    await this.client.queryArray("DROP FUNCTION IF EXISTS set_updated_at;");
+    await this.client.queryArray("DROP TABLE IF EXISTS attachments;");
+    await this.client.queryArray("DROP TABLE IF EXISTS note_tags;");
+    await this.client.queryArray("DROP TABLE IF EXISTS notes;");
+    await this.client.queryArray("DROP TABLE IF EXISTS tags;");
+    await this.client.queryArray("DROP TABLE IF EXISTS folders;");
+    await this.client.queryArray("DROP TABLE IF EXISTS users;");
+  }
 }

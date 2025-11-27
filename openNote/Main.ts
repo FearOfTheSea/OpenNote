@@ -34,10 +34,10 @@ app.use(express.static(join(__dirname, "interface/web/public")));
 const port = Deno.env.get("PORT") || 3000;
 
 app.use((_req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "*");
-    res.header("Access-Control-Allow-Headers", "Content-Type");
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-    next();
+  res.header("Access-Control-Allow-Origin", "*");
+  res.header("Access-Control-Allow-Headers", "Content-Type");
+  res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
+  next();
 });
 
 // Initialize controllers
@@ -48,8 +48,8 @@ const updateNoteController = new UpdateNoteController(folderRepository, noteRepo
 const deleteNoteController = new DeleteNoteController(noteRepository, createUnitOfWork);
 const searchNotesController = new SearchNotesController(noteRepository);
 const getNotesByTagsController = new GetNotesByTagsController(
-    noteRepository,
-    tagRepository,
+  noteRepository,
+  tagRepository,
 );
 
 const createFolderController = new CreateFolderController(folderRepository);
@@ -58,8 +58,8 @@ const getAllFoldersController = new GetAllFoldersController(folderRepository);
 const updateFolderController = new UpdateFolderController(folderRepository);
 const deleteFolderController = new DeleteFolderController(folderRepository, noteRepository, createUnitOfWork);
 const getFolderContentsController = new GetFolderContentsController(
-    folderRepository,
-    noteRepository,
+  folderRepository,
+  noteRepository,
 );
 const searchFoldersController = new SearchFoldersController(folderRepository);
 
@@ -74,129 +74,129 @@ const newfolder1 = await createFolderController.apply({ name: "newfolder1", user
 const newfolder2 = await createFolderController.apply({ name: "newfolder2", userId: mocked_user_id });
 const newfolder3 = await createFolderController.apply({ name: "newfolder3", userId: mocked_user_id });
 const subfolder1 = await createFolderController.apply({
-    name: "subfolder1",
-    userId: mocked_user_id,
-    parentFolderId: newfolder1.id,
+  name: "subfolder1",
+  userId: mocked_user_id,
+  parentFolderId: newfolder1.id,
 });
 const subfolder2 = await createFolderController.apply({
-    name: "subfolder2",
-    userId: mocked_user_id,
-    parentFolderId: newfolder1.id,
+  name: "subfolder2",
+  userId: mocked_user_id,
+  parentFolderId: newfolder1.id,
 });
 const subfolder3 = await createFolderController.apply({
-    name: "subfolder3",
-    userId: mocked_user_id,
-    parentFolderId: newfolder1.id,
+  name: "subfolder3",
+  userId: mocked_user_id,
+  parentFolderId: newfolder1.id,
 });
 
 if (newfolder1 && newfolder2 && newfolder3 && subfolder1 && subfolder2 && subfolder3) {
-    await createNoteController.apply({
-        name: "f1note1",
-        content: `f1content
+  await createNoteController.apply({
+    name: "f1note1",
+    content: `f1content
     #tag1
     #tag2
     # not a tag`,
-        parentFolderId: newfolder1.id,
-    });
-    await createNoteController.apply({
-        name: "f1note2",
-        content: `f2content
+    parentFolderId: newfolder1.id,
+  });
+  await createNoteController.apply({
+    name: "f1note2",
+    content: `f2content
     #tag1
     #tag3`,
-        parentFolderId: newfolder1.id,
-    });
-    await createNoteController.apply({
-        name: "f1note3",
-        content: `f3content
+    parentFolderId: newfolder1.id,
+  });
+  await createNoteController.apply({
+    name: "f1note3",
+    content: `f3content
     #tag2
     #tag3`,
-        parentFolderId: newfolder1.id,
-    });
-    await createNoteController.apply({
-        name: "f2note1",
-        content: "content",
-        parentFolderId: newfolder2.id,
-    });
-    await createNoteController.apply({
-        name: "f2note2",
-        content: "content",
-        parentFolderId: newfolder2.id,
-    });
-    await createNoteController.apply({
-        name: "f2note3",
-        content: "content",
-        parentFolderId: newfolder2.id,
-    });
-    await createNoteController.apply({
-        name: "f3note1",
-        content: "content",
-        parentFolderId: newfolder3.id,
-    });
-    await createNoteController.apply({
-        name: "f3note2",
-        content: "content",
-        parentFolderId: newfolder3.id,
-    });
-    await createNoteController.apply({
-        name: "f3note3",
-        content: "content",
-        parentFolderId: newfolder3.id,
-    });
-    await createNoteController.apply({
-        name: "sf3note1",
-        content: `sf3-1content
+    parentFolderId: newfolder1.id,
+  });
+  await createNoteController.apply({
+    name: "f2note1",
+    content: "content",
+    parentFolderId: newfolder2.id,
+  });
+  await createNoteController.apply({
+    name: "f2note2",
+    content: "content",
+    parentFolderId: newfolder2.id,
+  });
+  await createNoteController.apply({
+    name: "f2note3",
+    content: "content",
+    parentFolderId: newfolder2.id,
+  });
+  await createNoteController.apply({
+    name: "f3note1",
+    content: "content",
+    parentFolderId: newfolder3.id,
+  });
+  await createNoteController.apply({
+    name: "f3note2",
+    content: "content",
+    parentFolderId: newfolder3.id,
+  });
+  await createNoteController.apply({
+    name: "f3note3",
+    content: "content",
+    parentFolderId: newfolder3.id,
+  });
+  await createNoteController.apply({
+    name: "sf3note1",
+    content: `sf3-1content
     #tag2
     #tag1
     #tag4`,
-        parentFolderId: subfolder3.id,
-    });
-    await createNoteController.apply({
-        name: "sf3note2",
-        content: `sf3-2content
+    parentFolderId: subfolder3.id,
+  });
+  await createNoteController.apply({
+    name: "sf3note2",
+    content: `sf3-2content
     #tag2`,
-        parentFolderId: subfolder3.id,
-    });
-    await createNoteController.apply({
-        name: "sf3note3",
-        content: "content",
-        parentFolderId: subfolder3.id,
-    });
+    parentFolderId: subfolder3.id,
+  });
+  await createNoteController.apply({
+    name: "sf3note3",
+    content: "content",
+    parentFolderId: subfolder3.id,
+  });
 }
 
 //=====================
 //====SETUP ROUTES=====
 //=====================
 app.use(
-    "/api/notes",
-    createNoteRoutes(
-        createNoteController,
-        deleteNoteController,
-        getAllNotesController,
-        getNoteByIdController,
-        getNotesByTagsController,
-        searchNotesController,
-        updateNoteController,
-    ),
+  "/api/notes",
+  createNoteRoutes(
+    createNoteController,
+    deleteNoteController,
+    getAllNotesController,
+    getNoteByIdController,
+    getNotesByTagsController,
+    searchNotesController,
+    updateNoteController,
+  ),
 );
 
 app.use(
-    "/api/folders",
-    createFolderRoutes(
-        createFolderController,
-        deleteFolderController,
-        getAllFoldersController,
-        getFolderByIdController,
-        getFolderContentsController,
-        searchFoldersController,
-        updateFolderController,
-    ),
+  "/api/folders",
+  createFolderRoutes(
+    createFolderController,
+    deleteFolderController,
+    getAllFoldersController,
+    getFolderByIdController,
+    getFolderContentsController,
+    searchFoldersController,
+    updateFolderController,
+  ),
 );
 
 app.use(
-    "/api/tags",
-    createTagRoutes(
-        getAllTagsController,
-    ),
+  "/api/tags",
+  createTagRoutes(
+    getAllTagsController,
+  ),
 );
 
 app.use("/api/tags", createTagRoutes(getAllTagsController));
@@ -204,5 +204,5 @@ app.use("/api/tags", createTagRoutes(getAllTagsController));
 app.use(createViewRoutes(__dirname));
 
 app.listen(port, () => {
-    console.log(`Server running at http://localhost:${port}`);
+  console.log(`Server running at http://localhost:${port}`);
 });

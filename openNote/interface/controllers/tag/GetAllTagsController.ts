@@ -2,26 +2,26 @@ import { GetAllTags, GetAllTagsInput } from "../../../application/useCases/tag/G
 import { TagRepository } from "../../../application/repositories/TagRepository.ts";
 
 export interface TagViewObject {
-    readonly id: string;
-    readonly name: string;
+  readonly id: string;
+  readonly name: string;
 }
 
 export interface GetAllTagsRequest {
-    readonly userId: string;
+  readonly userId: string;
 }
 
 export interface GetAllTagsResponse {
-    readonly tags: TagViewObject[];
+  readonly tags: TagViewObject[];
 }
 
 export class GetAllTagsController {
-    private useCase: GetAllTags;
+  private useCase: GetAllTags;
 
-    constructor(tagRepository: TagRepository) {
-        this.useCase = new GetAllTags(tagRepository);
-    }
+  constructor(tagRepository: TagRepository) {
+    this.useCase = new GetAllTags(tagRepository);
+  }
 
-    async apply(request: GetAllTagsRequest): Promise<GetAllTagsResponse> {
-        return await this.useCase.execute(request as GetAllTagsInput) as GetAllTagsResponse;
-    }
+  async apply(request: GetAllTagsRequest): Promise<GetAllTagsResponse> {
+    return await this.useCase.execute(request as GetAllTagsInput) as GetAllTagsResponse;
+  }
 }

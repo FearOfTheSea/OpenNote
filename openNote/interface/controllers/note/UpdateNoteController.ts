@@ -5,33 +5,33 @@ import { UpdateNote, UpdateNoteInput } from "../../../application/useCases/note/
 import { GetNoteByIdResponse } from "./GetNoteByIdController.ts";
 
 export interface UpdateNoteRequest {
-    readonly id: string;
-    readonly newName?: string;
-    readonly newContent?: string;
-    readonly newParentFolderId?: string;
+  readonly id: string;
+  readonly newName?: string;
+  readonly newContent?: string;
+  readonly newParentFolderId?: string;
 }
 
 export interface UpdateNoteResponse {
-    readonly note: GetNoteByIdResponse;
+  readonly note: GetNoteByIdResponse;
 }
 
 export class UpdateNoteController {
-    private useCase: UpdateNote;
+  private useCase: UpdateNote;
 
-    constructor(
-        folderRepository: FolderRepository,
-        noteRepository: NoteRepository,
-        createNoteUnitOfWork: () => IUnitOfWork,
-    ) {
-        this.useCase = new UpdateNote(folderRepository, noteRepository, createNoteUnitOfWork);
-    }
+  constructor(
+    folderRepository: FolderRepository,
+    noteRepository: NoteRepository,
+    createNoteUnitOfWork: () => IUnitOfWork,
+  ) {
+    this.useCase = new UpdateNote(folderRepository, noteRepository, createNoteUnitOfWork);
+  }
 
-    async apply(request: UpdateNoteRequest): Promise<UpdateNoteResponse> {
-        const input: UpdateNoteInput = request as UpdateNoteInput;
-        try {
-            return (await this.useCase.execute(input)) as UpdateNoteResponse;
-        } catch (error) {
-            throw error;
-        }
+  async apply(request: UpdateNoteRequest): Promise<UpdateNoteResponse> {
+    const input: UpdateNoteInput = request as UpdateNoteInput;
+    try {
+      return (await this.useCase.execute(input)) as UpdateNoteResponse;
+    } catch (error) {
+      throw error;
     }
+  }
 }

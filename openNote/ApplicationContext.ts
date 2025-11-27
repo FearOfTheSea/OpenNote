@@ -11,53 +11,64 @@ import { PostgreNoteRepository } from "./infrastructure/repositories/PostgreNote
 import { PostgreFolderRepository } from "./infrastructure/repositories/PostgreFolderRepository.ts";
 import { PostgreTagRepository } from "./infrastructure/repositories/PostgreTagRepository.ts";
 import { PostgreUnitOfWork } from "./infrastructure/db/PostgreUnitOfWork.ts";
+import { PostgreUserRepository } from "./infrastructure/repositories/PostgreUserRepository.ts";
+import { UserRepository } from "./application/repositories/UserRepository.ts";
 
 const env = Deno.env.get("NODE_ENV") || "development";
 
 let noteRepository: NoteRepository;
 let folderRepository: FolderRepository;
 let tagRepository: TagRepository;
+let userRepository: UserRepository;
 
 // factory method tạo mới unit of work cho mỗi use case
 let createUnitOfWork: () => IUnitOfWork;
 
 // Switch repository types based on environment
 switch (env) {
-    case "test":
-        folderRepository = new InMemoryFolderRepository();
-        noteRepository = new InMemoryNoteRepository(folderRepository);
-        tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
-        createUnitOfWork = () => {
-            return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
-        };
-        console.log("[APP CONTEXT]: TEST");
-        break;
+  case "test":
+    folderRepository = new InMemoryFolderRepository();
+    noteRepository = new InMemoryNoteRepository(folderRepository);
+    tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
+    createUnitOfWork = () => {
+      return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
+    };
+    console.log("[APP CONTEXT]: TEST");
+    break;
 
-    case "production":
-        folderRepository = new PostgreFolderRepository();
-        noteRepository = new PostgreNoteRepository();
-        tagRepository = new PostgreTagRepository();
+  case "production":
+    folderRepository = new PostgreFolderRepository();
+    noteRepository = new PostgreNoteRepository();
+    tagRepository = new PostgreTagRepository();
+    userRepository = new PostgreUserRepository();
+    userRepository.save({
+      "id": "d1e931d0-24bd-43d4-a3b7-61594efc909c",
+      "email": "adnope@gmail.com",
+      "createdAt": new Date(),
+      "fullName": "Duy Nguyen",
+      "passwordHash": "",
+    });
 
-        createUnitOfWork = () => {
-            const tx = client.createTransaction("unit_of_work_tx");
-            const noteRepo = new PostgreNoteRepository(tx);
-            const folderRepo = new PostgreFolderRepository(tx);
-            const tagRepo = new PostgreTagRepository(tx);
-            return new PostgreUnitOfWork(tx, noteRepo, tagRepo, folderRepo);
-        };
-        console.log("[APP CONTEXT]: PROD");
-        break;
+    createUnitOfWork = () => {
+      const tx = client.createTransaction("unit_of_work_tx");
+      const noteRepo = new PostgreNoteRepository(tx);
+      const folderRepo = new PostgreFolderRepository(tx);
+      const tagRepo = new PostgreTagRepository(tx);
+      return new PostgreUnitOfWork(tx, noteRepo, tagRepo, folderRepo);
+    };
+    console.log("[APP CONTEXT]: PROD");
+    break;
 
-    case "development":
-    default:
-        folderRepository = new InMemoryFolderRepository();
-        noteRepository = new InMemoryNoteRepository(folderRepository);
-        tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
-        createUnitOfWork = () => {
-            return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
-        };
-        console.log("[APP CONTEXT]: DEV");
-        break;
+  case "development":
+  default:
+    folderRepository = new InMemoryFolderRepository();
+    noteRepository = new InMemoryNoteRepository(folderRepository);
+    tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
+    createUnitOfWork = () => {
+      return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
+    };
+    console.log("[APP CONTEXT]: DEV");
+    break;
 }
 
 export { createUnitOfWork, folderRepository, noteRepository, tagRepository };

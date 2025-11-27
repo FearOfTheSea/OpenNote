@@ -3,21 +3,21 @@ import { GetAllFolders, GetAllFoldersInput } from "../../../application/useCases
 import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
 
 export interface GetAllFoldersRequest {
-    readonly userId: string;
+  readonly userId: string;
 }
 
 export interface GetAllFoldersResponse {
-    readonly folders: GetFolderByIdResponse[];
+  readonly folders: GetFolderByIdResponse[];
 }
 
 export class GetAllFoldersController {
-    private useCase: GetAllFolders;
+  private useCase: GetAllFolders;
 
-    constructor(folderRepository: FolderRepository) {
-        this.useCase = new GetAllFolders(folderRepository);
-    }
+  constructor(folderRepository: FolderRepository) {
+    this.useCase = new GetAllFolders(folderRepository);
+  }
 
-    async apply(request: GetAllFoldersRequest): Promise<GetAllFoldersResponse> {
-        return await this.useCase.execute(request as GetAllFoldersInput) as GetAllFoldersResponse;
-    }
+  async apply(request: GetAllFoldersRequest): Promise<GetAllFoldersResponse> {
+    return await this.useCase.execute(request as GetAllFoldersInput) as GetAllFoldersResponse;
+  }
 }

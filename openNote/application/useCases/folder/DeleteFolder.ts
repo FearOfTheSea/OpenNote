@@ -3,32 +3,32 @@ import { FolderRepository } from "../../repositories/FolderRepository.ts";
 import { NoteRepository } from "../../repositories/NoteRepository.ts";
 
 export interface DeleteFolderInput {
-    id: string;
+  id: string;
 }
 
 export class DeleteFolder {
-    constructor(
-        private folderRepository: FolderRepository,
-        private noteRepository: NoteRepository,
-        private readonly createNoteUnitOfWork: () => IUnitOfWork,
-    ) {}
+  constructor(
+    private folderRepository: FolderRepository,
+    private noteRepository: NoteRepository,
+    private readonly createNoteUnitOfWork: () => IUnitOfWork,
+  ) {}
 
-    async execute(input: DeleteFolderInput): Promise<void> {
-        const folder = await this.folderRepository.findById(input.id);
+  async execute(input: DeleteFolderInput): Promise<void> {
+    const folder = await this.folderRepository.findById(input.id);
 
-        if (!folder) {
-            throw new Error(`Folder with id ${input.id} not found`);
-        }
-
-        const uow = this.createNoteUnitOfWork();
-        try {
-            await uow.begin();
-            await uow.folders.delete(input.id, this.noteRepository);
-            await uow.tags.cleanupOrphanTags();
-            await uow.commit();
-        } catch (error) {
-            await uow.rollback();
-            throw error;
-        }
+    if (!folder) {
+      throw new Error(`Folder with id ${input.id} not found`);
     }
+
+    const uow = this.createNoteUnitOfWork();
+    try {
+      await uow.begin();
+      await uow.folders.delete(input.id, this.noteRepository);
+      await uow.tags.cleanupOrphanTags();
+      await uow.commit();
+    } catch (error) {
+      await uow.rollback();
+      throw error;
+    }
+  }
 }

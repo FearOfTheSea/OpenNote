@@ -1,59 +1,59 @@
 <!DOCTYPE html>
 <html lang="en">
-    <head>
-        <!-- Add modal.css -->
-        <link rel="stylesheet" href="/css/modal.css" />
+  <head>
+    <!-- Add modal.css -->
+    <link rel="stylesheet" href="/css/modal.css" />
 
-        <!-- Add modal.js before other scripts -->
-        <script src="/js/modal.js"></script>
-        <meta charset="utf-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <link type="text/css" rel="stylesheet" href="/css/homepage.css" />
-        <title>OpenNote</title>
-    </head>
-    <body>
-        <header>
-            <div class="topbar">
-                <div class="brand">Notes</div>
-                <nav class="nav">
-                    <a href="#" id="new-folder">New folder</a>
-                    <a
-                        href="#"
-                        id="new-note"
-                        onclick="event.preventDefault(); showCreateNoteDialog();"
-                    >New note</a>
-                    <a href="#" id="search">Search</a>
-                    <a href="#" id="help">Help</a>
-                    <a href="#" id="log-out">Log out</a>
-                </nav>
-            </div>
-        </header>
+    <!-- Add modal.js before other scripts -->
+    <script src="/js/modal.js"></script>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <link type="text/css" rel="stylesheet" href="/css/homepage.css" />
+    <title>OpenNote</title>
+  </head>
+  <body>
+    <header>
+      <div class="topbar">
+        <div class="brand">Notes</div>
+        <nav class="nav">
+          <a href="#" id="new-folder">New folder</a>
+          <a
+            href="#"
+            id="new-note"
+            onclick="event.preventDefault(); showCreateNoteDialog();"
+          >New note</a>
+          <a href="#" id="search">Search</a>
+          <a href="#" id="help">Help</a>
+          <a href="#" id="log-out">Log out</a>
+        </nav>
+      </div>
+    </header>
 
-        <main class="page">
-            <!-- Left sidebar -->
-            <aside>
-                <div class="sidebar-header">
-                    <h3>Folders</h3>
-                    <button onclick="goHome()" title="Go to home">🏠</button>
-                </div>
-                <ul class="list">
-                    <!-- Folders will be dynamically loaded here -->
-                    <li class="row empty">Loading...</li>
-                </ul>
-            </aside>
+    <main class="page">
+      <!-- Left sidebar -->
+      <aside>
+        <div class="sidebar-header">
+          <h3>Folders</h3>
+          <button onclick="goHome()" title="Go to home">🏠</button>
+        </div>
+        <ul class="list">
+          <!-- Folders will be dynamically loaded here -->
+          <li class="row empty">Loading...</li>
+        </ul>
+      </aside>
 
-            <!-- Main content -->
-            <section>
-                <div class="section-header">
-                    <button onclick="goBack()" class="back-btn" title="Go back">←</button>
-                    <div class="section-title">Home</div>
-                </div>
-                <div class="grid">
-                    <!-- Content will be dynamically loaded here -->
-                </div>
-            </section>
-        </main>
+      <!-- Main content -->
+      <section>
+        <div class="section-header">
+          <button onclick="goBack()" class="back-btn" title="Go back">←</button>
+          <div class="section-title">Home</div>
+        </div>
+        <div class="grid">
+          <!-- Content will be dynamically loaded here -->
+        </div>
+      </section>
+    </main>
 
-        <script src="/js/homepage.js"></script>
-    </body>
+    <script src="/js/homepage.js"></script>
+  </body>
 </html>

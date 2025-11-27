@@ -10,102 +10,102 @@ import { SearchNotesController } from "../interface/controllers/note/SearchNotes
 import { UpdateNoteController } from "../interface/controllers/note/UpdateNoteController.ts";
 
 export function createNoteRoutes(
-    createNoteController: CreateNoteController,
-    deleteNoteController: DeleteNoteController,
-    getAllNotesController: GetAllNotesController,
-    getNoteByIdController: GetNoteByIdController,
-    getNotesByTagsController: GetNotesByTagsController,
-    searchNotesController: SearchNotesController,
-    updateNoteController: UpdateNoteController,
+  createNoteController: CreateNoteController,
+  deleteNoteController: DeleteNoteController,
+  getAllNotesController: GetAllNotesController,
+  getNoteByIdController: GetNoteByIdController,
+  getNotesByTagsController: GetNotesByTagsController,
+  searchNotesController: SearchNotesController,
+  updateNoteController: UpdateNoteController,
 ) {
-    const router = Router();
+  const router = Router();
 
-    // Create a new note
-    router.post("/", async (req: Request, res: Response) => {
-        try {
-            console.log(
-                `[NoteRoutes] Creating new note: name: ${req.body.name}, content: ${
-                    req.body.content || ""
-                }, parentFolderId: ${req.body.parent_folder_id}`,
-            );
-            const result = await createNoteController.apply({
-                name: req.body.name,
-                content: req.body.content || "",
-                parentFolderId: req.body.parent_folder_id,
-            });
-            res.status(201).json(result);
-        } catch (error) {
-            res.status(400).json({ error: (error as Error).message });
-        }
-    });
+  // Create a new note
+  router.post("/", async (req: Request, res: Response) => {
+    try {
+      console.log(
+        `[NoteRoutes] Creating new note: name: ${req.body.name}, content: ${
+          req.body.content || ""
+        }, parentFolderId: ${req.body.parent_folder_id}`,
+      );
+      const result = await createNoteController.apply({
+        name: req.body.name,
+        content: req.body.content || "",
+        parentFolderId: req.body.parent_folder_id,
+      });
+      res.status(201).json(result);
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  });
 
-    // Get notes with optional tag filtering
-    router.get("/", async (req: Request, res: Response) => {
-        try {
-            console.log(`[NoteRoutes] Getting all notes from user ${req.query.user_id}`);
-            const tagsParam = req.query.tags as string;
-            const userId = (req.query.user_id as string) || "user";
+  // Get notes with optional tag filtering
+  router.get("/", async (req: Request, res: Response) => {
+    try {
+      console.log(`[NoteRoutes] Getting all notes from user ${req.query.user_id}`);
+      const tagsParam = req.query.tags as string;
+      const userId = (req.query.user_id as string) || "user";
 
-            if (tagsParam) {
-                const tagIds = tagsParam.split(",");
-                const result = await getNotesByTagsController.apply({ userId, tagIds: tagIds });
-                res.json(result);
-            } else {
-                const result = await getAllNotesController.apply({ userId });
-                res.json(result.notes);
-            }
-        } catch (error) {
-            res.status(500).json({ error: (error as Error).message });
-        }
-    });
+      if (tagsParam) {
+        const tagIds = tagsParam.split(",");
+        const result = await getNotesByTagsController.apply({ userId, tagIds: tagIds });
+        res.json(result);
+      } else {
+        const result = await getAllNotesController.apply({ userId });
+        res.json(result.notes);
+      }
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
 
-    // Search notes
-    router.get("/search", async (req: Request, res: Response) => {
-        try {
-            const result = await searchNotesController.apply({
-                keyword: req.query.q as string,
-                userId: (req.query.user_id as string) || "user",
-            });
-            res.json(result);
-        } catch (error) {
-            res.status(500).json({ error: (error as Error).message });
-        }
-    });
+  // Search notes
+  router.get("/search", async (req: Request, res: Response) => {
+    try {
+      const result = await searchNotesController.apply({
+        keyword: req.query.q as string,
+        userId: (req.query.user_id as string) || "user",
+      });
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
 
-    // Get note by ID
-    router.get("/:id", async (req: Request, res: Response) => {
-        try {
-            const result = await getNoteByIdController.apply({ id: req.params.id });
-            res.json(result);
-        } catch (error) {
-            res.status(500).json({ error: (error as Error).message });
-        }
-    });
+  // Get note by ID
+  router.get("/:id", async (req: Request, res: Response) => {
+    try {
+      const result = await getNoteByIdController.apply({ id: req.params.id });
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
 
-    // Update note
-    router.put("/:id", async (req: Request, res: Response) => {
-        try {
-            const result = await updateNoteController.apply({
-                id: req.params.id,
-                newName: req.body.name,
-                newContent: req.body.content,
-                newParentFolderId: req.body.parent_folder_id,
-            });
-            res.json(result);
-        } catch (error) {
-            res.status(500).json({ error: (error as Error).message });
-        }
-    });
+  // Update note
+  router.put("/:id", async (req: Request, res: Response) => {
+    try {
+      const result = await updateNoteController.apply({
+        id: req.params.id,
+        newName: req.body.name,
+        newContent: req.body.content,
+        newParentFolderId: req.body.parent_folder_id,
+      });
+      res.json(result);
+    } catch (error) {
+      res.status(500).json({ error: (error as Error).message });
+    }
+  });
 
-    // Delete note
-    router.delete("/:id", async (req: Request, res: Response) => {
-        try {
-            await deleteNoteController.apply({ id: req.params.id });
-            res.status(204).send();
-        } catch (error) {
-            res.status(400).json({ error: (error as Error).message });
-        }
-    });
+  // Delete note
+  router.delete("/:id", async (req: Request, res: Response) => {
+    try {
+      await deleteNoteController.apply({ id: req.params.id });
+      res.status(204).send();
+    } catch (error) {
+      res.status(400).json({ error: (error as Error).message });
+    }
+  });
 
-    return router;
+  return router;
 }

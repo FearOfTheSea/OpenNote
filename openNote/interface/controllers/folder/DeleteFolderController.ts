@@ -4,26 +4,26 @@ import { NoteRepository } from "../../../application/repositories/NoteRepository
 import { DeleteFolder, DeleteFolderInput } from "../../../application/useCases/folder/DeleteFolder.ts";
 
 export interface DeleteFolderRequest {
-    id: string;
+  id: string;
 }
 
 export class DeleteFolderController {
-    private useCase: DeleteFolder;
+  private useCase: DeleteFolder;
 
-    constructor(
-        folderRepository: FolderRepository,
-        noteRepository: NoteRepository,
-        createUnitOfWork: () => IUnitOfWork,
-    ) {
-        this.useCase = new DeleteFolder(folderRepository, noteRepository, createUnitOfWork);
-    }
+  constructor(
+    folderRepository: FolderRepository,
+    noteRepository: NoteRepository,
+    createUnitOfWork: () => IUnitOfWork,
+  ) {
+    this.useCase = new DeleteFolder(folderRepository, noteRepository, createUnitOfWork);
+  }
 
-    async apply(request: DeleteFolderRequest): Promise<void> {
-        const input = request as DeleteFolderInput;
-        try {
-            return await this.useCase.execute(input);
-        } catch (error) {
-            throw error;
-        }
+  async apply(request: DeleteFolderRequest): Promise<void> {
+    const input = request as DeleteFolderInput;
+    try {
+      return await this.useCase.execute(input);
+    } catch (error) {
+      throw error;
     }
+  }
 }
