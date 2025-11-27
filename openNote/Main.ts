@@ -1,6 +1,7 @@
-// @ts-types="npm:@types/express@4.17.15"
-import express from "express";
+// @ts-types="npm:@types/express"
+// @ts-types="@std/path"
 import { dirname, fromFileUrl, join } from "@std/path";
+import express from "express";
 import { createUnitOfWork, folderRepository, noteRepository, tagRepository } from "./ApplicationContext.ts";
 
 import { CreateFolderController } from "./interface/controllers/folder/CreateFolderController.ts";
@@ -19,8 +20,8 @@ import { SearchNotesController } from "./interface/controllers/note/SearchNotesC
 import { UpdateNoteController } from "./interface/controllers/note/UpdateNoteController.ts";
 import { GetAllTagsController } from "./interface/controllers/tag/GetAllTagsController.ts";
 
-import { createNoteRoutes } from "./routes/NoteRoutes.ts";
 import { createFolderRoutes } from "./routes/FolderRoutes.ts";
+import { createNoteRoutes } from "./routes/NoteRoutes.ts";
 import { createTagRoutes } from "./routes/TagRoutes.ts";
 import { createViewRoutes } from "./routes/ViewRoutes.ts";
 
@@ -55,7 +56,7 @@ const createFolderController = new CreateFolderController(folderRepository);
 const getFolderByIdController = new GetFolderByIdController(folderRepository);
 const getAllFoldersController = new GetAllFoldersController(folderRepository);
 const updateFolderController = new UpdateFolderController(folderRepository);
-const deleteFolderController = new DeleteFolderController(folderRepository, createUnitOfWork);
+const deleteFolderController = new DeleteFolderController(folderRepository, noteRepository, createUnitOfWork);
 const getFolderContentsController = new GetFolderContentsController(
     folderRepository,
     noteRepository,

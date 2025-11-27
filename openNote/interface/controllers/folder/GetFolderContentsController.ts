@@ -22,7 +22,7 @@ export class GetFolderContentsController {
     private useCase: GetFolderContents;
 
     constructor(folderRepository: FolderRepository, private noteRepository: NoteRepository) {
-        this.useCase = new GetFolderContents(folderRepository, noteRepository);
+        this.useCase = new GetFolderContents(folderRepository, this.noteRepository);
     }
 
     async apply(request: GetFolderContentsRequest): Promise<GetFolderContentsResponse> {

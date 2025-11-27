@@ -5,27 +5,31 @@ import { NoteRepository } from "../../application/repositories/NoteRepository.ts
 export class InMemoryFolderRepository implements FolderRepository {
     private folders: Folder[] = [];
 
-    async findAll(userId: string): Promise<Folder[]> {
-        return this.folders.filter((folder) => folder.userId === userId);
+    findAll(userId: string): Promise<Folder[]> {
+        return Promise.resolve(this.folders.filter((folder) => folder.userId === userId));
     }
 
-    async findById(id: string): Promise<Folder | null> {
+    findById(id: string): Promise<Folder | null> {
         const folder = this.folders.find((folder) => folder.id === id);
-        return folder ? folder : null;
+        return folder ? Promise.resolve(folder) : Promise.resolve(null);
     }
 
-    async findByName(name: string, userId: string): Promise<Folder[]> {
-        return this.folders.filter((folder) => folder.name.includes(name.trim()) && folder.userId === userId);
+    findByName(name: string, userId: string): Promise<Folder[]> {
+        return Promise.resolve(
+            this.folders.filter((folder) => folder.name.includes(name.trim()) && folder.userId === userId),
+        );
     }
 
-    async findByParentFolderId(parentFolderId: string | undefined, userId: string): Promise<Folder[]> {
-        return this.folders.filter((folder) => folder.parentFolderId === parentFolderId && folder.userId === userId);
+    findByParentFolderId(parentFolderId: string | undefined, userId: string): Promise<Folder[]> {
+        return Promise.resolve(
+            this.folders.filter((folder) => folder.parentFolderId === parentFolderId && folder.userId === userId),
+        );
     }
 
-    async cutFolder(folderId: string, userId: string, newParentFolderId: string | undefined): Promise<boolean> {
+    cutFolder(folderId: string, _userId: string, newParentFolderId: string | undefined): Promise<boolean> {
         const folder = this.folders.find((f) => f.id === folderId);
         if (!folder) {
-            return false;
+            return Promise.resolve(false);
         }
 
         const newFolder = new Folder(
@@ -40,10 +44,10 @@ export class InMemoryFolderRepository implements FolderRepository {
             this.folders[oldFolderIndex] = newFolder;
         }
 
-        return true;
+        return Promise.resolve(true);
     }
 
-    async save(folder: Folder): Promise<void> {
+    save(folder: Folder): Promise<void> {
         const existingFolderIndex = this.folders.findIndex((n) => n.id === folder.id);
 
         if (existingFolderIndex === -1) {
@@ -51,6 +55,8 @@ export class InMemoryFolderRepository implements FolderRepository {
         } else {
             this.folders[existingFolderIndex] = folder;
         }
+
+        return Promise.resolve();
     }
 
     async delete(id: string, noteRepository: NoteRepository): Promise<void> {

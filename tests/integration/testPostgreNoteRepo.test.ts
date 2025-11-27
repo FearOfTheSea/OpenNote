@@ -1,6 +1,6 @@
 import { PostgreNoteRepository } from "../../openNote/infrastructure/repositories/PostgreNoteRepository.ts";
 import { Note } from "../../openNote/domain/entities/Note.ts";
-import { assert, assertArrayIncludes, assertEquals, assertExists } from "https://deno.land/std@0.202.0/assert/mod.ts";
+import { assert, assertArrayIncludes, assertEquals, assertExists } from "@std/assert";
 import dbClient from "../../openNote/infrastructure/db/postgresClient.ts";
 
 // --- Dữ liệu test với UUIDs hợp lệ ---
@@ -26,7 +26,7 @@ const setupDatabase = async () => {
   `);
 
     await dbClient.queryObject(`
-    INSERT INTO users (user_id, full_name, email, password_hash) VALUES 
+    INSERT INTO users (user_id, full_name, email, password_hash) VALUES
       ('${USER_1_ID}', 'manh1', 'test1@example.com', 'pass'),
       ('${USER_2_ID}', 'manh2', 'test2@example.com', 'pass');
   `);

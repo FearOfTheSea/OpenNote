@@ -1,8 +1,8 @@
-import { AbstractMigration, ClientPostgreSQL, Info } from "https://deno.land/x/nessie@2.0.11/mod.ts";
+import { AbstractMigration, ClientPostgreSQL, Info } from "nessie";
 
 export default class extends AbstractMigration<ClientPostgreSQL> {
     /** Runs on migrate */
-    async up(info: Info): Promise<void> {
+    async up(_info: Info): Promise<void> {
         await this.client.queryArray(`
         CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
@@ -77,7 +77,7 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
     }
 
     /** Runs on rollback */
-    async down(info: Info): Promise<void> {
+    async down(_info: Info): Promise<void> {
         await this.client.queryArray(
             "DROP TRIGGER IF EXISTS trigger_update_notes_updated_at ON notes;",
         );

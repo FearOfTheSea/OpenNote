@@ -1,4 +1,4 @@
-// @ts-types="npm:@types/express@4.17.15"
+// @ts-types="express"
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { CreateFolderController } from "../interface/controllers/folder/CreateFolderController.ts";

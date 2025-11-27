@@ -25,7 +25,7 @@ const modifiedDate = document.getElementById("modified-date");
 // Initialize
 async function init() {
     // Get note ID from URL
-    const path = window.location.pathname;
+    const path = globalThis.location.pathname;
     const match = path.match(/\/note\/([^\/]+)/);
     editorState.noteId = match ? match[1] : null;
 
@@ -53,7 +53,7 @@ async function loadNote(id) {
             renderNote();
         } else {
             alert("Note not found");
-            window.location.href = "/";
+            globalThis.location.href = "/";
         }
     } catch (error) {
         console.error("Error loading note:", error);
@@ -131,8 +131,8 @@ async function saveNote() {
             editorState.isDirty = false;
 
             // Update URL if it was a new note
-            if (window.location.pathname.includes("/new")) {
-                window.history.replaceState({}, "", `/note/${editorState.noteId}`);
+            if (globalThis.location.pathname.includes("/new")) {
+                globalThis.history.replaceState({}, "", `/note/${editorState.noteId}`);
             }
 
             showSaveStatus("saved");
@@ -150,7 +150,7 @@ async function saveNote() {
 
 async function deleteNote() {
     if (!editorState.noteId || editorState.noteId === "new") {
-        window.location.href = "/";
+        globalThis.location.href = "/";
         return;
     }
 
@@ -169,7 +169,7 @@ async function deleteNote() {
         });
 
         if (response.ok) {
-            window.location.href = "/";
+            globalThis.location.href = "/";
         } else {
             alert("Error deleting note");
         }
@@ -303,10 +303,10 @@ function setupEventListeners() {
                     "Unsaved Changes",
                 );
                 if (confirmed) {
-                    window.location.href = "/";
+                    globalThis.location.href = "/";
                 }
             } else {
-                window.location.href = "/";
+                globalThis.location.href = "/";
             }
 
             saveBtn.addEventListener("click", saveNote);
@@ -338,7 +338,7 @@ function setupEventListeners() {
             });
 
             // Warn before leaving with unsaved changes
-            window.addEventListener("beforeunload", (e) => {
+            globalThis.addEventListener("beforeunload", (e) => {
                 if (editorState.isDirty) {
                     e.preventDefault();
                     e.returnValue = "";
@@ -385,7 +385,7 @@ function setupEventListeners() {
             return div.innerHTML;
         },
         // Expose functions for inline handlers
-        window.removeTag = removeTag,
+        globalThis.removeTag = removeTag,
     );
 
     // Initialize when DOM is ready

@@ -308,5 +308,5 @@ const modal = new Modal();
 
 // Export for use in other files
 if (typeof window !== "undefined") {
-    window.modal = modal;
+    globalThis.modal = modal;
 }

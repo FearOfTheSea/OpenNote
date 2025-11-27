@@ -2,11 +2,7 @@ import { Client } from "pg";
 
 const env = Deno.env.get("NODE_ENV") || "development";
 
-console.log(Deno.env.get("DB_HOST"));
-console.log(Deno.env.get("DB_PORT"));
-console.log(Deno.env.get("DB_USER"));
-console.log(Deno.env.get("DB_PASSWORD"));
-console.log(Deno.env.get("DB_NAME"));
+console.log("[POSTGRES CLIENT] CLIENT INITIALIZED");
 
 const client = new Client({
     hostname: Deno.env.get("DB_HOST"),

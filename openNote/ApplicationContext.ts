@@ -27,10 +27,10 @@ switch (env) {
         folderRepository = new InMemoryFolderRepository();
         noteRepository = new InMemoryNoteRepository(folderRepository);
         tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
-
         createUnitOfWork = () => {
             return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
         };
+        console.log("[APP CONTEXT]: TEST");
         break;
 
     case "production":
@@ -45,8 +45,7 @@ switch (env) {
             const tagRepo = new PostgreTagRepository(tx);
             return new PostgreUnitOfWork(tx, noteRepo, tagRepo, folderRepo);
         };
-        console.log("Running in production mode!");
-
+        console.log("[APP CONTEXT]: PROD");
         break;
 
     case "development":
@@ -54,10 +53,10 @@ switch (env) {
         folderRepository = new InMemoryFolderRepository();
         noteRepository = new InMemoryNoteRepository(folderRepository);
         tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
-
         createUnitOfWork = () => {
             return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
         };
+        console.log("[APP CONTEXT]: DEV");
         break;
 }
 

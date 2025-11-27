@@ -32,7 +32,7 @@ export class InMemoryTagRepository implements TagRepository {
         return this.tags.filter((tag) => tagIdsSet.has(tag.id));
     }
 
-    async save(tag: Tag): Promise<void> {
+    async save(_tag: Tag): Promise<void> {
     }
 
     async syncTagsForNoteUpdate(noteId: string, noteContent: string): Promise<void> {
@@ -83,11 +83,8 @@ export class InMemoryTagRepository implements TagRepository {
         }
     }
 
-    async deleteOrphanedTag(id: string): Promise<void> {
+    async deleteOrphanedTag(_id: string): Promise<void> {
     }
-
-    // openNote/infrastructure/repositories/InMemoryTagRepository.ts
-    // Update cleanupOrphanTags method:
 
     async cleanupOrphanTags(): Promise<void> {
         // Recalculate reference counts from scratch

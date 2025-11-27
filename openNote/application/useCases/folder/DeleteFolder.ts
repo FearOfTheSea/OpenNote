@@ -4,12 +4,12 @@ import { NoteRepository } from "../../repositories/NoteRepository.ts";
 
 export interface DeleteFolderInput {
     id: string;
-    noteRepository: NoteRepository;
 }
 
 export class DeleteFolder {
     constructor(
         private folderRepository: FolderRepository,
+        private noteRepository: NoteRepository,
         private readonly createNoteUnitOfWork: () => IUnitOfWork,
     ) {}
 
@@ -23,7 +23,7 @@ export class DeleteFolder {
         const uow = this.createNoteUnitOfWork();
         try {
             await uow.begin();
-            await uow.folders.delete(input.id, input.noteRepository);
+            await uow.folders.delete(input.id, this.noteRepository);
             await uow.tags.cleanupOrphanTags();
             await uow.commit();
         } catch (error) {

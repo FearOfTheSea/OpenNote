@@ -1,5 +1,5 @@
-import { ClientPostgreSQL, NessieConfig } from "https://deno.land/x/nessie@2.0.11/mod.ts";
-import { load } from "https://deno.land/std@0.224.0/dotenv/mod.ts";
+import { ClientPostgreSQL, NessieConfig } from "nessie";
+import { load } from "dotenv";
 
 await load({ export: true });
 

@@ -26,13 +26,13 @@ export class InMemoryNoteRepository implements NoteRepository {
         return userNotes;
     }
 
-    async findById(id: string): Promise<Note | null> {
+    findById(id: string): Promise<Note | null> {
         const note = this.notes.find((n) => n.id === id);
-        return note || null;
+        return Promise.resolve(note || null);
     }
 
-    async findByFolderId(folderId: string): Promise<Note[]> {
-        return this.notes.filter((note) => note.parentFolderId === folderId);
+    findByFolderId(folderId: string): Promise<Note[]> {
+        return Promise.resolve(this.notes.filter((note) => note.parentFolderId === folderId));
     }
 
     async findByTagsIds(tagIds: string[], userId: string): Promise<Note[]> {
@@ -63,7 +63,7 @@ export class InMemoryNoteRepository implements NoteRepository {
         return true;
     }
 
-    async save(note: Note): Promise<void> {
+    save(note: Note): Promise<void> {
         const existingNoteIndex = this.notes.findIndex((n) => n.id === note.id);
 
         if (existingNoteIndex === -1) {
@@ -71,13 +71,15 @@ export class InMemoryNoteRepository implements NoteRepository {
         } else {
             this.notes[existingNoteIndex] = note;
         }
+        return Promise.resolve();
     }
 
-    async delete(id: string): Promise<void> {
+    delete(id: string): Promise<void> {
         const noteIndex = this.notes.findIndex((note) => note.id === id);
         if (noteIndex !== -1) {
             this.notes.splice(noteIndex, 1);
         }
+        return Promise.resolve();
     }
 
     async searchByKeyword(keyword: string, userId: string): Promise<Note[]> {
