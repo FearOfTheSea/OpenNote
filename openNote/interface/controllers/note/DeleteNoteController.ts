@@ -11,7 +11,7 @@ export class DeleteNoteController {
 
   constructor(
     noteRepository: NoteRepository,
-    createNoteUnitOfWork: () => IUnitOfWork,
+    createNoteUnitOfWork: () => Promise<IUnitOfWork>
   ) {
     this.useCase = new DeleteNote(noteRepository, createNoteUnitOfWork);
   }

@@ -28,7 +28,7 @@ export class PostgreTagRepository implements TagRepository {
   }
 
   /**
-   * find all tags of a user - return tag names
+   * find all tags of a user
    */
   async findAll(userId: string): Promise<Tag[]> {
     const result = await this.executeQuery<{
@@ -48,6 +48,15 @@ export class PostgreTagRepository implements TagRepository {
     );
 
     return result.rows.map((row) => new Tag(row.tag_name, row.tag_id));
+  }
+
+  // not sure about this
+  // Hàm tìm tag theo tên (Dùng cho lúc Import để tránh trùng lặp)
+  async findByName(tagName: string): Promise<Tag | null> {
+    const query = `SELECT * FROM tags WHERE LOWER(tag_name) = LOWER($1)`;
+    const result = await this.executeQuery<any>(query, [tagName]);
+    if (result.rows.length === 0) return null;
+    return new Tag(result.rows[0].tag_id, result.rows[0].tag_name);
   }
 
   /*

@@ -1,4 +1,4 @@
-import { Transaction } from "pg";
+import { Transaction, PoolClient } from "pg";
 import { IUnitOfWork } from "../../application/IUnitOfWork.ts";
 import { NoteRepository } from "../../application/repositories/NoteRepository.ts";
 import { TagRepository } from "../../application/repositories/TagRepository.ts";
@@ -12,17 +12,20 @@ export class PostgreUnitOfWork implements IUnitOfWork {
 
   constructor(
     tx: Transaction,
+    private client: PoolClient,
     noteRepo: NoteRepository,
     tagRepo: TagRepository,
-    folderRepo: FolderRepository,
+    folderRepo: FolderRepository
   ) {
     this.tx = tx;
+    this.client = client;
     this.notes = noteRepo;
     this.tags = tagRepo;
     this.folders = folderRepo;
   }
 
   async begin(): Promise<void> {
+    if (!this.tx) throw new Error("Transaction not initialized");
     await this.tx.begin();
     // this.notes = new PostgreNoteRepository(this.tx);
     // this.tags = new PostgreTagRepository(this.tx);
@@ -30,10 +33,18 @@ export class PostgreUnitOfWork implements IUnitOfWork {
   }
 
   async commit(): Promise<void> {
-    await this.tx.commit();
+    try {
+      await this.tx.commit();
+    } finally {
+      this.client.release();
+    }
   }
 
   async rollback(): Promise<void> {
-    await this.tx.rollback();
+    try {
+      await this.tx.rollback();
+    } finally {
+      this.client.release();
+    }
   }
 }

@@ -34,8 +34,13 @@ import { createNoteRoutes } from "./routes/NoteRoutes.ts";
 import { createTagRoutes } from "./routes/TagRoutes.ts";
 import { createViewRoutes } from "./routes/ViewRoutes.ts";
 import { createUserRoutes } from "./routes/UserRoutes.ts";
+import { createBackupRoutes } from "./routes/BackupRoutes.ts";
+
 import { SignUpController } from "./interface/controllers/user/SignUpController.ts";
 import { SignInController } from "./interface/controllers/user/SignInController.ts";
+
+import { CreateBackupController } from "./interface/controllers/backup/CreateBackupController.ts";
+import { ImportBackupController } from "./interface/controllers/backup/ImportBackupController.ts";
 
 const __dirname = dirname(fromFileUrl(import.meta.url));
 
@@ -43,12 +48,11 @@ export interface ServerOptions {
   seedMockData?: boolean;
 }
 
-export async function createServer(
-  options: ServerOptions = {},
-) {
+export async function createServer(options: ServerOptions = {}) {
   const app = express();
 
-  app.use(express.json());
+  // increase payload limit for large backup files
+  app.use(express.json({ limit: "50mb" }));
   app.use(express.static(join(__dirname, "interface/web/public")));
 
   app.use((_req, res, next) => {
@@ -61,23 +65,23 @@ export async function createServer(
   // Initialize controllers
   const createNoteController = new CreateNoteController(
     folderRepository,
-    createUnitOfWork,
+    createUnitOfWork
   );
   const getAllNotesController = new GetAllNotesController(noteRepository);
   const getNoteByIdController = new GetNoteByIdController(noteRepository);
   const updateNoteController = new UpdateNoteController(
     folderRepository,
     noteRepository,
-    createUnitOfWork,
+    createUnitOfWork
   );
   const deleteNoteController = new DeleteNoteController(
     noteRepository,
-    createUnitOfWork,
+    createUnitOfWork
   );
   const searchNotesController = new SearchNotesController(noteRepository);
   const getNotesByTagsController = new GetNotesByTagsController(
     noteRepository,
-    tagRepository,
+    tagRepository
   );
 
   const createFolderController = new CreateFolderController(folderRepository);
@@ -87,11 +91,11 @@ export async function createServer(
   const deleteFolderController = new DeleteFolderController(
     folderRepository,
     noteRepository,
-    createUnitOfWork,
+    createUnitOfWork
   );
   const getFolderContentsController = new GetFolderContentsController(
     folderRepository,
-    noteRepository,
+    noteRepository
   );
   const searchFoldersController = new SearchFoldersController(folderRepository);
 
@@ -100,18 +104,29 @@ export async function createServer(
   const signInController = new SignInController(userRepository);
   const signUpController = new SignUpController(userRepository);
 
-  const mockUser = await signUpController.apply({
-    fullname: Deno.env.get("USER_FULLNAME") || "Duy Nguyen",
-    email: Deno.env.get("USER_EMAIL") || "adnope@gmail.com",
-    password: Deno.env.get("USER_PASSWORD") || "password123",
-  }, passwordHasher);
+  const createBackupController = new CreateBackupController(
+    folderRepository,
+    noteRepository,
+    tagRepository
+  );
+
+  const importBackupController = new ImportBackupController(createUnitOfWork);
+
+  const mockUser = await signUpController.apply(
+    {
+      fullname: Deno.env.get("USER_FULLNAME") || "Duy Nguyen",
+      email: Deno.env.get("USER_EMAIL") || "adnope@gmail.com",
+      password: Deno.env.get("USER_PASSWORD") || "password123",
+    },
+    passwordHasher
+  );
 
   // Seed mock data
   if (options.seedMockData) {
     await seedMockData(
       mockUser.id,
       createFolderController,
-      createNoteController,
+      createNoteController
     );
   }
 
@@ -125,8 +140,8 @@ export async function createServer(
       getNoteByIdController,
       getNotesByTagsController,
       searchNotesController,
-      updateNoteController,
-    ),
+      updateNoteController
+    )
   );
 
   app.use(
@@ -138,21 +153,23 @@ export async function createServer(
       getFolderByIdController,
       getFolderContentsController,
       searchFoldersController,
-      updateFolderController,
-    ),
+      updateFolderController
+    )
   );
 
-  app.use(
-    "/api/tags",
-    createTagRoutes(getAllTagsController),
-  );
+  app.use("/api/tags", createTagRoutes(getAllTagsController));
 
   app.use(
     "/api/users",
-    createUserRoutes(signInController, signUpController, passwordHasher),
+    createUserRoutes(signInController, signUpController, passwordHasher)
   );
 
-  app.use(createViewRoutes(__dirname));
+  app.use(
+    "/api/backup",
+    createBackupRoutes(createBackupController, importBackupController)
+  );
+
+  app.use("/", createViewRoutes(__dirname));
 
   return app;
 }
@@ -160,7 +177,7 @@ export async function createServer(
 async function seedMockData(
   mockedUserId: string,
   createFolderController: CreateFolderController,
-  createNoteController: CreateNoteController,
+  createNoteController: CreateNoteController
 ) {
   const newfolder1 = await createFolderController.apply({
     name: "newfolder1",
@@ -190,7 +207,14 @@ async function seedMockData(
     parentFolderId: newfolder1.id,
   });
 
-  if (newfolder1 && newfolder2 && newfolder3 && subfolder1 && subfolder2 && subfolder3) {
+  if (
+    newfolder1 &&
+    newfolder2 &&
+    newfolder3 &&
+    subfolder1 &&
+    subfolder2 &&
+    subfolder3
+  ) {
     await createNoteController.apply({
       name: "f1note1",
       content: `f1content

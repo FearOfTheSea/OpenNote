@@ -10,7 +10,7 @@ export class InMemoryTagRepository implements TagRepository {
 
   constructor(
     private readonly noteRepository: NoteRepository,
-    private readonly folderRepository: FolderRepository,
+    private readonly folderRepository: FolderRepository
   ) {}
 
   async findAll(userId: string): Promise<Tag[]> {
@@ -32,10 +32,17 @@ export class InMemoryTagRepository implements TagRepository {
     return this.tags.filter((tag) => tagIdsSet.has(tag.id));
   }
 
-  async save(_tag: Tag): Promise<void> {
+  async save(_tag: Tag): Promise<void> {}
+
+  async findByName(name: string): Promise<Tag | null> {
+    const foundTag = this.tags.find((t) => t.name === name);
+    return foundTag || null;
   }
 
-  async syncTagsForNoteUpdate(noteId: string, noteContent: string): Promise<void> {
+  async syncTagsForNoteUpdate(
+    noteId: string,
+    noteContent: string
+  ): Promise<void> {
     const tagNamesInContent = new Set<string>();
     const lines = noteContent.split("\n");
 
@@ -58,7 +65,10 @@ export class InMemoryTagRepository implements TagRepository {
 
       if (foundTag && !note?.tagIds.includes(foundTag.id)) {
         note?.tagIds.push(foundTag.id);
-        this.tagIdRefCountMap.set(foundTag.id, (this.tagIdRefCountMap.get(foundTag.id) || 0) + 1);
+        this.tagIdRefCountMap.set(
+          foundTag.id,
+          (this.tagIdRefCountMap.get(foundTag.id) || 0) + 1
+        );
         continue;
       }
 
@@ -83,8 +93,7 @@ export class InMemoryTagRepository implements TagRepository {
     }
   }
 
-  async deleteOrphanedTag(_id: string): Promise<void> {
-  }
+  async deleteOrphanedTag(_id: string): Promise<void> {}
 
   async cleanupOrphanTags(): Promise<void> {
     // Recalculate reference counts from scratch
@@ -98,7 +107,9 @@ export class InMemoryTagRepository implements TagRepository {
     }
 
     // Remove tags with zero references
-    this.tags = this.tags.filter((tag) => (newRefCountMap.get(tag.id) || 0) > 0);
+    this.tags = this.tags.filter(
+      (tag) => (newRefCountMap.get(tag.id) || 0) > 0
+    );
     this.tagIdRefCountMap = newRefCountMap;
   }
 }

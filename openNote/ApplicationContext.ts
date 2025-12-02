@@ -6,7 +6,7 @@ import { InMemoryFolderRepository } from "./infrastructure/repositories/InMemory
 import { InMemoryTagRepository } from "./infrastructure/repositories/InMemoryTagRepository.ts";
 import { InMemoryUnitOfWork } from "./infrastructure/repositories/InMemoryUnitOfWork.ts";
 import type { IUnitOfWork } from "./application/IUnitOfWork.ts";
-import client from "./infrastructure/db/postgresClient.ts";
+import pool from "./infrastructure/db/postgresClient.ts";
 import { PostgreNoteRepository } from "./infrastructure/repositories/PostgreNoteRepository.ts";
 import { PostgreFolderRepository } from "./infrastructure/repositories/PostgreFolderRepository.ts";
 import { PostgreTagRepository } from "./infrastructure/repositories/PostgreTagRepository.ts";
@@ -23,15 +23,19 @@ let folderRepository: FolderRepository;
 let tagRepository: TagRepository;
 let userRepository: UserRepository;
 
-let createUnitOfWork: () => IUnitOfWork;
+let createUnitOfWork: () => Promise<IUnitOfWork>;
 
 switch (env) {
   case "test":
     folderRepository = new InMemoryFolderRepository();
     noteRepository = new InMemoryNoteRepository(folderRepository);
     tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
-    createUnitOfWork = () => {
-      return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
+    createUnitOfWork = async () => {
+      return new InMemoryUnitOfWork(
+        noteRepository,
+        tagRepository,
+        folderRepository
+      );
     };
     console.log("[APP CONTEXT]: TEST");
     break;
@@ -42,20 +46,23 @@ switch (env) {
     tagRepository = new PostgreTagRepository();
     userRepository = new PostgreUserRepository();
     userRepository.save({
-      "id": "d1e931d0-24bd-43d4-a3b7-61594efc909c",
-      "email": "adnope@gmail.com",
-      "createdAt": new Date(),
-      "fullName": "Duy Nguyen",
-      "passwordHash": "some-hash",
+      id: "d1e931d0-24bd-43d4-a3b7-61594efc909c",
+      email: "adnope@gmail.com",
+      createdAt: new Date(),
+      fullName: "Duy Nguyen",
+      passwordHash: "some-hash",
     });
 
-    createUnitOfWork = () => {
+    createUnitOfWork = async () => {
+      const client = await pool.connect();
       const tx = client.createTransaction("unit_of_work_tx");
+
       const noteRepo = new PostgreNoteRepository(tx);
       const folderRepo = new PostgreFolderRepository(tx);
       const tagRepo = new PostgreTagRepository(tx);
-      return new PostgreUnitOfWork(tx, noteRepo, tagRepo, folderRepo);
+      return new PostgreUnitOfWork(tx, client, noteRepo, tagRepo, folderRepo);
     };
+
     console.log("[APP CONTEXT]: PROD");
     break;
 
@@ -65,8 +72,12 @@ switch (env) {
     noteRepository = new InMemoryNoteRepository(folderRepository);
     tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
     userRepository = new InMemoryUserRepository();
-    createUnitOfWork = () => {
-      return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
+    createUnitOfWork = async () => {
+      return new InMemoryUnitOfWork(
+        noteRepository,
+        tagRepository,
+        folderRepository
+      );
     };
     console.log("[APP CONTEXT]: DEV");
     break;
@@ -74,4 +85,11 @@ switch (env) {
 
 const passwordHasher = new BcryptPasswordHasher();
 
-export { createUnitOfWork, folderRepository, noteRepository, passwordHasher, tagRepository, userRepository };
+export {
+  createUnitOfWork,
+  folderRepository,
+  noteRepository,
+  passwordHasher,
+  tagRepository,
+  userRepository,
+};

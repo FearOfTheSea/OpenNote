@@ -8,7 +8,7 @@ export interface DeleteNoteInput {
 export class DeleteNote {
   constructor(
     private noteRepository: NoteRepository,
-    private readonly createNoteUnitOfWork: () => IUnitOfWork,
+    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>
   ) {}
 
   async execute(input: DeleteNoteInput): Promise<void> {
@@ -18,7 +18,7 @@ export class DeleteNote {
       throw new Error(`Note with id ${input.id} not found`);
     }
 
-    const uow = this.createNoteUnitOfWork();
+    const uow = await this.createNoteUnitOfWork();
     try {
       await uow.begin();
       await uow.notes.delete(input.id);

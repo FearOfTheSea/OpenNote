@@ -10,7 +10,7 @@ export class DeleteFolder {
   constructor(
     private folderRepository: FolderRepository,
     private noteRepository: NoteRepository,
-    private readonly createNoteUnitOfWork: () => IUnitOfWork,
+    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>
   ) {}
 
   async execute(input: DeleteFolderInput): Promise<void> {
@@ -20,10 +20,10 @@ export class DeleteFolder {
       throw new Error(`Folder with id ${input.id} not found`);
     }
 
-    const uow = this.createNoteUnitOfWork();
+    const uow = await this.createNoteUnitOfWork();
     try {
       await uow.begin();
-      await uow.folders.delete(input.id, this.noteRepository);
+      await uow.folders.delete(input.id);
       await uow.tags.cleanupOrphanTags();
       await uow.commit();
     } catch (error) {
