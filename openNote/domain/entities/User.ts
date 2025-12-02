@@ -1,11 +1,11 @@
 import { randomUUID } from "../utils.ts";
 
 export class User {
-  public readonly id: string;
-  public readonly fullName: string;
-  public readonly email: string;
-  public readonly passwordHash: string;
-  public readonly createdAt: Date;
+  readonly id: string;
+  readonly fullName: string;
+  readonly email: string;
+  readonly passwordHash: string;
+  readonly createdAt: Date;
 
   constructor(params: {
     fullName: string;

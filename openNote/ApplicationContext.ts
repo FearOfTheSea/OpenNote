@@ -13,6 +13,8 @@ import { PostgreTagRepository } from "./infrastructure/repositories/PostgreTagRe
 import { PostgreUnitOfWork } from "./infrastructure/db/PostgreUnitOfWork.ts";
 import { PostgreUserRepository } from "./infrastructure/repositories/PostgreUserRepository.ts";
 import { UserRepository } from "./application/repositories/UserRepository.ts";
+import { InMemoryUserRepository } from "./infrastructure/repositories/InmemoryUserRepository.ts";
+import { BcryptPasswordHasher } from "./infrastructure/utils/BcryptPasswordHasher.ts";
 
 const env = Deno.env.get("NODE_ENV") || "development";
 
@@ -62,6 +64,7 @@ switch (env) {
     folderRepository = new InMemoryFolderRepository();
     noteRepository = new InMemoryNoteRepository(folderRepository);
     tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
+    userRepository = new InMemoryUserRepository();
     createUnitOfWork = () => {
       return new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository);
     };
@@ -69,4 +72,6 @@ switch (env) {
     break;
 }
 
-export { createUnitOfWork, folderRepository, noteRepository, tagRepository };
+const passwordHasher = new BcryptPasswordHasher();
+
+export { createUnitOfWork, folderRepository, noteRepository, passwordHasher, tagRepository, userRepository };

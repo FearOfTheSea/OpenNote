@@ -16,9 +16,7 @@ type ResponseData = NoteDTO;
 Deno.test("[POST /api/notes] Create a new note", async () => {
   const mockedUserId = "d1e931d0-24bd-43d4-a3b7-61594efc909c";
 
-  const app = await createServer({    seedMockData: true,
-    mockUserId: mockedUserId,
-  });
+  const app = await createServer({ seedMockData: true, mockUserId: mockedUserId });
 
   const port = 7000;
   const server = app.listen(port);

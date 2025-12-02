@@ -2,7 +2,14 @@
 // @ts-types="@std/path"
 import { dirname, fromFileUrl, join } from "@std/path";
 import express from "express";
-import { createUnitOfWork, folderRepository, noteRepository, tagRepository } from "./ApplicationContext.ts";
+import {
+  createUnitOfWork,
+  folderRepository,
+  noteRepository,
+  passwordHasher,
+  tagRepository,
+  userRepository,
+} from "./ApplicationContext.ts";
 
 import { CreateFolderController } from "./interface/controllers/folder/CreateFolderController.ts";
 import { DeleteFolderController } from "./interface/controllers/folder/DeleteFolderController.ts";
@@ -26,12 +33,13 @@ import { createFolderRoutes } from "./routes/FolderRoutes.ts";
 import { createNoteRoutes } from "./routes/NoteRoutes.ts";
 import { createTagRoutes } from "./routes/TagRoutes.ts";
 import { createViewRoutes } from "./routes/ViewRoutes.ts";
+import { createUserRoutes } from "./routes/UserRoutes.ts";
+import { SignUpController } from "./interface/controllers/user/SignUpController.ts";
 
 const __dirname = dirname(fromFileUrl(import.meta.url));
 
 export interface ServerOptions {
   seedMockData?: boolean;
-  mockUserId?: string;
 }
 
 export async function createServer(
@@ -87,11 +95,18 @@ export async function createServer(
   const searchFoldersController = new SearchFoldersController(folderRepository);
 
   const getAllTagsController = new GetAllTagsController(tagRepository);
+  const signUpController = new SignUpController(userRepository);
+
+  const mockUser = await signUpController.apply({
+    fullname: Deno.env.get("USER_FULLNAME") || "Duy Nguyen",
+    email: Deno.env.get("USER_EMAIL") || "adnope@gmail.com",
+    password: Deno.env.get("USER_PASSWORD") || "password123",
+  }, passwordHasher);
 
   // Seed mock data
-  if (options.seedMockData && options.mockUserId) {
+  if (options.seedMockData) {
     await seedMockData(
-      options.mockUserId,
+      mockUser.id,
       createFolderController,
       createNoteController,
     );
@@ -127,6 +142,11 @@ export async function createServer(
   app.use(
     "/api/tags",
     createTagRoutes(getAllTagsController),
+  );
+
+  app.use(
+    "/api/users",
+    createUserRoutes(signUpController, passwordHasher),
   );
 
   app.use(createViewRoutes(__dirname));

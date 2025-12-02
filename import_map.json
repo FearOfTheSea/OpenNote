@@ -5,6 +5,7 @@
     "@std/path": "jsr:@std/path@^1.1.3",
     "express": "npm:express@^5.1.0",
     "pg": "jsr:@db/postgres@^0.19.5",
-    "nessie": "https://deno.land/x/nessie@2.0.11/mod.ts"
+    "nessie": "https://deno.land/x/nessie@2.0.11/mod.ts",
+    "bcrypt": "npm:bcrypt"
   }
 }
