@@ -35,6 +35,7 @@ import { createTagRoutes } from "./routes/TagRoutes.ts";
 import { createViewRoutes } from "./routes/ViewRoutes.ts";
 import { createUserRoutes } from "./routes/UserRoutes.ts";
 import { SignUpController } from "./interface/controllers/user/SignUpController.ts";
+import { SignInController } from "./interface/controllers/user/SignInController.ts";
 
 const __dirname = dirname(fromFileUrl(import.meta.url));
 
@@ -95,6 +96,8 @@ export async function createServer(
   const searchFoldersController = new SearchFoldersController(folderRepository);
 
   const getAllTagsController = new GetAllTagsController(tagRepository);
+
+  const signInController = new SignInController(userRepository);
   const signUpController = new SignUpController(userRepository);
 
   const mockUser = await signUpController.apply({
@@ -146,7 +149,7 @@ export async function createServer(
 
   app.use(
     "/api/users",
-    createUserRoutes(signUpController, passwordHasher),
+    createUserRoutes(signInController, signUpController, passwordHasher),
   );
 
   app.use(createViewRoutes(__dirname));
