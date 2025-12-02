@@ -2,6 +2,7 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { GetAllTagsController } from "../interface/controllers/tag/GetAllTagsController.ts";
+import { requireAuth } from "./middlewares/RequireAuth.ts";
 
 export function createTagRoutes(
   getAllTagsController: GetAllTagsController,
@@ -9,7 +10,7 @@ export function createTagRoutes(
   const router = Router();
 
   // Get all tags
-  router.get("/", async (req: Request, res: Response) => {
+  router.get("/", requireAuth, async (req: Request, res: Response) => {
     try {
       const result = await getAllTagsController.apply({ userId: req.query.user_id as string });
       res.json(result.tags);

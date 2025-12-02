@@ -7,6 +7,11 @@ export interface SignInRequest {
   readonly password: string;
 }
 
+export interface SignInResponse {
+  readonly userId: string;
+  readonly userEmail: string;
+}
+
 export class SignInController {
   private useCase: SignIn;
 
@@ -14,10 +19,10 @@ export class SignInController {
     this.useCase = new SignIn(userRepository);
   }
 
-  async apply(request: SignInRequest, passwordHasher: PasswordHasher): Promise<void> {
+  async apply(request: SignInRequest, passwordHasher: PasswordHasher): Promise<SignInResponse> {
     const input = request as SignInInput;
     try {
-      await this.useCase.execute(input, passwordHasher);
+      return await this.useCase.execute(input, passwordHasher);
     } catch (error) {
       throw error;
     }

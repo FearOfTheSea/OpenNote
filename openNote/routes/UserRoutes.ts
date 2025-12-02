@@ -1,4 +1,5 @@
 // @ts-types="express"
+// @ts-types="express-session"
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { SignUpController } from "../interface/controllers/user/SignUpController.ts";
@@ -32,13 +33,34 @@ export function createUserRoutes(
   // Sign in
   router.post("/signin", async (req: Request, res: Response) => {
     try {
-      await signInController.apply({
+      const signInResult = await signInController.apply({
         email: req.body.email,
         password: req.body.password,
       }, passwordHasher);
 
-      console.log(`[UserRoutes] User with email ${req.body.email} logged in!`);
-      return res.status(200).json();
+      const userId = signInResult.userId;
+      const userEmail = signInResult.userEmail;
+      req.session.regenerate((err: Error) => {
+        if (err) {
+          console.error("Session regenerate error:", err);
+          return res.status(500).json({ error: "Internal server error" });
+        }
+
+        // Store whatever you need to identify the user
+        req.session.user_id = userId;
+        req.session.user_email = userEmail;
+
+        console.log(`[UserRoutes] User with email ${userEmail} logged in!`);
+
+        // Ensure the session is saved before responding
+        req.session.save((err: Error) => {
+          if (err) {
+            console.error("Session save error:", err);
+            return res.status(500).json({ error: "Internal server error" });
+          }
+          return res.status(200).json({ message: "Logged in successfully" });
+        });
+      });
     } catch (error) {
       res.status(400).json({ error: (error as Error).message });
     }

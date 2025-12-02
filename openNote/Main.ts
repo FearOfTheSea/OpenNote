@@ -1,6 +1,6 @@
 import { createServer } from "./Server.ts";
 
-const port = Number(Deno.env.get("PORT") ?? "3000");
+const port = Number(Deno.env.get("PORT") ?? "3300");
 
 const app = await createServer({
   seedMockData: true,
