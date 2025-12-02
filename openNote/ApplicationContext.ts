@@ -21,10 +21,8 @@ let folderRepository: FolderRepository;
 let tagRepository: TagRepository;
 let userRepository: UserRepository;
 
-// factory method tạo mới unit of work cho mỗi use case
 let createUnitOfWork: () => IUnitOfWork;
 
-// Switch repository types based on environment
 switch (env) {
   case "test":
     folderRepository = new InMemoryFolderRepository();
@@ -46,7 +44,7 @@ switch (env) {
       "email": "adnope@gmail.com",
       "createdAt": new Date(),
       "fullName": "Duy Nguyen",
-      "passwordHash": "",
+      "passwordHash": "some-hash",
     });
 
     createUnitOfWork = () => {
