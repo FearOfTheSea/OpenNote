@@ -1,7 +1,11 @@
 // @ts-types="npm:@types/express"
+// @ts-types="npm:@types/express-session"
 // @ts-types="@std/path"
+
 import { dirname, fromFileUrl, join } from "@std/path";
 import express from "express";
+import session from "express-session";
+
 import {
   createUnitOfWork,
   folderRepository,
@@ -61,6 +65,19 @@ export async function createServer(options: ServerOptions = {}) {
     res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
     next();
   });
+
+  app.use(
+    session({
+      secret: Deno.env.get("SESSION_SECRET") || "a-unique-secret",
+      resave: false,
+      saveUninitialized: false,
+      cookie: {
+        httpOnly: true,
+        secure: false,
+        maxAge: 1000 * 60 * 60 * 24,
+      },
+    }),
+  );
 
   // Initialize controllers
   const createNoteController = new CreateNoteController(

@@ -8,6 +8,7 @@ import { DeleteFolderController } from "../interface/controllers/folder/DeleteFo
 import { GetFolderContentsController } from "../interface/controllers/folder/GetFolderContentsController.ts";
 import { SearchFoldersController } from "../interface/controllers/folder/SearchFoldersController.ts";
 import { UpdateFolderController } from "../interface/controllers/folder/UpdateFolderController.ts";
+import { requireAuth } from "./middlewares/RequireAuth.ts";
 
 export function createFolderRoutes(
   createFolderController: CreateFolderController,
@@ -21,7 +22,7 @@ export function createFolderRoutes(
   const router = Router();
 
   // Create a new folder
-  router.post("/", async (req: Request, res: Response) => {
+  router.post("/", requireAuth, async (req: Request, res: Response) => {
     try {
       const result = await createFolderController.apply({
         name: req.body.name,
@@ -38,7 +39,7 @@ export function createFolderRoutes(
   });
 
   // Search folders
-  router.get("/search", async (req: Request, res: Response) => {
+  router.get("/search", requireAuth, async (req: Request, res: Response) => {
     try {
       const result = await searchFoldersController.apply({
         keyword: req.query.q as string,
@@ -51,7 +52,7 @@ export function createFolderRoutes(
   });
 
   // Get all folders
-  router.get("/", async (req: Request, res: Response) => {
+  router.get("/", requireAuth, async (req: Request, res: Response) => {
     try {
       console.log(`[FolderRoutes] Getting all folders from user ${req.query.user_id}`);
 
@@ -64,7 +65,7 @@ export function createFolderRoutes(
   });
 
   // Get folder by ID
-  router.get("/:id", async (req: Request, res: Response) => {
+  router.get("/:id", requireAuth, async (req: Request, res: Response) => {
     try {
       const result = await getFolderByIdController.apply({ id: req.params.id });
       res.json(result);
@@ -74,7 +75,7 @@ export function createFolderRoutes(
   });
 
   // Get folder contents (subfolders and notes)
-  router.get("/:id/contents", async (req: Request, res: Response) => {
+  router.get("/:id/contents", requireAuth, async (req: Request, res: Response) => {
     try {
       console.log(`[FolderRoutes] Getting a folder's content from user ${req.query.user_id}`);
       const result = await getFolderContentsController.apply({
@@ -88,7 +89,7 @@ export function createFolderRoutes(
   });
 
   // Update folder
-  router.put("/:id", async (req: Request, res: Response) => {
+  router.put("/:id", requireAuth, async (req: Request, res: Response) => {
     try {
       const result = await updateFolderController.apply({
         id: req.params.id,
@@ -102,7 +103,7 @@ export function createFolderRoutes(
   });
 
   // Delete folder
-  router.delete("/:id", async (req: Request, res: Response) => {
+  router.delete("/:id", requireAuth, async (req: Request, res: Response) => {
     try {
       await deleteFolderController.apply({ id: req.params.id });
       res.status(204).send();

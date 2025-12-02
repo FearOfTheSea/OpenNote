@@ -1,7 +1,9 @@
-// @ts-types="npm:@types/express@4.17.15"
-import { Router } from "express";
-import type { Request, Response } from "express";
+// @ts-types="express"
+// @ts-types="express-session"
+
+import { Request, Response, Router } from "express";
 import { join } from "@std/path";
+import { requireAuth } from "./middlewares/RequireAuth.ts";
 
 export function createViewRoutes(dirname: string) {
   const router = Router();
@@ -19,6 +21,13 @@ export function createViewRoutes(dirname: string) {
   // Note editor for new note
   router.get("/note/new", (_req: Request, res: Response) => {
     res.sendFile(join(dirname, "interface/web/views/editor.html"));
+  });
+
+  router.get("/me", requireAuth, (req: Request, res: Response) => {
+    return res.json({
+      loggedIn: true,
+      email: req.session.email,
+    });
   });
 
   return router;
