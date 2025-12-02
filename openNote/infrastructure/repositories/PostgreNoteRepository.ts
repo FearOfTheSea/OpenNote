@@ -1,7 +1,7 @@
 import { Note } from "../../domain/entities/Note.ts";
 import { NoteRepository } from "../../application/repositories/NoteRepository.ts";
-import dbClient from "../db/postgresClient.ts";
-import { Transaction } from "pg";
+import pool from "../db/postgresClient.ts";
+import { Transaction, QueryObjectResult } from "pg";
 
 /**
  * PostgreSQL implementation of NoteRepository
@@ -9,16 +9,27 @@ import { Transaction } from "pg";
 export class PostgreNoteRepository implements NoteRepository {
   constructor(private tx?: Transaction) {}
 
-  // helper for getting the correct query runner
-  private getQueryRunner() {
+  private async executeQuery<T>(
+    query: string,
+    args: any[] = []
+  ): Promise<QueryObjectResult<T>> {
     if (this.tx) {
-      return this.tx;
+      return await this.tx.queryObject<T>(query, args);
+    } else {
+      // create a new client from the pool
+      const client = await pool.connect();
+      try {
+        return await client.queryObject<T>(query, args);
+      } finally {
+        // release the client back to the pool
+        client.release();
+      }
     }
-    return dbClient;
   }
+
   /** Find all notes belonging to a user */
   async findAll(userId: string): Promise<Note[]> {
-    const result = await this.getQueryRunner().queryObject(
+    const result = await this.executeQuery(
       `
       SELECT n.*, 
         COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
@@ -29,7 +40,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [userId],
+      [userId]
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -37,7 +48,7 @@ export class PostgreNoteRepository implements NoteRepository {
 
   /** dind note by its id */
   async findById(id: string): Promise<Note | null> {
-    const result = await this.getQueryRunner().queryObject(
+    const result = await this.executeQuery(
       `
       SELECT n.*, 
         COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
@@ -46,7 +57,7 @@ export class PostgreNoteRepository implements NoteRepository {
       WHERE n.note_id = $1
       GROUP BY n.note_id
       `,
-      [id],
+      [id]
     );
 
     if (result.rows.length === 0) return null;
@@ -55,7 +66,7 @@ export class PostgreNoteRepository implements NoteRepository {
 
   /** find notes by folder id */
   async findByFolderId(folderId: string): Promise<Note[]> {
-    const result = await this.getQueryRunner().queryObject(
+    const result = await this.executeQuery(
       `
       SELECT n.*, 
         COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
@@ -65,7 +76,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [folderId],
+      [folderId]
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -77,7 +88,7 @@ export class PostgreNoteRepository implements NoteRepository {
       return [];
     }
 
-    const result = await this.getQueryRunner().queryObject(
+    const result = await this.executeQuery(
       `
       SELECT n.*,
         COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
@@ -89,7 +100,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [tagIds, userId],
+      [tagIds, userId]
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -102,14 +113,14 @@ export class PostgreNoteRepository implements NoteRepository {
 
     if (note.parentFolderId === newFolderId) return false;
 
-    await this.getQueryRunner().queryObject(
+    await this.executeQuery(
       `
       UPDATE notes
       SET folder_id = $1,
           updated_at = CURRENT_TIMESTAMP
       WHERE note_id = $2
       `,
-      [newFolderId, noteId],
+      [newFolderId, noteId]
     );
     return true;
   }
@@ -129,7 +140,7 @@ export class PostgreNoteRepository implements NoteRepository {
             folder_id = EXCLUDED.folder_id,
             updated_at = CURRENT_TIMESTAMP
         `,
-      [note.id, note.name, note.content, note.parentFolderId],
+      [note.id, note.name, note.content, note.parentFolderId]
     );
   }
 
@@ -166,10 +177,7 @@ export class PostgreNoteRepository implements NoteRepository {
       ORDER BY n.updated_at DESC
     `;
 
-    const result = await dbClient.queryObject(query, [
-      normalizedKeyword,
-      userId,
-    ]);
+    const result = await this.executeQuery(query, [normalizedKeyword, userId]);
     return result.rows.map((row) => this.mapRowToNote(row));
   }
 
@@ -180,7 +188,7 @@ export class PostgreNoteRepository implements NoteRepository {
       row.content,
       row.folder_id,
       row.tags,
-      row.note_id,
+      row.note_id
     );
   }
 }

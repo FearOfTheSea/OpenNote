@@ -1,8 +1,7 @@
 import { Folder } from "../../domain/entities/Folder.ts";
 import { FolderRepository } from "../../application/repositories/FolderRepository.ts";
-import { Transaction } from "pg";
-import dbClient from "../db/postgresClient.ts";
-
+import pool from "../db/postgresClient.ts";
+import { Transaction, QueryObjectResult } from "pg";
 /**
  * PostgreSQL implementation of FolderRepository.
  */
@@ -10,38 +9,47 @@ export class PostgreFolderRepository implements FolderRepository {
   constructor(private tx?: Transaction) {}
 
   // helper for getting the correct query runner
-  private getQueryRunner() {
+  private async executeQuery<T>(
+    query: string,
+    args: any[] = []
+  ): Promise<QueryObjectResult<T>> {
     if (this.tx) {
-      return this.tx;
+      return await this.tx.queryObject<T>(query, args);
+    } else {
+      // create a new client from the pool
+      const client = await pool.connect();
+      try {
+        return await client.queryObject<T>(query, args);
+      } finally {
+        // release the client back to the pool
+        client.release();
+      }
     }
-    return dbClient;
   }
 
   findAll(userId: string): Promise<Folder[]> {
-    return this.getQueryRunner()
-      .queryObject(
-        `
+    return this.executeQuery(
+      `
       SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
       FROM folders
       WHERE user_id = $1
       ORDER BY updated_at DESC
       `,
-        [userId],
-      )
-      .then((result) => result.rows.map((row) => this.mapRowToFolder(row)));
+      [userId]
+    ).then((result) => result.rows.map((row) => this.mapRowToFolder(row)));
   }
 
   /**
    * find folder by its id
    */
   async findById(id: string): Promise<Folder | null> {
-    const result = await this.getQueryRunner().queryObject(
+    const result = await this.executeQuery(
       `
       SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
       FROM folders
       WHERE folder_id = $1
       `,
-      [id],
+      [id]
     );
 
     if (result.rows.length === 0) return null;
@@ -53,32 +61,32 @@ export class PostgreFolderRepository implements FolderRepository {
    */
   async findByParentFolderId(
     parentFolderId: string | undefined,
-    userId: string,
+    userId: string
   ): Promise<Folder[]> {
     if (!parentFolderId) {
       // return all folders gốc (không có parent)
-      const result = await this.getQueryRunner().queryObject(
+      const result = await this.executeQuery(
         `
       SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
       FROM folders
       WHERE user_id = $1 AND parent_folder_id IS NULL
       ORDER BY updated_at DESC
       `,
-        [userId],
+        [userId]
       );
 
       return result.rows.map((row) => this.mapRowToFolder(row));
     }
 
     // return subfolders of the given parentFolderId
-    const result = await dbClient.queryObject(
+    const result = await this.executeQuery(
       `
       SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
       FROM folders
       WHERE parent_folder_id = $1
       ORDER BY updated_at DESC
       `,
-      [parentFolderId],
+      [parentFolderId]
     );
 
     return result.rows.map((row) => this.mapRowToFolder(row));
@@ -88,20 +96,21 @@ export class PostgreFolderRepository implements FolderRepository {
   async cutFolder(
     folderId: string,
     userId: string,
-    newParentFolderId?: string,
+    newParentFolderId?: string
   ): Promise<boolean> {
     if (folderId === newParentFolderId) {
       throw new Error("Cannot move a folder into itself.");
     }
 
-    const tx = dbClient.createTransaction("cut_folder_tx");
+    const client = await pool.connect();
+    const tx = client.createTransaction("cut_folder_tx");
     try {
       await tx.begin();
 
       // check xem folder cần di chuyển có thuộc về user ko
       const folderToMove = await tx.queryObject<{ user_id: string }>(
         `SELECT user_id FROM folders WHERE folder_id = $1`,
-        [folderId],
+        [folderId]
       );
       if (
         folderToMove.rows.length === 0 ||
@@ -115,7 +124,7 @@ export class PostgreFolderRepository implements FolderRepository {
         // xem folder đích có tồn tại và cũng thuộc về user
         const parentFolder = await tx.queryObject<{ user_id: string }>(
           `SELECT user_id FROM folders WHERE folder_id = $1`,
-          [newParentFolderId],
+          [newParentFolderId]
         );
 
         // nếu folder đích ko tồn tại hoặc ko thuộc về user
@@ -124,7 +133,7 @@ export class PostgreFolderRepository implements FolderRepository {
           parentFolder.rows[0].user_id !== userId
         ) {
           throw new Error(
-            "Target folder not found or you don't have permission.",
+            "Target folder not found or you don't have permission."
           );
         }
 
@@ -144,7 +153,7 @@ export class PostgreFolderRepository implements FolderRepository {
         )
         SELECT folder_id FROM subfolders WHERE folder_id = $2
         `,
-          [newParentFolderId, folderId],
+          [newParentFolderId, folderId]
         );
 
         if (checkCycle.rows.length > 0) {
@@ -159,7 +168,7 @@ export class PostgreFolderRepository implements FolderRepository {
       SET parent_folder_id = $1, updated_at = NOW()
       WHERE folder_id = $2 AND user_id = $3
       `,
-        [newParentFolderId, folderId, userId],
+        [newParentFolderId, folderId, userId]
       );
 
       await tx.commit();
@@ -174,7 +183,7 @@ export class PostgreFolderRepository implements FolderRepository {
    * create or update folder
    */
   async save(folder: Folder): Promise<void> {
-    await dbClient.queryObject(
+    await this.executeQuery(
       `
       INSERT INTO folders (folder_id, folder_name, user_id, parent_folder_id)
       VALUES ($1, $2, $3, $4)
@@ -182,7 +191,7 @@ export class PostgreFolderRepository implements FolderRepository {
       SET folder_name = EXCLUDED.folder_name,
           parent_folder_id = EXCLUDED.parent_folder_id
       `,
-      [folder.id, folder.name, folder.userId, folder.parentFolderId],
+      [folder.id, folder.name, folder.userId, folder.parentFolderId]
     );
   }
 
@@ -219,10 +228,7 @@ export class PostgreFolderRepository implements FolderRepository {
     ORDER BY updated_at DESC
   `;
 
-    const result = await dbClient.queryObject(query, [
-      normalizedKeyword,
-      userId,
-    ]);
+    const result = await this.executeQuery(query, [normalizedKeyword, userId]);
 
     return result.rows.map((row) => this.mapRowToFolder(row));
   }
@@ -235,7 +241,7 @@ export class PostgreFolderRepository implements FolderRepository {
       row.folder_name,
       row.user_id,
       row.parent_folder_id,
-      row.folder_id,
+      row.folder_id
     );
   }
 }
