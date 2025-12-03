@@ -1,10 +1,11 @@
 // @ts-types="express"
-import { Router } from "express";
+// @ts-types="express-session"
 import type { Request, Response } from "express";
+import { Router } from "express";
 import { CreateFolderController } from "../interface/controllers/folder/CreateFolderController.ts";
-import { GetFolderByIdController } from "../interface/controllers/folder/GetFolderByIdController.ts";
-import { GetAllFoldersController } from "../interface/controllers/folder/GetAllFoldersController.ts";
 import { DeleteFolderController } from "../interface/controllers/folder/DeleteFolderController.ts";
+import { GetAllFoldersController } from "../interface/controllers/folder/GetAllFoldersController.ts";
+import { GetFolderByIdController } from "../interface/controllers/folder/GetFolderByIdController.ts";
 import { GetFolderContentsController } from "../interface/controllers/folder/GetFolderContentsController.ts";
 import { SearchFoldersController } from "../interface/controllers/folder/SearchFoldersController.ts";
 import { UpdateFolderController } from "../interface/controllers/folder/UpdateFolderController.ts";
@@ -26,7 +27,7 @@ export function createFolderRoutes(
     try {
       const result = await createFolderController.apply({
         name: req.body.name,
-        userId: req.body.user_id || "user",
+        userId: req.session.user_id,
         parentFolderId: req.body.parent_folder_id,
       });
 
@@ -43,7 +44,7 @@ export function createFolderRoutes(
     try {
       const result = await searchFoldersController.apply({
         keyword: req.query.q as string,
-        userId: (req.query.user_id as string) || "user",
+        userId: req.session.user_id,
       });
       res.json(result);
     } catch (error) {
@@ -56,7 +57,7 @@ export function createFolderRoutes(
     try {
       console.log(`[FolderRoutes] Getting all folders from user ${req.query.user_id}`);
 
-      const userId = (req.query.user_id as string) || "user";
+      const userId = req.session.user_id;
       const result = await getAllFoldersController.apply({ userId });
       res.json(result);
     } catch (error) {
@@ -77,9 +78,9 @@ export function createFolderRoutes(
   // Get folder contents (subfolders and notes)
   router.get("/:id/contents", requireAuth, async (req: Request, res: Response) => {
     try {
-      console.log(`[FolderRoutes] Getting a folder's content from user ${req.query.user_id}`);
+      console.log(`[FolderRoutes] Getting a folder's content from user ${req.session.user_id}`);
       const result = await getFolderContentsController.apply({
-        userId: (req.query.user_id as string) || "user",
+        userId: req.session.user_id,
         folderId: req.params.id,
       });
       res.json(result);

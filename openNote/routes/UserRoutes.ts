@@ -1,5 +1,6 @@
 // @ts-types="express"
 // @ts-types="express-session"
+
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { SignUpController } from "../interface/controllers/user/SignUpController.ts";
@@ -58,7 +59,11 @@ export function createUserRoutes(
             console.error("Session save error:", err);
             return res.status(500).json({ error: "Internal server error" });
           }
-          return res.status(200).json({ message: "Logged in successfully" });
+          return res.status(200).json({
+            message: "Logged in successfully",
+            user_id: req.session.user_id,
+            user_email: req.session.user_email,
+          });
         });
       });
     } catch (error) {

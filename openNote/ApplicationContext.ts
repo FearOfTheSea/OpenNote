@@ -50,13 +50,6 @@ switch (env) {
     noteRepository = new PostgreNoteRepository();
     tagRepository = new PostgreTagRepository();
     userRepository = new PostgreUserRepository();
-    userRepository.save({
-      id: "d1e931d0-24bd-43d4-a3b7-61594efc909c",
-      email: "adnope@gmail.com",
-      createdAt: new Date(),
-      fullName: "Duy Nguyen",
-      passwordHash: "some-hash",
-    });
 
     createUnitOfWork = async () => {
       const client = await pool.connect();

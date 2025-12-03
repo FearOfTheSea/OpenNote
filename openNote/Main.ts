@@ -3,7 +3,7 @@ import { createServer } from "./Server.ts";
 const port = Number(Deno.env.get("PORT") ?? "3300");
 
 const app = await createServer({
-  seedMockData: true,
+  seedMockData: false,
 });
 
 app.listen(port, () => {

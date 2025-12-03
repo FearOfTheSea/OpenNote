@@ -26,7 +26,8 @@ export function createViewRoutes(dirname: string) {
   router.get("/me", requireAuth, (req: Request, res: Response) => {
     return res.json({
       loggedIn: true,
-      email: req.session.email,
+      user_id: req.session.user_id,
+      user_email: req.session.user_email,
     });
   });
 

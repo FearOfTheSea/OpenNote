@@ -1,4 +1,6 @@
-// @ts-types="npm:@types/express@4.17.15"
+// @ts-types="express"
+// @ts-types="express-session"
+
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { CreateNoteController } from "../interface/controllers/note/CreateNoteController.ts";
@@ -43,9 +45,9 @@ export function createNoteRoutes(
   // Get notes with optional tag filtering
   router.get("/", requireAuth, async (req: Request, res: Response) => {
     try {
-      console.log(`[NoteRoutes] Getting all notes from user ${req.query.user_id}`);
+      console.log(`[NoteRoutes] Getting all notes from user ${req.session.user_id}`);
       const tagsParam = req.query.tags as string;
-      const userId = (req.query.user_id as string) || "user";
+      const userId = req.session.user_id;
 
       if (tagsParam) {
         const tagIds = tagsParam.split(",");
@@ -65,7 +67,7 @@ export function createNoteRoutes(
     try {
       const result = await searchNotesController.apply({
         keyword: req.query.q as string,
-        userId: (req.query.user_id as string) || "user",
+        userId: req.session.user_id,
       });
       res.json(result);
     } catch (error) {

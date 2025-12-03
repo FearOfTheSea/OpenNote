@@ -9,8 +9,8 @@ export type UnitOfWorkFactory = () => Promise<IUnitOfWork>;
 export class ImportBackup {
   constructor(private makeUow: UnitOfWorkFactory) {}
 
-  async execute(userId: string, jsonContent: string): Promise<void> {
-    const parsed: BackupDataDTO = JSON.parse(jsonContent);
+  async execute(userId: string, jsonContent: unknown): Promise<void> {
+    const parsed = jsonContent as BackupDataDTO;
     const data = parsed.data;
 
     const uow = await this.makeUow();

@@ -1,7 +1,11 @@
-import { Router } from "express";
+// @ts-types="express"
+// @ts-types="express-session"
+
 import type { Request, Response } from "express";
+import { Router } from "express";
 import { CreateBackupController } from "../interface/controllers/backup/CreateBackupController.ts";
 import { ImportBackupController } from "../interface/controllers/backup/ImportBackupController.ts";
+import { requireAuth } from "./middlewares/RequireAuth.ts";
 
 export function createBackupRoutes(
   createBackupController: CreateBackupController,
@@ -10,11 +14,9 @@ export function createBackupRoutes(
   const router = Router();
 
   // Export backup route
-  router.get("/export", async (req: Request, res: Response) => {
+  router.get("/export", requireAuth, async (req: Request, res: Response) => {
     try {
-      // t lấy userId từ query parameters giống ở các route khác
-      // chắc m dùng session sẽ thay sau
-      const userId = req.query.user_id as string;
+      const userId = req.session.user_id;
 
       if (!userId) {
         res.status(400).json({ error: "Missing user_id in query parameters" });
@@ -39,10 +41,10 @@ export function createBackupRoutes(
   });
 
   // Import backup route
-  router.post("/import", async (req: Request, res: Response) => {
+  router.post("/import", requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = req.query.user_id as string;
-      const { fileContent } = req.body;
+      const userId = req.session.user_id;
+      const fileContent = req.body;
 
       if (!userId) {
         res.status(400).json({ error: "Missing user_id in query parameters" });

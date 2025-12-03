@@ -1,5 +1,4 @@
-// @ts-types="npm:@types/express"
-// @ts-types="npm:@types/express-session"
+// @ts-types="express"
 // @ts-types="@std/path"
 
 import { dirname, fromFileUrl, join } from "@std/path";
@@ -129,21 +128,12 @@ export async function createServer(options: ServerOptions = {}) {
 
   const importBackupController = new ImportBackupController(createUnitOfWork);
 
-  const mockUser = await signUpController.apply(
-    {
-      fullname: Deno.env.get("USER_FULLNAME") || "Duy Nguyen",
-      email: Deno.env.get("USER_EMAIL") || "adnope@gmail.com",
-      password: Deno.env.get("USER_PASSWORD") || "adnope123",
-    },
-    passwordHasher,
-  );
-
   // Seed mock data
   if (options.seedMockData) {
     await seedMockData(
-      mockUser.id,
       createFolderController,
       createNoteController,
+      signUpController,
     );
   }
 
@@ -192,35 +182,44 @@ export async function createServer(options: ServerOptions = {}) {
 }
 
 async function seedMockData(
-  mockedUserId: string,
   createFolderController: CreateFolderController,
   createNoteController: CreateNoteController,
+  signUpController: SignUpController,
 ) {
+  const mockUser = await signUpController.apply(
+    {
+      fullname: Deno.env.get("USER_FULLNAME") || "Duy Nguyen",
+      email: Deno.env.get("USER_EMAIL") || "adnope@gmail.com",
+      password: Deno.env.get("USER_PASSWORD") || "adnope123",
+    },
+    passwordHasher,
+  );
+  const mockUserId = mockUser.id;
   const newfolder1 = await createFolderController.apply({
     name: "newfolder1",
-    userId: mockedUserId,
+    userId: mockUserId,
   });
   const newfolder2 = await createFolderController.apply({
     name: "newfolder2",
-    userId: mockedUserId,
+    userId: mockUserId,
   });
   const newfolder3 = await createFolderController.apply({
     name: "newfolder3",
-    userId: mockedUserId,
+    userId: mockUserId,
   });
   const subfolder1 = await createFolderController.apply({
     name: "subfolder1",
-    userId: mockedUserId,
+    userId: mockUserId,
     parentFolderId: newfolder1.id,
   });
   const subfolder2 = await createFolderController.apply({
     name: "subfolder2",
-    userId: mockedUserId,
+    userId: mockUserId,
     parentFolderId: newfolder1.id,
   });
   const subfolder3 = await createFolderController.apply({
     name: "subfolder3",
-    userId: mockedUserId,
+    userId: mockUserId,
     parentFolderId: newfolder1.id,
   });
 
