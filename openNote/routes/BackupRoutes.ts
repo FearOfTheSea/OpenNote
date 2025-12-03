@@ -5,7 +5,7 @@ import { ImportBackupController } from "../interface/controllers/backup/ImportBa
 
 export function createBackupRoutes(
   createBackupController: CreateBackupController,
-  importBackupController: ImportBackupController
+  importBackupController: ImportBackupController,
 ) {
   const router = Router();
 
@@ -27,7 +27,7 @@ export function createBackupRoutes(
       res.setHeader("Content-Type", "application/json");
       res.setHeader(
         "Content-Disposition",
-        `attachment; filename="${result.filename}"`
+        `attachment; filename="${result.filename}"`,
       );
 
       // trả về nội dung JSON

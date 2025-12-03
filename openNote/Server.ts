@@ -82,23 +82,23 @@ export async function createServer(options: ServerOptions = {}) {
   // Initialize controllers
   const createNoteController = new CreateNoteController(
     folderRepository,
-    createUnitOfWork
+    createUnitOfWork,
   );
   const getAllNotesController = new GetAllNotesController(noteRepository);
   const getNoteByIdController = new GetNoteByIdController(noteRepository);
   const updateNoteController = new UpdateNoteController(
     folderRepository,
     noteRepository,
-    createUnitOfWork
+    createUnitOfWork,
   );
   const deleteNoteController = new DeleteNoteController(
     noteRepository,
-    createUnitOfWork
+    createUnitOfWork,
   );
   const searchNotesController = new SearchNotesController(noteRepository);
   const getNotesByTagsController = new GetNotesByTagsController(
     noteRepository,
-    tagRepository
+    tagRepository,
   );
 
   const createFolderController = new CreateFolderController(folderRepository);
@@ -108,11 +108,11 @@ export async function createServer(options: ServerOptions = {}) {
   const deleteFolderController = new DeleteFolderController(
     folderRepository,
     noteRepository,
-    createUnitOfWork
+    createUnitOfWork,
   );
   const getFolderContentsController = new GetFolderContentsController(
     folderRepository,
-    noteRepository
+    noteRepository,
   );
   const searchFoldersController = new SearchFoldersController(folderRepository);
 
@@ -124,7 +124,7 @@ export async function createServer(options: ServerOptions = {}) {
   const createBackupController = new CreateBackupController(
     folderRepository,
     noteRepository,
-    tagRepository
+    tagRepository,
   );
 
   const importBackupController = new ImportBackupController(createUnitOfWork);
@@ -133,9 +133,9 @@ export async function createServer(options: ServerOptions = {}) {
     {
       fullname: Deno.env.get("USER_FULLNAME") || "Duy Nguyen",
       email: Deno.env.get("USER_EMAIL") || "adnope@gmail.com",
-      password: Deno.env.get("USER_PASSWORD") || "password123",
+      password: Deno.env.get("USER_PASSWORD") || "adnope123",
     },
-    passwordHasher
+    passwordHasher,
   );
 
   // Seed mock data
@@ -143,7 +143,7 @@ export async function createServer(options: ServerOptions = {}) {
     await seedMockData(
       mockUser.id,
       createFolderController,
-      createNoteController
+      createNoteController,
     );
   }
 
@@ -157,8 +157,8 @@ export async function createServer(options: ServerOptions = {}) {
       getNoteByIdController,
       getNotesByTagsController,
       searchNotesController,
-      updateNoteController
-    )
+      updateNoteController,
+    ),
   );
 
   app.use(
@@ -170,20 +170,20 @@ export async function createServer(options: ServerOptions = {}) {
       getFolderByIdController,
       getFolderContentsController,
       searchFoldersController,
-      updateFolderController
-    )
+      updateFolderController,
+    ),
   );
 
   app.use("/api/tags", createTagRoutes(getAllTagsController));
 
   app.use(
     "/api/users",
-    createUserRoutes(signInController, signUpController, passwordHasher)
+    createUserRoutes(signInController, signUpController, passwordHasher),
   );
 
   app.use(
     "/api/backup",
-    createBackupRoutes(createBackupController, importBackupController)
+    createBackupRoutes(createBackupController, importBackupController),
   );
 
   app.use("/", createViewRoutes(__dirname));
@@ -194,7 +194,7 @@ export async function createServer(options: ServerOptions = {}) {
 async function seedMockData(
   mockedUserId: string,
   createFolderController: CreateFolderController,
-  createNoteController: CreateNoteController
+  createNoteController: CreateNoteController,
 ) {
   const newfolder1 = await createFolderController.apply({
     name: "newfolder1",

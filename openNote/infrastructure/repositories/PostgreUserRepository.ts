@@ -1,10 +1,10 @@
 import { UserRepository } from "../../application/repositories/UserRepository.ts";
 import { User } from "../../domain/entities/User.ts";
-import pool from "../db/postgresClient.ts";
+import { getPool } from "../db/postgresClient.ts";
 
 export class PostgreUserRepository implements UserRepository {
   async findByEmail(email: string): Promise<User | null> {
-    const client = await pool.connect();
+    const client = await (await getPool()).connect();
     try {
       const result = await client.queryObject(
         `
@@ -12,7 +12,7 @@ export class PostgreUserRepository implements UserRepository {
         FROM users
         WHERE email = $1
         `,
-        [email]
+        [email],
       );
 
       if (result.rows.length === 0) return null;
@@ -31,7 +31,7 @@ export class PostgreUserRepository implements UserRepository {
   }
 
   async save(user: User): Promise<void> {
-    const client = await pool.connect();
+    const client = await (await getPool()).connect();
     try {
       await client.queryObject(
         `
@@ -45,7 +45,7 @@ export class PostgreUserRepository implements UserRepository {
           user.email,
           user.passwordHash,
           user.createdAt ?? new Date(),
-        ]
+        ],
       );
     } finally {
       client.release();

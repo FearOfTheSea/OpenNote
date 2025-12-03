@@ -1,4 +1,4 @@
-import { Transaction, PoolClient } from "pg";
+import { PoolClient, Transaction } from "pg";
 import { IUnitOfWork } from "../../application/IUnitOfWork.ts";
 import { NoteRepository } from "../../application/repositories/NoteRepository.ts";
 import { TagRepository } from "../../application/repositories/TagRepository.ts";
@@ -15,7 +15,7 @@ export class PostgreUnitOfWork implements IUnitOfWork {
     private client: PoolClient,
     noteRepo: NoteRepository,
     tagRepo: TagRepository,
-    folderRepo: FolderRepository
+    folderRepo: FolderRepository,
   ) {
     this.tx = tx;
     this.client = client;

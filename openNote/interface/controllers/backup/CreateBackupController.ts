@@ -20,13 +20,13 @@ export class CreateBackupController {
   constructor(
     folderRepository: FolderRepository,
     noteRepository: NoteRepository,
-    tagRepository: TagRepository
+    tagRepository: TagRepository,
   ) {
     // Controller chịu trách nhiệm lắp ráp UseCase với các Repo
     this.useCase = new CreateBackup(
       folderRepository,
       noteRepository,
-      tagRepository
+      tagRepository,
     );
   }
 

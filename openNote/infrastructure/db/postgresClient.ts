@@ -1,25 +1,32 @@
 import { Pool } from "pg";
 
-const env = Deno.env.get("NODE_ENV") ?? "development";
-
 console.log("[POSTGRES] POOL INITIALIZED");
 
-const pool = new Pool(
-  {
-    hostname: Deno.env.get("DB_HOST"),
-    port: Number(Deno.env.get("DB_PORT")),
-    user: Deno.env.get("DB_USER"),
-    password: Deno.env.get("DB_PASSWORD"),
-    database: Deno.env.get("DB_NAME"),
-  },
-  10 // max connections
-);
+let pool: Pool | null = null;
 
-if (env === "production") {
-  // Test connection
-  const client = await pool.connect();
-  console.log("🐘 Connected to PostgreSQL via pool!");
-  client.release();
+function createPool(): Pool {
+  console.log("[POSTGRES] POOL INITIALIZED");
+
+  return new Pool(
+    {
+      hostname: Deno.env.get("DB_HOST"),
+      port: Number(Deno.env.get("DB_PORT")),
+      user: Deno.env.get("DB_USER"),
+      password: Deno.env.get("DB_PASSWORD"),
+      database: Deno.env.get("DB_NAME"),
+    },
+    10,
+  );
 }
 
-export default pool;
+// Export getter instead of pool object so that postgres
+// connection is not established in other environments
+export async function getPool(): Promise<Pool> {
+  if (!pool) {
+    pool = createPool();
+    const client = await pool.connect();
+    console.log("[POSTGRES] Connected to PostgreSQL via pool!");
+    client.release();
+  }
+  return pool;
+}

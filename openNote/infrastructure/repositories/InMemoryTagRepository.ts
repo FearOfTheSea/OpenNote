@@ -10,7 +10,7 @@ export class InMemoryTagRepository implements TagRepository {
 
   constructor(
     private readonly noteRepository: NoteRepository,
-    private readonly folderRepository: FolderRepository
+    private readonly folderRepository: FolderRepository,
   ) {}
 
   async findAll(userId: string): Promise<Tag[]> {
@@ -41,7 +41,7 @@ export class InMemoryTagRepository implements TagRepository {
 
   async syncTagsForNoteUpdate(
     noteId: string,
-    noteContent: string
+    noteContent: string,
   ): Promise<void> {
     const tagNamesInContent = new Set<string>();
     const lines = noteContent.split("\n");
@@ -67,7 +67,7 @@ export class InMemoryTagRepository implements TagRepository {
         note?.tagIds.push(foundTag.id);
         this.tagIdRefCountMap.set(
           foundTag.id,
-          (this.tagIdRefCountMap.get(foundTag.id) || 0) + 1
+          (this.tagIdRefCountMap.get(foundTag.id) || 0) + 1,
         );
         continue;
       }
@@ -108,7 +108,7 @@ export class InMemoryTagRepository implements TagRepository {
 
     // Remove tags with zero references
     this.tags = this.tags.filter(
-      (tag) => (newRefCountMap.get(tag.id) || 0) > 0
+      (tag) => (newRefCountMap.get(tag.id) || 0) > 0,
     );
     this.tagIdRefCountMap = newRefCountMap;
   }

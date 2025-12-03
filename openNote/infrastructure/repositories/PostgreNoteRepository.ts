@@ -1,7 +1,7 @@
 import { Note } from "../../domain/entities/Note.ts";
 import { NoteRepository } from "../../application/repositories/NoteRepository.ts";
-import pool from "../db/postgresClient.ts";
-import { Transaction, QueryObjectResult } from "pg";
+import { getPool } from "../db/postgresClient.ts";
+import { QueryObjectResult, Transaction } from "pg";
 
 /**
  * PostgreSQL implementation of NoteRepository
@@ -11,13 +11,13 @@ export class PostgreNoteRepository implements NoteRepository {
 
   private async executeQuery<T>(
     query: string,
-    args: any[] = []
+    args: any[] = [],
   ): Promise<QueryObjectResult<T>> {
     if (this.tx) {
       return await this.tx.queryObject<T>(query, args);
     } else {
       // create a new client from the pool
-      const client = await pool.connect();
+      const client = await (await getPool()).connect();
       try {
         return await client.queryObject<T>(query, args);
       } finally {
@@ -31,7 +31,7 @@ export class PostgreNoteRepository implements NoteRepository {
   async findAll(userId: string): Promise<Note[]> {
     const result = await this.executeQuery(
       `
-      SELECT n.*, 
+      SELECT n.*,
         COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
       FROM notes n
       JOIN folders f ON n.folder_id = f.folder_id
@@ -40,7 +40,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [userId]
+      [userId],
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -50,14 +50,14 @@ export class PostgreNoteRepository implements NoteRepository {
   async findById(id: string): Promise<Note | null> {
     const result = await this.executeQuery(
       `
-      SELECT n.*, 
+      SELECT n.*,
         COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
       FROM notes n
       LEFT JOIN note_tags nt ON n.note_id = nt.note_id
       WHERE n.note_id = $1
       GROUP BY n.note_id
       `,
-      [id]
+      [id],
     );
 
     if (result.rows.length === 0) return null;
@@ -68,7 +68,7 @@ export class PostgreNoteRepository implements NoteRepository {
   async findByFolderId(folderId: string): Promise<Note[]> {
     const result = await this.executeQuery(
       `
-      SELECT n.*, 
+      SELECT n.*,
         COALESCE(ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL), '{}') AS tags
       FROM notes n
       LEFT JOIN note_tags nt ON n.note_id = nt.note_id
@@ -76,7 +76,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [folderId]
+      [folderId],
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -100,7 +100,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [tagIds, userId]
+      [tagIds, userId],
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -120,7 +120,7 @@ export class PostgreNoteRepository implements NoteRepository {
           updated_at = CURRENT_TIMESTAMP
       WHERE note_id = $2
       `,
-      [newFolderId, noteId]
+      [newFolderId, noteId],
     );
     return true;
   }
@@ -140,7 +140,7 @@ export class PostgreNoteRepository implements NoteRepository {
             folder_id = EXCLUDED.folder_id,
             updated_at = CURRENT_TIMESTAMP
         `,
-      [note.id, note.name, note.content, note.parentFolderId]
+      [note.id, note.name, note.content, note.parentFolderId],
     );
   }
 
@@ -160,7 +160,7 @@ export class PostgreNoteRepository implements NoteRepository {
     if (!normalizedKeyword) return [];
 
     const query = `
-      SELECT n.*, 
+      SELECT n.*,
         COALESCE(
           ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL),
           '{}'
@@ -188,7 +188,7 @@ export class PostgreNoteRepository implements NoteRepository {
       row.content,
       row.folder_id,
       row.tags,
-      row.note_id
+      row.note_id,
     );
   }
 }

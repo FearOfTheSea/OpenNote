@@ -1,7 +1,7 @@
 import { Tag } from "../../domain/entities/Tag.ts";
 import { TagRepository } from "../../application/repositories/TagRepository.ts";
-import pool from "../db/postgresClient.ts";
-import { Transaction, QueryObjectResult } from "pg";
+import { QueryObjectResult, Transaction } from "pg";
+import { getPool } from "../db/postgresClient.ts";
 
 /**
  * PostgreSQL implementation of TagRepository.
@@ -11,13 +11,13 @@ export class PostgreTagRepository implements TagRepository {
 
   private async executeQuery<T>(
     query: string,
-    args: any[] = []
+    args: any[] = [],
   ): Promise<QueryObjectResult<T>> {
     if (this.tx) {
       return await this.tx.queryObject<T>(query, args);
     } else {
       // create a new client from the pool
-      const client = await pool.connect();
+      const client = await (await getPool()).connect();
       try {
         return await client.queryObject<T>(query, args);
       } finally {
@@ -44,7 +44,7 @@ export class PostgreTagRepository implements TagRepository {
       WHERE f.user_id = $1
       ORDER BY t.tag_name ASC
       `,
-      [userId]
+      [userId],
     );
 
     return result.rows.map((row) => new Tag(row.tag_name, row.tag_id));
@@ -65,17 +65,17 @@ export class PostgreTagRepository implements TagRepository {
    */
   async syncTagsForNoteUpdate(
     noteId: string,
-    noteContent: string
+    noteContent: string,
   ): Promise<void> {
     if (!this.tx) {
       throw new Error(
-        "Transaction is required for syncTagsForNoteUpdate operation"
+        "Transaction is required for syncTagsForNoteUpdate operation",
       );
     }
 
     const oldTagsResult = await this.tx.queryObject<{ tag_id: string }>(
       `SELECT tag_id FROM note_tags WHERE note_id = $1`,
-      [noteId]
+      [noteId],
     );
     const oldTagIds = oldTagsResult.rows.map((row) => row.tag_id);
 
@@ -118,7 +118,7 @@ export class PostgreTagRepository implements TagRepository {
         VALUES ($1, $2)
         ON CONFLICT (LOWER(tag_name)) DO NOTHING
         `,
-      [tag.id, cleanName]
+      [tag.id, cleanName],
     );
 
     // link tag with note in note_tags table
@@ -130,7 +130,7 @@ export class PostgreTagRepository implements TagRepository {
         WHERE LOWER(t.tag_name) = $2
         ON CONFLICT DO NOTHING
         `,
-      [noteId, cleanName]
+      [noteId, cleanName],
     );
   }
 
@@ -140,7 +140,7 @@ export class PostgreTagRepository implements TagRepository {
   async deleteOrphanedTag(tagId: string): Promise<void> {
     if (!this.tx) {
       throw new Error(
-        "deleteOrphanedTag method must be called within a transaction."
+        "deleteOrphanedTag method must be called within a transaction.",
       );
     }
 
@@ -154,7 +154,7 @@ export class PostgreTagRepository implements TagRepository {
           FROM note_tags
           WHERE tag_id = $1
           `,
-      [tagId]
+      [tagId],
     );
 
     if (tagUsage.rows[0].count === 0) {
@@ -168,7 +168,7 @@ export class PostgreTagRepository implements TagRepository {
   async cleanupOrphanTags(): Promise<void> {
     if (!this.tx) {
       throw new Error(
-        "cleanupOrphanTags method must be called within a transaction."
+        "cleanupOrphanTags method must be called within a transaction.",
       );
     }
 
