@@ -3,9 +3,9 @@
 
 import { dirname, fromFileUrl, join } from "@std/path";
 import { RedisStore } from "connect-redis";
+import { closeRedis, initRedis, redisClient } from "./RedisClient.ts";
 import express from "express";
 import session from "express-session";
-import { createClient } from "redis";
 
 import {
   createUnitOfWork,
@@ -56,6 +56,23 @@ export interface ServerOptions {
 export async function createServer(options: ServerOptions = {}) {
   const app = express();
 
+  // Simple per-request timing logger
+  app.use((req, res, next) => {
+    const start = performance.now();
+    console.log(`${req.method} ${req.originalUrl}`);
+    res.on("finish", () => {
+      const ms = performance.now() - start;
+      if (ms < 20) {
+        console.log(`[ERROR] REQUEST MIGHT HAVE BEEN DROPPED`);
+      }
+      console.log(
+        `[PERF] ${req.method} ${req.originalUrl} ${res.statusCode} ${ms.toFixed(1)}ms`,
+      );
+    });
+
+    next();
+  });
+
   // increase payload limit for large backup files
   app.use(express.json({ limit: "50mb" }));
   app.use(express.static(join(__dirname, "interface/web/public")));
@@ -67,22 +84,7 @@ export async function createServer(options: ServerOptions = {}) {
     next();
   });
 
-  const redisHost = Deno.env.get("REDIS_HOST") ?? "127.0.0.1";
-  const redisPort = Number(Deno.env.get("REDIS_PORT") ?? "6379");
-  const redisClient = createClient({
-    socket: {
-      host: redisHost,
-      port: redisPort,
-    },
-  });
-
-  redisClient.on("error", (err) => {
-    console.error("[REDIS] Client error:", err);
-  });
-
-  await redisClient.connect();
-  console.log(`[REDIS] Connected to redis at ${redisHost}:${redisPort}`);
-
+  await initRedis();
   const redisStore = new RedisStore({
     client: redisClient,
     prefix: "sess:",
@@ -201,6 +203,10 @@ export async function createServer(options: ServerOptions = {}) {
   );
 
   app.use("/", createViewRoutes(__dirname));
+
+  addEventListener("unload", () => {
+    closeRedis().catch(console.error);
+  });
 
   return app;
 }
