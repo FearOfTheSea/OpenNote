@@ -1,12 +1,9 @@
 import { Pool } from "pg";
 
-console.log("[POSTGRES] POOL INITIALIZED");
-
 let pool: Pool | null = null;
 
 function createPool(): Pool {
   console.log("[POSTGRES] POOL INITIALIZED");
-
   return new Pool(
     {
       hostname: Deno.env.get("DB_HOST"),

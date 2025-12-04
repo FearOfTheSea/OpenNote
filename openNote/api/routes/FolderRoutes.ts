@@ -2,13 +2,13 @@
 // @ts-types="express-session"
 import type { Request, Response } from "express";
 import { Router } from "express";
-import { CreateFolderController } from "../interface/controllers/folder/CreateFolderController.ts";
-import { DeleteFolderController } from "../interface/controllers/folder/DeleteFolderController.ts";
-import { GetAllFoldersController } from "../interface/controllers/folder/GetAllFoldersController.ts";
-import { GetFolderByIdController } from "../interface/controllers/folder/GetFolderByIdController.ts";
-import { GetFolderContentsController } from "../interface/controllers/folder/GetFolderContentsController.ts";
-import { SearchFoldersController } from "../interface/controllers/folder/SearchFoldersController.ts";
-import { UpdateFolderController } from "../interface/controllers/folder/UpdateFolderController.ts";
+import { CreateFolderController } from "../../interface/controllers/folder/CreateFolderController.ts";
+import { DeleteFolderController } from "../../interface/controllers/folder/DeleteFolderController.ts";
+import { GetAllFoldersController } from "../../interface/controllers/folder/GetAllFoldersController.ts";
+import { GetFolderByIdController } from "../../interface/controllers/folder/GetFolderByIdController.ts";
+import { GetFolderContentsController } from "../../interface/controllers/folder/GetFolderContentsController.ts";
+import { SearchFoldersController } from "../../interface/controllers/folder/SearchFoldersController.ts";
+import { UpdateFolderController } from "../../interface/controllers/folder/UpdateFolderController.ts";
 import { requireAuth } from "./middlewares/RequireAuth.ts";
 
 export function createFolderRoutes(

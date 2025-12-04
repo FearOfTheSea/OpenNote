@@ -3,13 +3,13 @@
 
 import { Router } from "express";
 import type { Request, Response } from "express";
-import { CreateNoteController } from "../interface/controllers/note/CreateNoteController.ts";
-import { DeleteNoteController } from "../interface/controllers/note/DeleteNoteController.ts";
-import { GetAllNotesController } from "../interface/controllers/note/GetAllNotesController.ts";
-import { GetNoteByIdController } from "../interface/controllers/note/GetNoteByIdController.ts";
-import { GetNotesByTagsController } from "../interface/controllers/note/GetNotesByTagsController.ts";
-import { SearchNotesController } from "../interface/controllers/note/SearchNotesController.ts";
-import { UpdateNoteController } from "../interface/controllers/note/UpdateNoteController.ts";
+import { CreateNoteController } from "../../interface/controllers/note/CreateNoteController.ts";
+import { DeleteNoteController } from "../../interface/controllers/note/DeleteNoteController.ts";
+import { GetAllNotesController } from "../../interface/controllers/note/GetAllNotesController.ts";
+import { GetNoteByIdController } from "../../interface/controllers/note/GetNoteByIdController.ts";
+import { GetNotesByTagsController } from "../../interface/controllers/note/GetNotesByTagsController.ts";
+import { SearchNotesController } from "../../interface/controllers/note/SearchNotesController.ts";
+import { UpdateNoteController } from "../../interface/controllers/note/UpdateNoteController.ts";
 import { requireAuth } from "./middlewares/RequireAuth.ts";
 
 export function createNoteRoutes(

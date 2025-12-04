@@ -3,7 +3,7 @@
 
 import { Router } from "express";
 import type { Request, Response } from "express";
-import { GetAllTagsController } from "../interface/controllers/tag/GetAllTagsController.ts";
+import { GetAllTagsController } from "../../interface/controllers/tag/GetAllTagsController.ts";
 import { requireAuth } from "./middlewares/RequireAuth.ts";
 
 export function createTagRoutes(

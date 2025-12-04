@@ -3,9 +3,9 @@
 
 import { Router } from "express";
 import type { Request, Response } from "express";
-import { SignUpController } from "../interface/controllers/user/SignUpController.ts";
-import { PasswordHasher } from "../application/useCases/utils.ts";
-import { SignInController } from "../interface/controllers/user/SignInController.ts";
+import { SignUpController } from "../../interface/controllers/user/SignUpController.ts";
+import { PasswordHasher } from "../../application/useCases/utils.ts";
+import { SignInController } from "../../interface/controllers/user/SignInController.ts";
 import { requireAuth } from "./middlewares/RequireAuth.ts";
 
 export function createAuthRoutes(

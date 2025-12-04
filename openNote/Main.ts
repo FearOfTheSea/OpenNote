@@ -1,4 +1,4 @@
-import { createServer } from "./Server.ts";
+import { createServer } from "./api/Server.ts";
 
 const port = Number(Deno.env.get("PORT") ?? "3300");
 

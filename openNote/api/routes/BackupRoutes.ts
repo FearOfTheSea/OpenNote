@@ -3,8 +3,8 @@
 
 import type { Request, Response } from "express";
 import { Router } from "express";
-import { CreateBackupController } from "../interface/controllers/backup/CreateBackupController.ts";
-import { ImportBackupController } from "../interface/controllers/backup/ImportBackupController.ts";
+import { CreateBackupController } from "../../interface/controllers/backup/CreateBackupController.ts";
+import { ImportBackupController } from "../../interface/controllers/backup/ImportBackupController.ts";
 import { requireAuth } from "./middlewares/RequireAuth.ts";
 
 export function createBackupRoutes(

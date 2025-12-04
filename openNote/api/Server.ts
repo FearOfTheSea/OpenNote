@@ -2,8 +2,10 @@
 // @ts-types="@std/path"
 
 import { dirname, fromFileUrl, join } from "@std/path";
+import { RedisStore } from "connect-redis";
 import express from "express";
 import session from "express-session";
+import { createClient } from "redis";
 
 import {
   createUnitOfWork,
@@ -12,38 +14,38 @@ import {
   passwordHasher,
   tagRepository,
   userRepository,
-} from "./ApplicationContext.ts";
+} from "./../ApplicationContext.ts";
 
-import { CreateFolderController } from "./interface/controllers/folder/CreateFolderController.ts";
-import { DeleteFolderController } from "./interface/controllers/folder/DeleteFolderController.ts";
-import { GetAllFoldersController } from "./interface/controllers/folder/GetAllFoldersController.ts";
-import { GetFolderByIdController } from "./interface/controllers/folder/GetFolderByIdController.ts";
-import { GetFolderContentsController } from "./interface/controllers/folder/GetFolderContentsController.ts";
-import { SearchFoldersController } from "./interface/controllers/folder/SearchFoldersController.ts";
-import { UpdateFolderController } from "./interface/controllers/folder/UpdateFolderController.ts";
+import { CreateFolderController } from "./../interface/controllers/folder/CreateFolderController.ts";
+import { DeleteFolderController } from "./../interface/controllers/folder/DeleteFolderController.ts";
+import { GetAllFoldersController } from "./../interface/controllers/folder/GetAllFoldersController.ts";
+import { GetFolderByIdController } from "./../interface/controllers/folder/GetFolderByIdController.ts";
+import { GetFolderContentsController } from "./../interface/controllers/folder/GetFolderContentsController.ts";
+import { SearchFoldersController } from "./../interface/controllers/folder/SearchFoldersController.ts";
+import { UpdateFolderController } from "./../interface/controllers/folder/UpdateFolderController.ts";
 
-import { CreateNoteController } from "./interface/controllers/note/CreateNoteController.ts";
-import { DeleteNoteController } from "./interface/controllers/note/DeleteNoteController.ts";
-import { GetAllNotesController } from "./interface/controllers/note/GetAllNotesController.ts";
-import { GetNoteByIdController } from "./interface/controllers/note/GetNoteByIdController.ts";
-import { GetNotesByTagsController } from "./interface/controllers/note/GetNotesByTagsController.ts";
-import { SearchNotesController } from "./interface/controllers/note/SearchNotesController.ts";
-import { UpdateNoteController } from "./interface/controllers/note/UpdateNoteController.ts";
+import { CreateNoteController } from "./../interface/controllers/note/CreateNoteController.ts";
+import { DeleteNoteController } from "./../interface/controllers/note/DeleteNoteController.ts";
+import { GetAllNotesController } from "./../interface/controllers/note/GetAllNotesController.ts";
+import { GetNoteByIdController } from "./../interface/controllers/note/GetNoteByIdController.ts";
+import { GetNotesByTagsController } from "./../interface/controllers/note/GetNotesByTagsController.ts";
+import { SearchNotesController } from "./../interface/controllers/note/SearchNotesController.ts";
+import { UpdateNoteController } from "./../interface/controllers/note/UpdateNoteController.ts";
 
-import { GetAllTagsController } from "./interface/controllers/tag/GetAllTagsController.ts";
+import { GetAllTagsController } from "./../interface/controllers/tag/GetAllTagsController.ts";
 
+import { createAuthRoutes } from "./routes/AuthRoutes.ts";
+import { createBackupRoutes } from "./routes/BackupRoutes.ts";
 import { createFolderRoutes } from "./routes/FolderRoutes.ts";
 import { createNoteRoutes } from "./routes/NoteRoutes.ts";
 import { createTagRoutes } from "./routes/TagRoutes.ts";
 import { createViewRoutes } from "./routes/ViewRoutes.ts";
-import { createAuthRoutes } from "./routes/AuthRoutes.ts";
-import { createBackupRoutes } from "./routes/BackupRoutes.ts";
 
-import { SignUpController } from "./interface/controllers/user/SignUpController.ts";
-import { SignInController } from "./interface/controllers/user/SignInController.ts";
+import { SignInController } from "./../interface/controllers/user/SignInController.ts";
+import { SignUpController } from "./../interface/controllers/user/SignUpController.ts";
 
-import { CreateBackupController } from "./interface/controllers/backup/CreateBackupController.ts";
-import { ImportBackupController } from "./interface/controllers/backup/ImportBackupController.ts";
+import { CreateBackupController } from "./../interface/controllers/backup/CreateBackupController.ts";
+import { ImportBackupController } from "./../interface/controllers/backup/ImportBackupController.ts";
 
 const __dirname = dirname(fromFileUrl(import.meta.url));
 
@@ -65,8 +67,30 @@ export async function createServer(options: ServerOptions = {}) {
     next();
   });
 
+  const redisHost = Deno.env.get("REDIS_HOST") ?? "127.0.0.1";
+  const redisPort = Number(Deno.env.get("REDIS_PORT") ?? "6379");
+  const redisClient = createClient({
+    socket: {
+      host: redisHost,
+      port: redisPort,
+    },
+  });
+
+  redisClient.on("error", (err) => {
+    console.error("[REDIS] Client error:", err);
+  });
+
+  await redisClient.connect();
+  console.log(`[REDIS] Connected to redis at ${redisHost}:${redisPort}`);
+
+  const redisStore = new RedisStore({
+    client: redisClient,
+    prefix: "sess:",
+  });
+
   app.use(
     session({
+      store: redisStore,
       secret: Deno.env.get("SESSION_SECRET") || "a-unique-secret",
       resave: false,
       saveUninitialized: false,
