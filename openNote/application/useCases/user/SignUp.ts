@@ -1,6 +1,6 @@
 import { User } from "../../../domain/entities/User.ts";
 import { UserRepository } from "../../repositories/UserRepository.ts";
-import { PasswordHasher } from "../../ports/utils.ts";
+import { PasswordHasher } from "../../ports/IPasswordHasher.ts";
 
 export interface SignUpInput {
   readonly fullname: string;

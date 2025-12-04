@@ -12,7 +12,7 @@ function createPool(): Pool {
       password: Deno.env.get("DB_PASSWORD"),
       database: Deno.env.get("DB_NAME"),
     },
-    40
+    50
   );
 }
 

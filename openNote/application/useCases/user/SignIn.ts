@@ -1,5 +1,5 @@
 import { UserRepository } from "../../repositories/UserRepository.ts";
-import { PasswordHasher } from "../../ports/utils.ts";
+import { PasswordHasher } from "../../ports/IPasswordHasher.ts";
 
 export interface SignInInput {
   readonly email: string;
