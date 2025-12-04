@@ -36,7 +36,7 @@ import { createFolderRoutes } from "./routes/FolderRoutes.ts";
 import { createNoteRoutes } from "./routes/NoteRoutes.ts";
 import { createTagRoutes } from "./routes/TagRoutes.ts";
 import { createViewRoutes } from "./routes/ViewRoutes.ts";
-import { createUserRoutes } from "./routes/UserRoutes.ts";
+import { createAuthRoutes } from "./routes/AuthRoutes.ts";
 import { createBackupRoutes } from "./routes/BackupRoutes.ts";
 
 import { SignUpController } from "./interface/controllers/user/SignUpController.ts";
@@ -167,8 +167,8 @@ export async function createServer(options: ServerOptions = {}) {
   app.use("/api/tags", createTagRoutes(getAllTagsController));
 
   app.use(
-    "/api/users",
-    createUserRoutes(signInController, signUpController, passwordHasher),
+    "/api/auth",
+    createAuthRoutes(signInController, signUpController, passwordHasher),
   );
 
   app.use(
