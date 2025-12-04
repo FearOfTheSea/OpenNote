@@ -1,6 +1,6 @@
-import { NoteRepository } from "./repositories/NoteRepository.ts";
-import { TagRepository } from "./repositories/TagRepository.ts";
-import { FolderRepository } from "./repositories/FolderRepository.ts";
+import { NoteRepository } from "../repositories/NoteRepository.ts";
+import { TagRepository } from "../repositories/TagRepository.ts";
+import { FolderRepository } from "../repositories/FolderRepository.ts";
 
 export interface IUnitOfWork {
   begin(): Promise<void>;

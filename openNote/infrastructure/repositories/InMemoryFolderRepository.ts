@@ -6,7 +6,9 @@ export class InMemoryFolderRepository implements FolderRepository {
   private folders: Folder[] = [];
 
   findAll(userId: string): Promise<Folder[]> {
-    return Promise.resolve(this.folders.filter((folder) => folder.userId === userId));
+    return Promise.resolve(
+      this.folders.filter((folder) => folder.userId === userId)
+    );
   }
 
   findById(id: string): Promise<Folder | null> {
@@ -16,17 +18,30 @@ export class InMemoryFolderRepository implements FolderRepository {
 
   findByName(name: string, userId: string): Promise<Folder[]> {
     return Promise.resolve(
-      this.folders.filter((folder) => folder.name.includes(name.trim()) && folder.userId === userId),
+      this.folders.filter(
+        (folder) =>
+          folder.name.includes(name.trim()) && folder.userId === userId
+      )
     );
   }
 
-  findByParentFolderId(parentFolderId: string | undefined, userId: string): Promise<Folder[]> {
+  findByParentFolderId(
+    parentFolderId: string | undefined,
+    userId: string
+  ): Promise<Folder[]> {
     return Promise.resolve(
-      this.folders.filter((folder) => folder.parentFolderId === parentFolderId && folder.userId === userId),
+      this.folders.filter(
+        (folder) =>
+          folder.parentFolderId === parentFolderId && folder.userId === userId
+      )
     );
   }
 
-  cutFolder(folderId: string, _userId: string, newParentFolderId: string | undefined): Promise<boolean> {
+  cutFolder(
+    folderId: string,
+    _userId: string,
+    newParentFolderId: string | undefined
+  ): Promise<boolean> {
     const folder = this.folders.find((f) => f.id === folderId);
     if (!folder) {
       return Promise.resolve(false);
@@ -36,7 +51,7 @@ export class InMemoryFolderRepository implements FolderRepository {
       folder.name,
       folder.userId,
       newParentFolderId,
-      folder.id,
+      folder.id
     );
 
     const oldFolderIndex = this.folders.findIndex((f) => f.id === folderId);
@@ -48,7 +63,9 @@ export class InMemoryFolderRepository implements FolderRepository {
   }
 
   save(folder: Folder): Promise<void> {
-    const existingFolderIndex = this.folders.findIndex((n) => n.id === folder.id);
+    const existingFolderIndex = this.folders.findIndex(
+      (n) => n.id === folder.id
+    );
 
     if (existingFolderIndex === -1) {
       this.folders.push(folder);
@@ -59,7 +76,12 @@ export class InMemoryFolderRepository implements FolderRepository {
     return Promise.resolve();
   }
 
-  async delete(id: string, noteRepository: NoteRepository): Promise<void> {
+  async delete(id: string): Promise<void> {}
+
+  async inmemoryDelete(
+    id: string,
+    noteRepository: NoteRepository
+  ): Promise<void> {
     // Find all subfolders recursively
     const foldersToDelete = new Set<string>([id]);
     let foundNew = true;
@@ -68,7 +90,8 @@ export class InMemoryFolderRepository implements FolderRepository {
       foundNew = false;
       for (const folder of this.folders) {
         if (
-          folder.parentFolderId && foldersToDelete.has(folder.parentFolderId) &&
+          folder.parentFolderId &&
+          foldersToDelete.has(folder.parentFolderId) &&
           !foldersToDelete.has(folder.id)
         ) {
           foldersToDelete.add(folder.id);
@@ -88,6 +111,8 @@ export class InMemoryFolderRepository implements FolderRepository {
     }
 
     // Delete all folders
-    this.folders = this.folders.filter((folder) => !foldersToDelete.has(folder.id));
+    this.folders = this.folders.filter(
+      (folder) => !foldersToDelete.has(folder.id)
+    );
   }
 }

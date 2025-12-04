@@ -1,4 +1,4 @@
-import { IUnitOfWork } from "../../IUnitOfWork.ts";
+import { IUnitOfWork } from "../../ports/IUnitOfWork.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
 import { NoteRepository } from "../../repositories/NoteRepository.ts";
 
@@ -10,7 +10,7 @@ export class DeleteFolder {
   constructor(
     private folderRepository: FolderRepository,
     private noteRepository: NoteRepository,
-    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>,
+    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>
   ) {}
 
   async execute(input: DeleteFolderInput): Promise<void> {

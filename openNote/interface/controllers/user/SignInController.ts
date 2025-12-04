@@ -1,6 +1,9 @@
 import { UserRepository } from "../../../application/repositories/UserRepository.ts";
-import { SignIn, SignInInput } from "../../../application/useCases/user/SignIn.ts";
-import { PasswordHasher } from "../../../application/useCases/utils.ts";
+import {
+  SignIn,
+  SignInInput,
+} from "../../../application/useCases/user/SignIn.ts";
+import { PasswordHasher } from "../../../application/ports/IPasswordHasher.ts";
 
 export interface SignInRequest {
   readonly email: string;
@@ -19,7 +22,10 @@ export class SignInController {
     this.useCase = new SignIn(userRepository);
   }
 
-  async apply(request: SignInRequest, passwordHasher: PasswordHasher): Promise<SignInResponse> {
+  async apply(
+    request: SignInRequest,
+    passwordHasher: PasswordHasher
+  ): Promise<SignInResponse> {
     const input = request as SignInInput;
     try {
       return await this.useCase.execute(input, passwordHasher);

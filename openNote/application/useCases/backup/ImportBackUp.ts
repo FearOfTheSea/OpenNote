@@ -1,5 +1,5 @@
 // application/useCases/backup/ImportBackup.ts
-import { IUnitOfWork } from "../../IUnitOfWork.ts";
+import { IUnitOfWork } from "../../ports/IUnitOfWork.ts";
 import { BackupDataDTO } from "../../dtos/BackupDataDTO.ts";
 import { Tag } from "../../../domain/entities/Tag.ts";
 
@@ -9,9 +9,15 @@ export type UnitOfWorkFactory = () => Promise<IUnitOfWork>;
 export class ImportBackup {
   constructor(private makeUow: UnitOfWorkFactory) {}
 
-  async execute(userId: string, jsonContent: unknown): Promise<void> {
-    const parsed = jsonContent as BackupDataDTO;
-    const data = parsed.data;
+  async execute(userId: string, dataDto: BackupDataDTO): Promise<void> {
+    console.log("[ImportBackup] START executing..."); // Log 1
+
+    const data = dataDto.data;
+
+    // DEBUG 2: Kiểm tra số lượng phần tử thực tế nhận được
+    console.log(
+      `[Debug Data] Folders: ${data.folders?.length}, Notes: ${data.notes?.length}, Tags: ${data.tags?.length}`
+    );
 
     const uow = await this.makeUow();
 
@@ -30,6 +36,11 @@ export class ImportBackup {
       for (const oldFolder of data.folders) {
         const newId = crypto.randomUUID();
         folderMap.set(oldFolder.id, newId);
+
+        // DEBUG 3: Xác nhận đang insert folder
+        console.log(
+          `Processing Folder: ${oldFolder.name} (OldID: ${oldFolder.id} -> NewID: ${newId})`
+        );
 
         await folderRepo.save({
           ...oldFolder,
@@ -57,22 +68,27 @@ export class ImportBackup {
         }
       }
 
+      console.log("[ImportBackup] Folders processed."); // Log 4
+
       // --- IMPORT NOTES & TAGS ---
       for (const oldNote of data.notes) {
         // Tìm folder mới tương ứng
         const newFolderId = folderMap.get(oldNote.parentFolderId);
 
         // Nếu folder gốc không tìm thấy (lỗi file backup), bỏ qua note này
-        if (!newFolderId) continue;
+        if (!newFolderId) continue; //skip if parent folder not found
 
         const newNoteId = crypto.randomUUID();
+
+        console.log(
+          `Inserting Note: "${oldNote.name}" into Folder ${newFolderId}`
+        );
 
         // Lưu Note (Constraint: Note phải thuộc Folder)
         await noteRepo.save({
           ...oldNote,
           id: newNoteId,
           parentFolderId: newFolderId, // Link vào folder mới
-          // userId không lưu ở Note
         });
 
         // Xử lý Tags
@@ -95,7 +111,10 @@ export class ImportBackup {
         }
       }
 
+      console.log("[ImportBackup] Notes processed. Committing...");
+
       await uow.commit();
+      console.log("[ImportBackup] COMMIT SUCCESS!"); // Log 6
     } catch (error) {
       console.error("Import Error:", error);
       await uow.rollback();

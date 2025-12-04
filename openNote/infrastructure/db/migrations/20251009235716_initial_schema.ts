@@ -23,6 +23,15 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
             );
 
+        
+        ALTER TABLE folders
+        ADD COLUMN search_tsv tsvector
+        GENERATED ALWAYS AS (to_tsvector('simple', folder_name)) STORED;
+            
+        CREATE INDEX idx_folders_search_tsv
+        ON folders USING GIN (search_tsv);
+
+
         CREATE INDEX idx_folders_user_id ON folders(user_id);
 
         CREATE TABLE tags (
@@ -43,6 +52,18 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
             created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
+
+        -- Full-Text Search vector column (title weighted higher than content)
+        ALTER TABLE notes
+        ADD COLUMN search_vector tsvector
+        GENERATED ALWAYS AS (
+          setweight(to_tsvector('english', coalesce(unaccent(title), '')), 'A') ||
+          setweight(to_tsvector('english', coalesce(unaccent(content), '')), 'B')
+        ) STORED;
+
+        -- GIN index on the tsvector for fast FTS lookups
+        CREATE INDEX IF NOT EXISTS idx_notes_search_vector
+        ON notes USING GIN (search_vector);
 
         CREATE INDEX idx_notes_folder_id ON notes(folder_id);
         -- CREATE INDEX idx_notes_user_id ON notes(user_id);
@@ -96,19 +117,29 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
   /** Runs on rollback */
   async down(info: Info): Promise<void> {
     await this.client.queryArray(
-      "DROP TRIGGER IF EXISTS trigger_update_jobs_updated_at ON background_jobs;",
+      "DROP TRIGGER IF EXISTS trigger_update_jobs_updated_at ON background_jobs;"
     );
     await this.client.queryArray(
-      "DROP TRIGGER IF EXISTS trigger_update_notes_updated_at ON notes;",
+      "DROP TRIGGER IF EXISTS trigger_update_notes_updated_at ON notes;"
     );
     await this.client.queryArray(
-      "DROP TRIGGER IF EXISTS trigger_update_folders_updated_at ON folders;",
+      "DROP TRIGGER IF EXISTS trigger_update_folders_updated_at ON folders;"
     );
     await this.client.queryArray("DROP FUNCTION IF EXISTS set_updated_at;");
     await this.client.queryArray("DROP TABLE IF EXISTS background_jobs;");
     await this.client.queryArray("DROP TABLE IF EXISTS note_tags;");
+
+    await this.client.queryArray(
+      "DROP INDEX IF EXISTS idx_notes_search_vector;"
+    );
+    // remove search_vector column if exists
+    await this.client.queryArray(
+      "ALTER TABLE IF EXISTS notes DROP COLUMN IF EXISTS search_vector;"
+    );
+
     await this.client.queryArray("DROP TABLE IF EXISTS notes;");
     await this.client.queryArray("DROP TABLE IF EXISTS tags;");
+    await this.client.queryArray("DROP INDEX IF EXISTS idx_folders_user_id;");
     await this.client.queryArray("DROP TABLE IF EXISTS folders;");
     await this.client.queryArray("DROP TABLE IF EXISTS users;");
   }

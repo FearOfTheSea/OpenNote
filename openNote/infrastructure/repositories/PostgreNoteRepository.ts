@@ -11,7 +11,7 @@ export class PostgreNoteRepository implements NoteRepository {
 
   private async executeQuery<T>(
     query: string,
-    args: any[] = [],
+    args: any[] = []
   ): Promise<QueryObjectResult<T>> {
     if (this.tx) {
       return await this.tx.queryObject<T>(query, args);
@@ -40,7 +40,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [userId],
+      [userId]
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -57,7 +57,7 @@ export class PostgreNoteRepository implements NoteRepository {
       WHERE n.note_id = $1
       GROUP BY n.note_id
       `,
-      [id],
+      [id]
     );
 
     if (result.rows.length === 0) return null;
@@ -76,7 +76,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [folderId],
+      [folderId]
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -100,7 +100,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [tagIds, userId],
+      [tagIds, userId]
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -120,7 +120,7 @@ export class PostgreNoteRepository implements NoteRepository {
           updated_at = CURRENT_TIMESTAMP
       WHERE note_id = $2
       `,
-      [newFolderId, noteId],
+      [newFolderId, noteId]
     );
     return true;
   }
@@ -140,7 +140,7 @@ export class PostgreNoteRepository implements NoteRepository {
             folder_id = EXCLUDED.folder_id,
             updated_at = CURRENT_TIMESTAMP
         `,
-      [note.id, note.name, note.content, note.parentFolderId],
+      [note.id, note.name, note.content, note.parentFolderId]
     );
   }
 
@@ -161,6 +161,7 @@ export class PostgreNoteRepository implements NoteRepository {
 
     const query = `
       SELECT n.*,
+        ts_rank_cd(n.search_vector, plainto_tsquery('english', $1)) AS rank,
         COALESCE(
           ARRAY_AGG(nt.tag_id) FILTER (WHERE nt.tag_id IS NOT NULL),
           '{}'
@@ -169,10 +170,7 @@ export class PostgreNoteRepository implements NoteRepository {
       JOIN folders f ON n.folder_id = f.folder_id
       LEFT JOIN note_tags nt ON n.note_id = nt.note_id
       WHERE f.user_id = $2
-        AND (
-          LOWER(n.title) LIKE '%' || $1 || '%'
-          OR LOWER(n.content) LIKE '%' || $1 || '%'
-        )
+        AND n.search_vector @@ plainto_tsquery('english', $1)
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
     `;
@@ -189,6 +187,8 @@ export class PostgreNoteRepository implements NoteRepository {
       row.folder_id,
       row.tags,
       row.note_id,
+      row.created_at,
+      row.updated_at
     );
   }
 }

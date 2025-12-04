@@ -1,7 +1,7 @@
 import { Note } from "../../../domain/entities/Note.ts";
 import { NoteRepository } from "../../repositories/NoteRepository.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
-import { IUnitOfWork } from "../../IUnitOfWork.ts";
+import { IUnitOfWork } from "../../ports/IUnitOfWork.ts";
 
 export interface UpdateNoteInput {
   readonly id: string;
@@ -18,7 +18,7 @@ export class UpdateNote {
   constructor(
     private folderRepository: FolderRepository,
     private noteRepository: NoteRepository,
-    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>,
+    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>
   ) {}
 
   async execute(input: UpdateNoteInput): Promise<UpdateNoteOutput> {
@@ -34,21 +34,21 @@ export class UpdateNote {
 
     if (input.newParentFolderId) {
       const parentFolder = await this.folderRepository.findById(
-        input.newParentFolderId,
+        input.newParentFolderId
       );
       if (!parentFolder) {
         throw new Error(
-          `Parent folder with id ${input.newParentFolderId} not found`,
+          `Parent folder with id ${input.newParentFolderId} not found`
         );
       }
 
       if (
         (await this.noteRepository.findByFolderId(parentFolder.id)).find(
-          (n) => n.name === newName,
+          (n) => n.name === newName
         )
       ) {
         throw new Error(
-          `Note with name ${newName} already exists in folder with id ${parentFolder.id}`,
+          `Note with name ${newName} already exists in folder with id ${parentFolder.id}`
         );
       }
     } else if (input.newName) {
@@ -58,7 +58,7 @@ export class UpdateNote {
         ).find((n) => n.name === newName)
       ) {
         throw new Error(
-          `Note with name ${newName} already exists in folder with id ${existingNote.parentFolderId}`,
+          `Note with name ${newName} already exists in folder with id ${existingNote.parentFolderId}`
         );
       }
     }
@@ -66,9 +66,11 @@ export class UpdateNote {
     const updatedNote = new Note(
       newName,
       input.newContent ? input.newContent : existingNote.content,
-      input.newParentFolderId ? input.newParentFolderId : existingNote.parentFolderId,
+      input.newParentFolderId
+        ? input.newParentFolderId
+        : existingNote.parentFolderId,
       existingNote.tagIds,
-      existingNote.id,
+      existingNote.id
     );
 
     const uow = await this.createNoteUnitOfWork();
@@ -80,7 +82,7 @@ export class UpdateNote {
       await uow.commit();
 
       console.log(
-        `Updated note: id: ${updatedNote.id}, name: ${updatedNote.name}, content: ${updatedNote.content}, parentFolderId: ${updatedNote.parentFolderId}, tags: ${updatedNote.tagIds}`,
+        `Updated note: id: ${updatedNote.id}, name: ${updatedNote.name}, content: ${updatedNote.content}, parentFolderId: ${updatedNote.parentFolderId}, tags: ${updatedNote.tagIds}`
       );
 
       return { note: updatedNote };

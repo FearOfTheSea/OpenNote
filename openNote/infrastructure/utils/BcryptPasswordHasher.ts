@@ -1,5 +1,5 @@
 import bcrypt from "bcrypt";
-import { PasswordHasher } from "../../application/useCases/utils.ts";
+import { PasswordHasher } from "../../application/ports/IPasswordHasher.ts";
 
 export class BcryptPasswordHasher implements PasswordHasher {
   private saltRounds: number = 10;
@@ -11,7 +11,7 @@ export class BcryptPasswordHasher implements PasswordHasher {
 
   async comparePassword(
     suppliedPassword: string,
-    hash: string,
+    hash: string
   ): Promise<boolean> {
     const isMatch = await bcrypt.compare(suppliedPassword, hash);
     return isMatch;

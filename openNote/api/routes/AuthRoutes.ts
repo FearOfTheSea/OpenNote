@@ -4,25 +4,28 @@
 import { Router } from "express";
 import type { Request, Response } from "express";
 import { SignUpController } from "../../interface/controllers/user/SignUpController.ts";
-import { PasswordHasher } from "../../application/useCases/utils.ts";
+import { PasswordHasher } from "../../application/ports/IPasswordHasher.ts";
 import { SignInController } from "../../interface/controllers/user/SignInController.ts";
 import { requireAuth } from "./middlewares/RequireAuth.ts";
 
 export function createAuthRoutes(
   signInController: SignInController,
   signUpController: SignUpController,
-  passwordHasher: PasswordHasher,
+  passwordHasher: PasswordHasher
 ) {
   const router = Router();
 
   // Sign up
   router.post("/signup", async (req: Request, res: Response) => {
     try {
-      const result = await signUpController.apply({
-        fullname: req.body.fullname,
-        email: req.body.email,
-        password: req.body.password,
-      }, passwordHasher);
+      const result = await signUpController.apply(
+        {
+          fullname: req.body.fullname,
+          email: req.body.email,
+          password: req.body.password,
+        },
+        passwordHasher
+      );
 
       console.log("[AuthRoutes] Created user with id:", result.id);
 
@@ -39,10 +42,13 @@ export function createAuthRoutes(
   // Sign in
   router.post("/signin", async (req: Request, res: Response) => {
     try {
-      const signInResult = await signInController.apply({
-        email: req.body.email,
-        password: req.body.password,
-      }, passwordHasher);
+      const signInResult = await signInController.apply(
+        {
+          email: req.body.email,
+          password: req.body.password,
+        },
+        passwordHasher
+      );
 
       const userId = signInResult.userId;
       const userEmail = signInResult.userEmail;

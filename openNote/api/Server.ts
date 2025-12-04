@@ -14,6 +14,8 @@ import {
   passwordHasher,
   tagRepository,
   userRepository,
+  jobRepository,
+  queueService,
 } from "./../ApplicationContext.ts";
 
 import { CreateFolderController } from "./../interface/controllers/folder/CreateFolderController.ts";
@@ -40,12 +42,14 @@ import { createFolderRoutes } from "./routes/FolderRoutes.ts";
 import { createNoteRoutes } from "./routes/NoteRoutes.ts";
 import { createTagRoutes } from "./routes/TagRoutes.ts";
 import { createViewRoutes } from "./routes/ViewRoutes.ts";
+import { createJobRoutes } from "./routes/JobRoutes.ts";
 
 import { SignInController } from "./../interface/controllers/user/SignInController.ts";
 import { SignUpController } from "./../interface/controllers/user/SignUpController.ts";
 
 import { CreateBackupController } from "./../interface/controllers/backup/CreateBackupController.ts";
 import { ImportBackupController } from "./../interface/controllers/backup/ImportBackupController.ts";
+import { GetJobStatusController } from "../interface/controllers/job/GetJobStatusController.ts";
 
 const __dirname = dirname(fromFileUrl(import.meta.url));
 
@@ -55,6 +59,13 @@ export interface ServerOptions {
 
 export async function createServer(options: ServerOptions = {}) {
   const app = express();
+
+  // --- THÊM ĐOẠN LOG NÀY ---
+  app.use((req, res, next) => {
+    console.log(`INCOMING REQUEST: ${req.method} ${req.url}`);
+    next();
+  });
+  // -------------------------
 
   // increase payload limit for large backup files
   app.use(express.json({ limit: "50mb" }));
@@ -99,29 +110,29 @@ export async function createServer(options: ServerOptions = {}) {
         secure: false,
         maxAge: 1000 * 60 * 60 * 24,
       },
-    }),
+    })
   );
 
   // Initialize controllers
   const createNoteController = new CreateNoteController(
     folderRepository,
-    createUnitOfWork,
+    createUnitOfWork
   );
   const getAllNotesController = new GetAllNotesController(noteRepository);
   const getNoteByIdController = new GetNoteByIdController(noteRepository);
   const updateNoteController = new UpdateNoteController(
     folderRepository,
     noteRepository,
-    createUnitOfWork,
+    createUnitOfWork
   );
   const deleteNoteController = new DeleteNoteController(
     noteRepository,
-    createUnitOfWork,
+    createUnitOfWork
   );
   const searchNotesController = new SearchNotesController(noteRepository);
   const getNotesByTagsController = new GetNotesByTagsController(
     noteRepository,
-    tagRepository,
+    tagRepository
   );
 
   const createFolderController = new CreateFolderController(folderRepository);
@@ -131,11 +142,11 @@ export async function createServer(options: ServerOptions = {}) {
   const deleteFolderController = new DeleteFolderController(
     folderRepository,
     noteRepository,
-    createUnitOfWork,
+    createUnitOfWork
   );
   const getFolderContentsController = new GetFolderContentsController(
     folderRepository,
-    noteRepository,
+    noteRepository
   );
   const searchFoldersController = new SearchFoldersController(folderRepository);
 
@@ -145,19 +156,23 @@ export async function createServer(options: ServerOptions = {}) {
   const signUpController = new SignUpController(userRepository);
 
   const createBackupController = new CreateBackupController(
-    folderRepository,
-    noteRepository,
-    tagRepository,
+    jobRepository,
+    queueService
   );
 
-  const importBackupController = new ImportBackupController(createUnitOfWork);
+  const importBackupController = new ImportBackupController(
+    jobRepository,
+    queueService
+  );
+
+  const getJobStatusController = new GetJobStatusController(jobRepository);
 
   // Seed mock data
   if (options.seedMockData) {
     await seedMockData(
       createFolderController,
       createNoteController,
-      signUpController,
+      signUpController
     );
   }
 
@@ -171,8 +186,8 @@ export async function createServer(options: ServerOptions = {}) {
       getNoteByIdController,
       getNotesByTagsController,
       searchNotesController,
-      updateNoteController,
-    ),
+      updateNoteController
+    )
   );
 
   app.use(
@@ -184,21 +199,23 @@ export async function createServer(options: ServerOptions = {}) {
       getFolderByIdController,
       getFolderContentsController,
       searchFoldersController,
-      updateFolderController,
-    ),
+      updateFolderController
+    )
   );
 
   app.use("/api/tags", createTagRoutes(getAllTagsController));
 
   app.use(
     "/api/auth",
-    createAuthRoutes(signInController, signUpController, passwordHasher),
+    createAuthRoutes(signInController, signUpController, passwordHasher)
   );
 
   app.use(
     "/api/backup",
-    createBackupRoutes(createBackupController, importBackupController),
+    createBackupRoutes(createBackupController, importBackupController)
   );
+
+  app.use("/api/jobs", createJobRoutes(getJobStatusController));
 
   app.use("/", createViewRoutes(__dirname));
 
@@ -208,7 +225,7 @@ export async function createServer(options: ServerOptions = {}) {
 async function seedMockData(
   createFolderController: CreateFolderController,
   createNoteController: CreateNoteController,
-  signUpController: SignUpController,
+  signUpController: SignUpController
 ) {
   const mockUser = await signUpController.apply(
     {
@@ -216,7 +233,7 @@ async function seedMockData(
       email: Deno.env.get("USER_EMAIL") || "adnope@gmail.com",
       password: Deno.env.get("USER_PASSWORD") || "adnope123",
     },
-    passwordHasher,
+    passwordHasher
   );
   const mockUserId = mockUser.id;
   const newfolder1 = await createFolderController.apply({

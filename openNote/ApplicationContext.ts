@@ -5,7 +5,7 @@ import { InMemoryNoteRepository } from "./infrastructure/repositories/InMemoryNo
 import { InMemoryFolderRepository } from "./infrastructure/repositories/InMemoryFolderRepository.ts";
 import { InMemoryTagRepository } from "./infrastructure/repositories/InMemoryTagRepository.ts";
 import { InMemoryUnitOfWork } from "./infrastructure/repositories/InMemoryUnitOfWork.ts";
-import type { IUnitOfWork } from "./application/IUnitOfWork.ts";
+import type { IUnitOfWork } from "./application/ports/IUnitOfWork.ts";
 import { PostgreNoteRepository } from "./infrastructure/repositories/PostgreNoteRepository.ts";
 import { PostgreFolderRepository } from "./infrastructure/repositories/PostgreFolderRepository.ts";
 import { PostgreTagRepository } from "./infrastructure/repositories/PostgreTagRepository.ts";
@@ -15,6 +15,10 @@ import { UserRepository } from "./application/repositories/UserRepository.ts";
 import { InMemoryUserRepository } from "./infrastructure/repositories/InmemoryUserRepository.ts";
 import { BcryptPasswordHasher } from "./infrastructure/utils/BcryptPasswordHasher.ts";
 import { getPool } from "./infrastructure/db/postgresClient.ts";
+import { JobRepository } from "./application/repositories/JobRepository.ts";
+import { PostgreJobRepository } from "./infrastructure/repositories/PostgreJobRepository.ts";
+import { IQueueService } from "./application/ports/IQueueService.ts";
+import { RedisQueueService } from "./infrastructure/queue/RedisQueueService.ts";
 
 const env = Deno.env.get("NODE_ENV") || "development";
 
@@ -22,6 +26,8 @@ let noteRepository: NoteRepository;
 let folderRepository: FolderRepository;
 let tagRepository: TagRepository;
 let userRepository: UserRepository;
+let jobRepository: JobRepository;
+let queueService: IQueueService;
 
 let createUnitOfWork: () => Promise<IUnitOfWork>;
 
@@ -32,11 +38,7 @@ switch (env) {
     tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
     createUnitOfWork = () => {
       return Promise.resolve(
-        new InMemoryUnitOfWork(
-          noteRepository,
-          tagRepository,
-          folderRepository,
-        ),
+        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository)
       );
     };
     console.log("[APP CONTEXT]: TEST");
@@ -50,6 +52,13 @@ switch (env) {
     noteRepository = new PostgreNoteRepository();
     tagRepository = new PostgreTagRepository();
     userRepository = new PostgreUserRepository();
+    jobRepository = new PostgreJobRepository();
+
+    // init redis queue
+    const redisHost = Deno.env.get("REDIS_HOST") || "localhost";
+    const redisPort = parseInt(Deno.env.get("REDIS_PORT") || "6379");
+    console.log(`🔌 Connecting to Redis at ${redisHost}:${redisPort}...`);
+    queueService = new RedisQueueService(redisHost, redisPort);
 
     createUnitOfWork = async () => {
       const client = await pool.connect();
@@ -74,11 +83,7 @@ switch (env) {
     userRepository = new InMemoryUserRepository();
     createUnitOfWork = () => {
       return Promise.resolve(
-        new InMemoryUnitOfWork(
-          noteRepository,
-          tagRepository,
-          folderRepository,
-        ),
+        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository)
       );
     };
     console.log("[APP CONTEXT]: DEV");
@@ -88,4 +93,13 @@ switch (env) {
 
 const passwordHasher = new BcryptPasswordHasher();
 
-export { createUnitOfWork, folderRepository, noteRepository, passwordHasher, tagRepository, userRepository };
+export {
+  createUnitOfWork,
+  folderRepository,
+  noteRepository,
+  passwordHasher,
+  tagRepository,
+  userRepository,
+  jobRepository,
+  queueService,
+};
