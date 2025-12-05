@@ -15,13 +15,15 @@ export class Note {
     parentFolderId: string,
     tagIds?: string[],
     id?: string,
+    createdAt?: Date,
+    updatedAt?: Date
   ) {
     if (!name || name.trim() === "") {
       throw new Error("Note name cannot be empty");
     }
     if (!validateName(name)) {
       throw new Error(
-        "Note name must be 1-255 characters long, uses only 0-9, a-Z, ., _, - and spaces",
+        "Note name must be 1-255 characters long, uses only 0-9, a-Z, ., _, - and spaces"
       );
     }
     if (!parentFolderId) {
@@ -33,7 +35,7 @@ export class Note {
     this.content = content;
     this.parentFolderId = parentFolderId;
     this.tagIds = tagIds || [];
-    this.createdAt = new Date();
-    this.updatedAt = new Date();
+    this.createdAt = createdAt || new Date();
+    this.updatedAt = updatedAt || new Date();
   }
 }
