@@ -7,7 +7,7 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
         CREATE EXTENSION IF NOT EXISTS "pgcrypto";
         CREATE EXTENSION IF NOT EXISTS "unaccent";
 
-        -- hàm wrapper IMMUTABLE cho unaccent
+        -- Hàm wrapper IMMUTABLE cho unaccent
         CREATE OR REPLACE FUNCTION immutable_unaccent(text)
         RETURNS text AS $$
         SELECT public.unaccent('public.unaccent', $1);
@@ -35,7 +35,7 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
         -- Folder Search Index
         ALTER TABLE folders
         ADD COLUMN search_tsv tsvector
-        GENERATED ALWAYS AS (to_tsvector('simple', folder_name)) STORED;
+        GENERATED ALWAYS AS (to_tsvector('simple', immutable_unaccent(folder_name))) STORED; -- Đã sửa thành 'simple' và thêm unaccent
             
         CREATE INDEX idx_folders_search_tsv ON folders USING GIN (search_tsv);
         CREATE INDEX idx_folders_user_id ON folders(user_id);
@@ -61,8 +61,8 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
         ALTER TABLE notes
         ADD COLUMN search_vector tsvector
         GENERATED ALWAYS AS (
-          setweight(to_tsvector('english', coalesce(immutable_unaccent(title), '')), 'A') ||
-          setweight(to_tsvector('english', coalesce(immutable_unaccent(content), '')), 'B')
+          setweight(to_tsvector('simple', coalesce(immutable_unaccent(title), '')), 'A') ||
+          setweight(to_tsvector('simple', coalesce(immutable_unaccent(content), '')), 'B')
         ) STORED;
 
         CREATE INDEX idx_notes_search_vector ON notes USING GIN (search_vector);
@@ -87,7 +87,6 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
             updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
         );
         
-        -- Index cho Worker query job nhanh hơn
         CREATE INDEX idx_background_jobs_status_created ON background_jobs(status, created_at);
 
         -- Triggers for updated_at
@@ -112,26 +111,24 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
 
   /** Runs on rollback */
   async down(info: Info): Promise<void> {
-    // Drop Triggers
     await this.client.queryArray(
-      "DROP TRIGGER IF EXISTS trigger_update_jobs_updated_at ON background_jobs;",
+      "DROP TRIGGER IF EXISTS trigger_update_jobs_updated_at ON background_jobs;"
     );
     await this.client.queryArray(
-      "DROP TRIGGER IF EXISTS trigger_update_notes_updated_at ON notes;",
+      "DROP TRIGGER IF EXISTS trigger_update_notes_updated_at ON notes;"
     );
     await this.client.queryArray(
-      "DROP TRIGGER IF EXISTS trigger_update_folders_updated_at ON folders;",
+      "DROP TRIGGER IF EXISTS trigger_update_folders_updated_at ON folders;"
     );
-
-    // Drop Function
     await this.client.queryArray("DROP FUNCTION IF EXISTS set_updated_at;");
-
-    // Drop Tables (Thứ tự quan trọng: Con trước Cha sau)
     await this.client.queryArray("DROP TABLE IF EXISTS background_jobs;");
     await this.client.queryArray("DROP TABLE IF EXISTS note_tags;");
     await this.client.queryArray("DROP TABLE IF EXISTS notes;");
     await this.client.queryArray("DROP TABLE IF EXISTS tags;");
     await this.client.queryArray("DROP TABLE IF EXISTS folders;");
     await this.client.queryArray("DROP TABLE IF EXISTS users;");
+    await this.client.queryArray("DROP FUNCTION IF EXISTS immutable_unaccent;");
+    await this.client.queryArray("DROP EXTENSION IF EXISTS unaccent;");
+    await this.client.queryArray("DROP EXTENSION IF EXISTS pgcrypto;");
   }
 }

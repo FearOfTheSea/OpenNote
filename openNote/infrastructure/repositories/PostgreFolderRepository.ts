@@ -2,6 +2,7 @@ import { Folder } from "../../domain/entities/Folder.ts";
 import { FolderRepository } from "../../application/repositories/FolderRepository.ts";
 import { getPool } from "../db/postgresClient.ts";
 import { QueryObjectResult, Transaction } from "pg";
+import { buildSearchSyntax } from "../utils/SearchHelper.ts";
 
 /**
  * PostgreSQL implementation of FolderRepository.
@@ -12,7 +13,7 @@ export class PostgreFolderRepository implements FolderRepository {
   // helper for getting the correct query runner
   private async executeQuery<T>(
     query: string,
-    args: any[] = [],
+    args: any[] = []
   ): Promise<QueryObjectResult<T>> {
     if (this.tx) {
       return await this.tx.queryObject<T>(query, args);
@@ -36,7 +37,7 @@ export class PostgreFolderRepository implements FolderRepository {
       WHERE user_id = $1
       ORDER BY updated_at DESC
       `,
-      [userId],
+      [userId]
     ).then((result) => result.rows.map((row) => this.mapRowToFolder(row)));
   }
 
@@ -50,7 +51,7 @@ export class PostgreFolderRepository implements FolderRepository {
       FROM folders
       WHERE folder_id = $1
       `,
-      [id],
+      [id]
     );
 
     if (result.rows.length === 0) return null;
@@ -62,7 +63,7 @@ export class PostgreFolderRepository implements FolderRepository {
    */
   async findByParentFolderId(
     parentFolderId: string | undefined,
-    userId: string,
+    userId: string
   ): Promise<Folder[]> {
     if (!parentFolderId) {
       // return all folders gốc (không có parent)
@@ -73,7 +74,7 @@ export class PostgreFolderRepository implements FolderRepository {
       WHERE user_id = $1 AND parent_folder_id IS NULL
       ORDER BY updated_at DESC
       `,
-        [userId],
+        [userId]
       );
 
       return result.rows.map((row) => this.mapRowToFolder(row));
@@ -87,97 +88,91 @@ export class PostgreFolderRepository implements FolderRepository {
       WHERE parent_folder_id = $1
       ORDER BY updated_at DESC
       `,
-      [parentFolderId],
+      [parentFolderId]
     );
 
     return result.rows.map((row) => this.mapRowToFolder(row));
   }
 
-  // no need to use unit of work here
   async cutFolder(
     folderId: string,
     userId: string,
-    newParentFolderId?: string,
+    newParentFolderId?: string
   ): Promise<boolean> {
     if (folderId === newParentFolderId) {
       throw new Error("Cannot move a folder into itself.");
     }
 
-    const client = await (await getPool()).connect();
-    const tx = client.createTransaction("cut_folder_tx");
-    try {
-      await tx.begin();
+    if (!this.tx) {
+      throw new Error("cutFolder method must be called within a transaction.");
+    }
 
-      // check xem folder cần di chuyển có thuộc về user ko
-      const folderToMove = await tx.queryObject<{ user_id: string }>(
+    const folderToMove = await this.tx.queryObject<{
+      user_id: string;
+      parent_folder_id: string | null;
+    }>(`SELECT user_id, parent_folder_id FROM folders WHERE folder_id = $1`, [
+      folderId,
+    ]);
+
+    // nếu folder đích ko tồn tại hoặc ko thuộc về user
+    if (
+      folderToMove.rows.length === 0 ||
+      folderToMove.rows[0].user_id !== userId
+    ) {
+      throw new Error("Folder not found or you don't have permission.");
+    }
+
+    const currentParentId = folderToMove.rows[0].parent_folder_id;
+    const targetParentId = newParentFolderId || null;
+
+    if (currentParentId === targetParentId) {
+      return true;
+    }
+
+    // Check target va cycle: neu targetParentId la con cua folderId thi khong duoc move
+    if (targetParentId) {
+      const parentFolder = await this.tx.queryObject<{ user_id: string }>(
         `SELECT user_id FROM folders WHERE folder_id = $1`,
-        [folderId],
+        [targetParentId]
       );
+
       if (
-        folderToMove.rows.length === 0 ||
-        folderToMove.rows[0].user_id !== userId
+        parentFolder.rows.length === 0 ||
+        parentFolder.rows[0].user_id !== userId
       ) {
-        throw new Error("Folder not found or you don't have permission.");
+        throw new Error(
+          "Target folder not found or you don't have permission."
+        );
       }
 
-      // thực hiện di chuyển folder
-      if (newParentFolderId) {
-        // xem folder đích có tồn tại và cũng thuộc về user
-        const parentFolder = await tx.queryObject<{ user_id: string }>(
-          `SELECT user_id FROM folders WHERE folder_id = $1`,
-          [newParentFolderId],
-        );
-
-        // nếu folder đích ko tồn tại hoặc ko thuộc về user
-        if (
-          parentFolder.rows.length === 0 ||
-          parentFolder.rows[0].user_id !== userId
-        ) {
-          throw new Error(
-            "Target folder not found or you don't have permission.",
-          );
-        }
-
-        // kiem tra xem target folder co phai la con cua folder dang move ko
-        const checkCycle = await tx.queryObject<{ folder_id: string }>(
-          // tìm cha của thư mục đích
-          // then kiểm tra xem thư mục đang được cut có phải ancesstor của thư mục đích ko
-          `
+      const checkCycle = await this.tx.queryObject(
+        `
         WITH RECURSIVE ancestors AS (
           SELECT folder_id, parent_folder_id
           FROM folders
           WHERE folder_id = $1
+          
           UNION ALL
+          
           SELECT f.folder_id, f.parent_folder_id
           FROM folders f
-          JOIN ancestors a ON f.folder_id = a.folder_id
+          JOIN ancestors a ON f.folder_id = a.parent_folder_id
         )
-        SELECT folder_id FROM subfolders WHERE folder_id = $2
+        SELECT folder_id FROM ancestors WHERE folder_id = $2
         `,
-          [newParentFolderId, folderId],
-        );
-
-        if (checkCycle.rows.length > 0) {
-          throw new Error("Cannot move a folder into its own subfolder.");
-        }
-      }
-
-      // all pass => thực hiện cut
-      await tx.queryObject(
-        `
-      UPDATE folders
-      SET parent_folder_id = $1, updated_at = NOW()
-      WHERE folder_id = $2 AND user_id = $3
-      `,
-        [newParentFolderId, folderId, userId],
+        [targetParentId, folderId]
       );
 
-      await tx.commit();
-    } catch (error) {
-      await tx.rollback();
-      throw error;
+      if (checkCycle.rows.length > 0) {
+        throw new Error("Cannot move a folder into its own subfolder.");
+      }
     }
-    return true; // true nếu cut thành công
+
+    await this.tx.queryObject(
+      `UPDATE folders SET parent_folder_id = $1 WHERE folder_id = $2`,
+      [targetParentId, folderId]
+    );
+    return true;
   }
 
   /**
@@ -192,7 +187,7 @@ export class PostgreFolderRepository implements FolderRepository {
       SET folder_name = EXCLUDED.folder_name,
           parent_folder_id = EXCLUDED.parent_folder_id
       `,
-      [folder.id, folder.name, folder.userId, folder.parentFolderId],
+      [folder.id, folder.name, folder.userId, folder.parentFolderId]
     );
   }
 
@@ -216,20 +211,22 @@ export class PostgreFolderRepository implements FolderRepository {
    * search folders by keyword in folder_name
    */
   async findByName(keyword: string, userId: string): Promise<Folder[]> {
-    const normalizedKeyword = keyword.trim().toLowerCase();
-    if (!normalizedKeyword) {
+    if (!keyword || !keyword.trim()) {
       return [];
     }
+
+    const searchSyntax = buildSearchSyntax(keyword);
+    if (!searchSyntax) return [];
 
     const query = `
     SELECT folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at
     FROM folders
     WHERE user_id = $2
-      AND search_tsv @@ plainto_tsquery('simple', $1)
+      AND search_tsv @@ to_tsquery('simple', $1)
     ORDER BY updated_at DESC
   `;
 
-    const result = await this.executeQuery(query, [normalizedKeyword, userId]);
+    const result = await this.executeQuery(query, [searchSyntax, userId]);
 
     return result.rows.map((row) => this.mapRowToFolder(row));
   }
@@ -244,7 +241,7 @@ export class PostgreFolderRepository implements FolderRepository {
       row.parent_folder_id,
       row.folder_id,
       row.created_at,
-      row.updated_at,
+      row.updated_at
     );
   }
 }
