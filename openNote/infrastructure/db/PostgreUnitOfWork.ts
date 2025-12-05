@@ -15,7 +15,7 @@ export class PostgreUnitOfWork implements IUnitOfWork {
     private client: PoolClient,
     noteRepo: NoteRepository,
     tagRepo: TagRepository,
-    folderRepo: FolderRepository
+    folderRepo: FolderRepository,
   ) {
     this.tx = tx;
     this.client = client;

@@ -10,7 +10,7 @@ export interface IQueueService {
    */
   dequeueReliable(
     queueName: string,
-    processingQueueName: string
+    processingQueueName: string,
   ): Promise<{ data: any; raw: string } | null>;
 
   /**

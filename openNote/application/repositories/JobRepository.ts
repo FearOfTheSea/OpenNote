@@ -7,11 +7,11 @@ export interface JobRepository {
     jobId: string,
     status: string,
     resultUrl?: string,
-    errorMessage?: string
+    errorMessage?: string,
   ): Promise<void>;
 
   // Lấy trạng thái (Frontend gọi để Polling)
   findById(
-    jobId: string
+    jobId: string,
   ): Promise<{ status: string; resultUrl?: string | null }>;
 }

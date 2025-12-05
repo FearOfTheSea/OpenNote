@@ -10,7 +10,7 @@ export class DeleteFolder {
   constructor(
     private folderRepository: FolderRepository,
     private noteRepository: NoteRepository,
-    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>
+    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>,
   ) {}
 
   async execute(input: DeleteFolderInput): Promise<void> {

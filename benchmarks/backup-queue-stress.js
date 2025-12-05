@@ -57,7 +57,7 @@ export default function () {
   const loginRes = http.post(
     `${BASE_URL}/api/auth/signin`,
     JSON.stringify({ email: user.email, password: user.password }),
-    { headers: { "Content-Type": "application/json" } }
+    { headers: { "Content-Type": "application/json" } },
   );
 
   if (loginRes.status !== 200) {
@@ -69,9 +69,7 @@ export default function () {
   }
 
   const cookieName = Object.keys(loginRes.cookies)[0];
-  const cookieValue = loginRes.cookies[cookieName]
-    ? loginRes.cookies[cookieName][0].value
-    : null;
+  const cookieValue = loginRes.cookies[cookieName] ? loginRes.cookies[cookieName][0].value : null;
 
   // Header chung
   const params = {
@@ -92,8 +90,7 @@ export default function () {
   // Validate Enqueue thành công
   const isEnqueued = check(enqueueRes, {
     // 1. Chấp nhận cả 200 và 201
-    "status is 200 or 201 or 202": (r) =>
-      r.status === 200 || r.status === 201 || r.status === 202,
+    "status is 200 or 201 or 202": (r) => r.status === 200 || r.status === 201 || r.status === 202,
 
     // 2. Kiểm tra logic JSON trả về
     "api reports success": (r) => {
@@ -104,8 +101,7 @@ export default function () {
       } // Đề phòng lỗi parse JSON
     },
 
-    "has jobId": (r) =>
-      r.json("jobId") !== undefined && r.json("jobId") !== null,
+    "has jobId": (r) => r.json("jobId") !== undefined && r.json("jobId") !== null,
   });
 
   errorRate.add(!isEnqueued);
@@ -161,7 +157,7 @@ export default function () {
     processingDuration.add(totalProcessingTime);
   } else {
     console.error(
-      `❌ [User ${user.email}] Job Timeout/Failed. Status: ${jobStatus}`
+      `❌ [User ${user.email}] Job Timeout/Failed. Status: ${jobStatus}`,
     );
     errorRate.add(1);
   }

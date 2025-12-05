@@ -40,7 +40,7 @@ export interface ImportBackupRequest {
 export class ImportBackupController {
   constructor(
     private jobRepo: JobRepository,
-    private queueService: IQueueService
+    private queueService: IQueueService,
   ) {}
 
   async apply(request: ImportBackupRequest): Promise<any> {

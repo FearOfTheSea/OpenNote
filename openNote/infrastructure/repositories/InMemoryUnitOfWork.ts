@@ -1,4 +1,4 @@
-import { IUnitOfWork } from "../../application/IUnitOfWork.ts";
+import { IUnitOfWork } from "../../application/ports/IUnitOfWork.ts";
 import { NoteRepository } from "../../application/repositories/NoteRepository.ts";
 import { TagRepository } from "../../application/repositories/TagRepository.ts";
 import { FolderRepository } from "../../application/repositories/FolderRepository.ts";

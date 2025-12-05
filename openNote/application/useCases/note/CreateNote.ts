@@ -15,12 +15,12 @@ export interface CreateNoteOutput {
 export class CreateNote {
   constructor(
     private readonly folderRepository: FolderRepository,
-    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>
+    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>,
   ) {}
 
   async execute(input: CreateNoteInput): Promise<CreateNoteOutput> {
     const parentFolder = await this.folderRepository.findById(
-      input.parentFolderId
+      input.parentFolderId,
     );
     if (!parentFolder) {
       throw new Error(`Folder with id ${input.parentFolderId} not found`);
@@ -30,11 +30,11 @@ export class CreateNote {
 
     if (
       (await unitOfWork.notes.findAll(parentFolder.userId)).find(
-        (n) => n.name === input.name
+        (n) => n.name === input.name,
       )
     ) {
       throw new Error(
-        `Note with name ${input.name} already exists in folder ${parentFolder.id}`
+        `Note with name ${input.name} already exists in folder ${parentFolder.id}`,
       );
     }
 

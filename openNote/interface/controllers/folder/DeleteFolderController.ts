@@ -1,10 +1,7 @@
 import { IUnitOfWork } from "../../../application/ports/IUnitOfWork.ts";
 import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
 import { NoteRepository } from "../../../application/repositories/NoteRepository.ts";
-import {
-  DeleteFolder,
-  DeleteFolderInput,
-} from "../../../application/useCases/folder/DeleteFolder.ts";
+import { DeleteFolder, DeleteFolderInput } from "../../../application/useCases/folder/DeleteFolder.ts";
 
 export interface DeleteFolderRequest {
   id: string;
@@ -16,12 +13,12 @@ export class DeleteFolderController {
   constructor(
     folderRepository: FolderRepository,
     noteRepository: NoteRepository,
-    createUnitOfWork: () => Promise<IUnitOfWork>
+    createUnitOfWork: () => Promise<IUnitOfWork>,
   ) {
     this.useCase = new DeleteFolder(
       folderRepository,
       noteRepository,
-      createUnitOfWork
+      createUnitOfWork,
     );
   }
 

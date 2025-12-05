@@ -1,10 +1,7 @@
 import { IUnitOfWork } from "../../../application/ports/IUnitOfWork.ts";
 import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
 import { NoteRepository } from "../../../application/repositories/NoteRepository.ts";
-import {
-  UpdateNote,
-  UpdateNoteInput,
-} from "../../../application/useCases/note/UpdateNote.ts";
+import { UpdateNote, UpdateNoteInput } from "../../../application/useCases/note/UpdateNote.ts";
 import { GetNoteByIdResponse } from "./GetNoteByIdController.ts";
 
 export interface UpdateNoteRequest {
@@ -24,12 +21,12 @@ export class UpdateNoteController {
   constructor(
     folderRepository: FolderRepository,
     noteRepository: NoteRepository,
-    createNoteUnitOfWork: () => Promise<IUnitOfWork>
+    createNoteUnitOfWork: () => Promise<IUnitOfWork>,
   ) {
     this.useCase = new UpdateNote(
       folderRepository,
       noteRepository,
-      createNoteUnitOfWork
+      createNoteUnitOfWork,
     );
   }
 

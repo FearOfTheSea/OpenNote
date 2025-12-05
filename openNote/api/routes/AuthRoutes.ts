@@ -11,7 +11,7 @@ import { requireAuth } from "./middlewares/RequireAuth.ts";
 export function createAuthRoutes(
   signInController: SignInController,
   signUpController: SignUpController,
-  passwordHasher: PasswordHasher
+  passwordHasher: PasswordHasher,
 ) {
   const router = Router();
 
@@ -24,7 +24,7 @@ export function createAuthRoutes(
           email: req.body.email,
           password: req.body.password,
         },
-        passwordHasher
+        passwordHasher,
       );
 
       console.log("[AuthRoutes] Created user with id:", result.id);
@@ -47,7 +47,7 @@ export function createAuthRoutes(
           email: req.body.email,
           password: req.body.password,
         },
-        passwordHasher
+        passwordHasher,
       );
 
       const userId = signInResult.userId;

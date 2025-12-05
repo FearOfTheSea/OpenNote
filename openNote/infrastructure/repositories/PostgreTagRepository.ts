@@ -38,7 +38,7 @@ export class PostgreTagRepository implements TagRepository {
       `
       SELECT DISTINCT t.tag_name, t.tag_id
       FROM tags t
-      JOIN note_tags nt ON t.tag_name = nt.tag_name
+      JOIN note_tags nt ON t.tag_name = t.tag_name
       JOIN notes n ON nt.note_id = n.note_id
       JOIN folders f ON n.folder_id = f.folder_id
       WHERE f.user_id = $1

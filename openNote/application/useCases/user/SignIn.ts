@@ -16,7 +16,7 @@ export class SignIn {
 
   async execute(
     input: SignInInput,
-    hasher: PasswordHasher
+    hasher: PasswordHasher,
   ): Promise<SignInOutput> {
     const foundUser = await this.userRepository.findByEmail(input.email);
     if (!foundUser) {
@@ -26,7 +26,7 @@ export class SignIn {
     try {
       const valid = await hasher.comparePassword(
         input.password,
-        foundUser.passwordHash
+        foundUser.passwordHash,
       );
       if (valid) {
         console.log(`[SignIn] User with email ${input.email} logged in!`);

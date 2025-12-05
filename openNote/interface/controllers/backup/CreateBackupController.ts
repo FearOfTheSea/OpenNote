@@ -62,7 +62,7 @@ export interface CreateBackupResponse {
 export class CreateBackupController {
   constructor(
     private jobRepo: JobRepository,
-    private queueService: IQueueService
+    private queueService: IQueueService,
   ) {}
 
   async apply(request: { userId: string }): Promise<any> {

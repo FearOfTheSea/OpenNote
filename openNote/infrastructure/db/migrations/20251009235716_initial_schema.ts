@@ -114,13 +114,13 @@ export default class extends AbstractMigration<ClientPostgreSQL> {
   async down(info: Info): Promise<void> {
     // Drop Triggers
     await this.client.queryArray(
-      "DROP TRIGGER IF EXISTS trigger_update_jobs_updated_at ON background_jobs;"
+      "DROP TRIGGER IF EXISTS trigger_update_jobs_updated_at ON background_jobs;",
     );
     await this.client.queryArray(
-      "DROP TRIGGER IF EXISTS trigger_update_notes_updated_at ON notes;"
+      "DROP TRIGGER IF EXISTS trigger_update_notes_updated_at ON notes;",
     );
     await this.client.queryArray(
-      "DROP TRIGGER IF EXISTS trigger_update_folders_updated_at ON folders;"
+      "DROP TRIGGER IF EXISTS trigger_update_folders_updated_at ON folders;",
     );
 
     // Drop Function

@@ -17,7 +17,7 @@ export class SignUp {
 
   async execute(
     input: SignUpInput,
-    hasher: PasswordHasher
+    hasher: PasswordHasher,
   ): Promise<SignUpOutput> {
     if (await this.userRepository.findByEmail(input.email)) {
       throw new Error(`There's already a user with email "${input.email}"!`);

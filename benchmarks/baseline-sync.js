@@ -54,7 +54,7 @@ export default function () {
   const loginRes = http.post(
     `${BASE_URL}/api/auth/signin`,
     JSON.stringify({ email: user.email, password: user.password }),
-    { headers: { "Content-Type": "application/json" } }
+    { headers: { "Content-Type": "application/json" } },
   );
 
   // Validate Login
@@ -70,9 +70,7 @@ export default function () {
   }
 
   const cookieName = Object.keys(loginRes.cookies)[0];
-  const cookieValue = loginRes.cookies[cookieName]
-    ? loginRes.cookies[cookieName][0].value
-    : null;
+  const cookieValue = loginRes.cookies[cookieName] ? loginRes.cookies[cookieName][0].value : null;
 
   if (!cookieValue) {
     errorRate.add(1);

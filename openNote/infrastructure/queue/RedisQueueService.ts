@@ -7,7 +7,7 @@ export class RedisQueueService implements IQueueService {
 
   constructor(
     private host: string,
-    private port: number
+    private port: number,
   ) {}
 
   private async getClient(): Promise<Redis> {
@@ -27,7 +27,7 @@ export class RedisQueueService implements IQueueService {
 
   async dequeueReliable(
     queueName: string,
-    processingQueueName: string
+    processingQueueName: string,
   ): Promise<{ data: any; raw: string } | null> {
     const client = await this.getClient();
 
@@ -48,7 +48,7 @@ export class RedisQueueService implements IQueueService {
 
   async acknowledge(
     processingQueueName: string,
-    rawData: string
+    rawData: string,
   ): Promise<void> {
     const client = await this.getClient();
     // LREM: Xóa job khỏi hàng đợi đang xử lý -> Xác nhận hoàn tất
@@ -58,7 +58,7 @@ export class RedisQueueService implements IQueueService {
   async recover(queueName: string, processingQueueName: string): Promise<void> {
     const client = await this.getClient();
     console.log(
-      `[QUEUE] Checking for orphaned jobs in ${processingQueueName}...`
+      `[QUEUE] Checking for orphaned jobs in ${processingQueueName}...`,
     );
 
     while (true) {

@@ -16,7 +16,7 @@ export class ImportBackup {
 
     // DEBUG 2: Kiểm tra số lượng phần tử thực tế nhận được
     console.log(
-      `[Debug Data] Folders: ${data.folders?.length}, Notes: ${data.notes?.length}, Tags: ${data.tags?.length}`
+      `[Debug Data] Folders: ${data.folders?.length}, Notes: ${data.notes?.length}, Tags: ${data.tags?.length}`,
     );
 
     const uow = await this.makeUow();
@@ -39,7 +39,7 @@ export class ImportBackup {
 
         // DEBUG 3: Xác nhận đang insert folder
         console.log(
-          `Processing Folder: ${oldFolder.name} (OldID: ${oldFolder.id} -> NewID: ${newId})`
+          `Processing Folder: ${oldFolder.name} (OldID: ${oldFolder.id} -> NewID: ${newId})`,
         );
 
         await folderRepo.save({
@@ -81,7 +81,7 @@ export class ImportBackup {
         const newNoteId = crypto.randomUUID();
 
         console.log(
-          `Inserting Note: "${oldNote.name}" into Folder ${newFolderId}`
+          `Inserting Note: "${oldNote.name}" into Folder ${newFolderId}`,
         );
 
         // Lưu Note (Constraint: Note phải thuộc Folder)

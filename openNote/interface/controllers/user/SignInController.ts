@@ -1,8 +1,5 @@
 import { UserRepository } from "../../../application/repositories/UserRepository.ts";
-import {
-  SignIn,
-  SignInInput,
-} from "../../../application/useCases/user/SignIn.ts";
+import { SignIn, SignInInput } from "../../../application/useCases/user/SignIn.ts";
 import { PasswordHasher } from "../../../application/ports/IPasswordHasher.ts";
 
 export interface SignInRequest {
@@ -24,7 +21,7 @@ export class SignInController {
 
   async apply(
     request: SignInRequest,
-    passwordHasher: PasswordHasher
+    passwordHasher: PasswordHasher,
   ): Promise<SignInResponse> {
     const input = request as SignInInput;
     try {

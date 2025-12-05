@@ -8,7 +8,7 @@ export interface DeleteNoteInput {
 export class DeleteNote {
   constructor(
     private noteRepository: NoteRepository,
-    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>
+    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>,
   ) {}
 
   async execute(input: DeleteNoteInput): Promise<void> {

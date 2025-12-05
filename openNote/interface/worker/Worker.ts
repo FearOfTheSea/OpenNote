@@ -19,7 +19,7 @@ async function startWorker() {
   // 1. Init Infrastructure
   const queueService = new RedisQueueService(
     Deno.env.get("REDIS_HOST") || "localhost",
-    Number(Deno.env.get("REDIS_PORT") || 6379)
+    Number(Deno.env.get("REDIS_PORT") || 6379),
   );
 
   const jobRepo = new PostgreJobRepository();
@@ -51,7 +51,7 @@ async function startWorker() {
 
   console.log(
     "✅ Worker listening on queues:",
-    QUEUES.map((q) => q.name)
+    QUEUES.map((q) => q.name),
   );
 
   // 3. Event Loop
@@ -63,7 +63,7 @@ async function startWorker() {
         // Dequeue tin cậy
         const jobContainer = await queueService.dequeueReliable(
           q.name,
-          q.processing
+          q.processing,
         );
 
         if (jobContainer) {
@@ -97,7 +97,7 @@ async function startWorker() {
               jobId,
               "FAILED",
               null,
-              (err as Error).message
+              (err as Error).message,
             );
           }
         }

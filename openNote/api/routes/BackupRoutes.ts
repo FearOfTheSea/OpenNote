@@ -85,7 +85,7 @@ import { requireAuth } from "./middlewares/RequireAuth.ts";
 
 export function createBackupRoutes(
   createBackupController: CreateBackupController,
-  importBackupController: ImportBackupController
+  importBackupController: ImportBackupController,
 ) {
   const router = Router();
 

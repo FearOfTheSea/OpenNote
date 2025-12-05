@@ -3,7 +3,7 @@ import { GetJobStatusController } from "../../interface/controllers/job/GetJobSt
 import { requireAuth } from "./middlewares/RequireAuth.ts";
 
 export function createJobRoutes(
-  getJobStatusController: GetJobStatusController
+  getJobStatusController: GetJobStatusController,
 ) {
   const router = Router();
 

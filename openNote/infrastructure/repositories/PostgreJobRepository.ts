@@ -37,7 +37,7 @@ export class PostgreJobRepository implements JobRepository {
     jobId: string,
     status: string,
     resultUrl: string | null = null,
-    errorMessage: string | null = null
+    errorMessage: string | null = null,
   ): Promise<void> {
     const query = `
       UPDATE background_jobs

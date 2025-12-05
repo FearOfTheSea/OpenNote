@@ -38,10 +38,10 @@ switch (env) {
     tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
     createUnitOfWork = () => {
       return Promise.resolve(
-        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository)
+        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository),
       );
     };
-    console.log("[APP CONTEXT]: TEST");
+    console.log("[CONTEXT]: test");
     break;
   }
 
@@ -57,7 +57,7 @@ switch (env) {
     // init redis queue
     const redisHost = Deno.env.get("REDIS_HOST") || "localhost";
     const redisPort = parseInt(Deno.env.get("REDIS_PORT") || "6379");
-    console.log(`🔌 Connecting to Redis at ${redisHost}:${redisPort}...`);
+    console.log(`[QUEUE SERVICE] Connecting to Redis at ${redisHost}:${redisPort}...`);
     queueService = new RedisQueueService(redisHost, redisPort);
 
     createUnitOfWork = async () => {
@@ -71,7 +71,7 @@ switch (env) {
       return new PostgreUnitOfWork(tx, client, noteRepo, tagRepo, folderRepo);
     };
 
-    console.log("[APP CONTEXT]: PROD");
+    console.log("[CONTEXT]: production");
     break;
   }
 
@@ -83,10 +83,10 @@ switch (env) {
     userRepository = new InMemoryUserRepository();
     createUnitOfWork = () => {
       return Promise.resolve(
-        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository)
+        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository),
       );
     };
-    console.log("[APP CONTEXT]: DEV");
+    console.log("[CONTEXT]: development");
     break;
   }
 }
@@ -96,10 +96,10 @@ const passwordHasher = new BcryptPasswordHasher();
 export {
   createUnitOfWork,
   folderRepository,
+  jobRepository,
   noteRepository,
   passwordHasher,
+  queueService,
   tagRepository,
   userRepository,
-  jobRepository,
-  queueService,
 };
