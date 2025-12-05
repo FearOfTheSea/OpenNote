@@ -82,6 +82,10 @@ import { Router } from "express";
 import { CreateBackupController } from "../../interface/controllers/backup/CreateBackupController.ts";
 import { ImportBackupController } from "../../interface/controllers/backup/ImportBackupController.ts";
 import { requireAuth } from "./middlewares/RequireAuth.ts";
+import { redisClient } from "../../infrastructure/redis/RedisClient.ts";
+import { invalidateGetAllNotesCache } from "./NoteRoutes.ts";
+import { invalidateGetAllTagsCache } from "./TagRoutes.ts";
+import { invalidateGetAllFoldersCache } from "./FolderRoutes.ts";
 
 export function createBackupRoutes(
   createBackupController: CreateBackupController,
@@ -137,6 +141,10 @@ export function createBackupRoutes(
         userId,
         fileContent,
       });
+
+      await invalidateGetAllNotesCache(userId);
+      await invalidateGetAllFoldersCache(userId);
+      await invalidateGetAllTagsCache(userId);
 
       res.status(202).json({
         success: true,

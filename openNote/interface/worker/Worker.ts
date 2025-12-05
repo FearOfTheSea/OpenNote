@@ -14,7 +14,7 @@ import { PostgreTagRepository } from "../../infrastructure/repositories/PostgreT
 config({ export: true });
 
 async function startWorker() {
-  console.log("🚀 WORKER STARTED - Initializing...");
+  console.log("[WORKER] Initializing...");
 
   // 1. Init Infrastructure
   const queueService = new RedisQueueService(
@@ -50,7 +50,7 @@ async function startWorker() {
   }
 
   console.log(
-    "✅ Worker listening on queues:",
+    "[WORKER] Listening on queues:",
     QUEUES.map((q) => q.name),
   );
 

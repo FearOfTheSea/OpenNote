@@ -12,7 +12,7 @@ export class PostgreNoteRepository implements NoteRepository {
 
   private async executeQuery<T>(
     query: string,
-    args: any[] = []
+    args: any[] = [],
   ): Promise<QueryObjectResult<T>> {
     if (this.tx) {
       return await this.tx.queryObject<T>(query, args);
@@ -41,7 +41,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [userId]
+      [userId],
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -58,7 +58,7 @@ export class PostgreNoteRepository implements NoteRepository {
       WHERE n.note_id = $1
       GROUP BY n.note_id
       `,
-      [id]
+      [id],
     );
 
     if (result.rows.length === 0) return null;
@@ -77,7 +77,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [folderId]
+      [folderId],
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -90,25 +90,33 @@ export class PostgreNoteRepository implements NoteRepository {
     }
 
     const query = `
-    WITH matched_notes AS (
-      -- find note_id that match the given tag id and user id
-      SELECT DISTINCT n.note_id
-      FROM notes n
-      JOIN folders f ON n.folder_id = f.folder_id
-      JOIN note_tags nt ON n.note_id = nt.note_id
-      WHERE nt.tag_id = ANY($1)
-        AND f.user_id = $2
-    )
-    -- retrieve full note details along with all their tags
-    SELECT n.*,
-      COALESCE(ARRAY_AGG(nt_all.tag_id) FILTER (WHERE nt_all.tag_id IS NOT NULL), '{}') AS tags
+  WITH matched_notes AS (
+    SELECT n.note_id
     FROM notes n
-    JOIN matched_notes mn ON n.note_id = mn.note_id
-    LEFT JOIN note_tags nt_all ON n.note_id = nt_all.note_id
+    JOIN folders f ON n.folder_id = f.folder_id
+    JOIN note_tags nt ON n.note_id = nt.note_id
+    WHERE nt.tag_id = ANY($1)
+      AND f.user_id = $2
     GROUP BY n.note_id
-    ORDER BY n.updated_at DESC
-  `;
-    const result = await this.executeQuery(query, [tagIds, userId]);
+    HAVING COUNT(DISTINCT nt.tag_id) = $3
+  )
+  SELECT n.*,
+    COALESCE(
+      ARRAY_AGG(nt_all.tag_id) FILTER (WHERE nt_all.tag_id IS NOT NULL),
+      '{}'
+    ) AS tags
+  FROM notes n
+  JOIN matched_notes mn ON n.note_id = mn.note_id
+  LEFT JOIN note_tags nt_all ON n.note_id = nt_all.note_id
+  GROUP BY n.note_id
+  ORDER BY n.updated_at DESC
+`;
+
+    const result = await this.executeQuery(query, [
+      tagIds,
+      userId,
+      tagIds.length,
+    ]);
 
     return result.rows.map((row) => this.mapRowToNote(row));
   }
@@ -127,7 +135,7 @@ export class PostgreNoteRepository implements NoteRepository {
           updated_at = CURRENT_TIMESTAMP
       WHERE note_id = $2
       `,
-      [newFolderId, noteId]
+      [newFolderId, noteId],
     );
     return true;
   }
@@ -147,7 +155,7 @@ export class PostgreNoteRepository implements NoteRepository {
             folder_id = EXCLUDED.folder_id,
             updated_at = CURRENT_TIMESTAMP
         `,
-      [note.id, note.name, note.content, note.parentFolderId]
+      [note.id, note.name, note.content, note.parentFolderId],
     );
   }
 
@@ -170,6 +178,8 @@ export class PostgreNoteRepository implements NoteRepository {
     const searchSyntax = buildSearchSyntax(keyword);
     if (!searchSyntax) return [];
 
+    const likeSyntax = `%${keyword.trim()}%`;
+
     const query = `
       SELECT n.*,
         -- Sử dụng to_tsquery thay vì plainto_tsquery để dùng prefix search
@@ -182,12 +192,22 @@ export class PostgreNoteRepository implements NoteRepository {
       JOIN folders f ON n.folder_id = f.folder_id
       LEFT JOIN note_tags nt ON n.note_id = nt.note_id
       WHERE f.user_id = $2
-        AND n.search_vector @@ to_tsquery('simple', $1)
+        AND (
+          n.search_vector @@ to_tsquery('simple', $1)
+          OR
+          unaccent(n.title) ILIKE unaccent($3)
+          OR
+          unaccent(n.content) ILIKE unaccent($3)
+        )
       GROUP BY n.note_id
-      ORDER BY rank DESC, n.updated_at DESC -- Ưu tiên rank (độ khớp) trước, mới đến thời gian
+      ORDER BY rank DESC, n.updated_at DESC
     `;
 
-    const result = await this.executeQuery(query, [searchSyntax, userId]);
+    const result = await this.executeQuery(query, [
+      searchSyntax,
+      userId,
+      likeSyntax,
+    ]);
     return result.rows.map((row) => this.mapRowToNote(row));
   }
 
@@ -200,7 +220,7 @@ export class PostgreNoteRepository implements NoteRepository {
       row.tags,
       row.note_id,
       row.created_at,
-      row.updated_at
+      row.updated_at,
     );
   }
 }

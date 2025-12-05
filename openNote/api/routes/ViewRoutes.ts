@@ -4,6 +4,7 @@
 import { Request, Response, Router } from "express";
 import { join } from "@std/path";
 import { requireAuth } from "./middlewares/RequireAuth.ts";
+import { redisClient } from "../../infrastructure/redis/RedisClient.ts";
 
 export function createViewRoutes(dirname: string) {
   const router = Router();

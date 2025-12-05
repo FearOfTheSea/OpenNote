@@ -21,8 +21,6 @@ export class GetNotesByTags {
         throw new Error(`Tag with id ${tagId} not found`);
       }
     }
-    return await this.noteRepository
-      .findByTagsIds(input.tagIds, input.userId)
-      .then((notes) => ({ notes }));
+    return { notes: await this.noteRepository.findByTagsIds(input.tagIds, input.userId) };
   }
 }

@@ -25,9 +25,8 @@ export class CreateNote {
     if (!parentFolder) {
       throw new Error(`Folder with id ${input.parentFolderId} not found`);
     }
-
     const unitOfWork = await this.createNoteUnitOfWork();
-
+    await unitOfWork.begin();
     if (
       (await unitOfWork.notes.findAll(parentFolder.userId)).find(
         (n) => n.name === input.name,
@@ -39,7 +38,6 @@ export class CreateNote {
     }
 
     try {
-      await unitOfWork.begin();
       const note = new Note(input.name, input.content, input.parentFolderId);
       await unitOfWork.notes.save(note);
       await unitOfWork.tags.syncTagsForNoteUpdate(note.id, note.content);
