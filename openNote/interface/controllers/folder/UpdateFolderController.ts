@@ -1,6 +1,12 @@
+import { UseCase } from "../../../application/core/UseCase.ts";
 import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
-import { UpdateFolder, UpdateFolderInput } from "../../../application/useCases/folder/UpdateFolder.ts";
+import {
+  UpdateFolder,
+  UpdateFolderInput,
+  UpdateFolderOutput,
+} from "../../../application/useCases/folder/UpdateFolder.ts";
 import { GetFolderByIdResponse } from "./GetFolderByIdController.ts";
+import { RetryUseCaseDecorator } from "../../../infrastructure/decorators/RetryUseCaseDecorator.ts";
 
 export interface UpdateFolderRequest {
   readonly id: string;
@@ -13,10 +19,15 @@ export interface UpdateFolderResponse {
 }
 
 export class UpdateFolderController {
-  private useCase: UpdateFolder;
+  private useCase: UseCase<UpdateFolderInput, UpdateFolderOutput>;
 
   constructor(folderRepository: FolderRepository) {
-    this.useCase = new UpdateFolder(folderRepository);
+    const coreUseCase = new UpdateFolder(folderRepository);
+    this.useCase = new RetryUseCaseDecorator(coreUseCase, {
+      maxRetries: 3,
+      initialDelay: 500,
+      useJitter: true,
+    });
   }
 
   async apply(request: UpdateFolderRequest): Promise<UpdateFolderResponse> {

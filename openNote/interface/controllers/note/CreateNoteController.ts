@@ -1,7 +1,13 @@
 import { IUnitOfWork } from "../../../application/ports/IUnitOfWork.ts";
 import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
-import { CreateNote, CreateNoteInput } from "../../../application/useCases/note/CreateNote.ts";
+import {
+  CreateNote,
+  CreateNoteInput,
+  CreateNoteOutput,
+} from "../../../application/useCases/note/CreateNote.ts";
 import { GetNoteByIdResponse } from "./GetNoteByIdController.ts";
+import { UseCase } from "../../../application/core/UseCase.ts";
+import { RetryUseCaseDecorator } from "../../../infrastructure/decorators/RetryUseCaseDecorator.ts";
 
 export interface CreateNoteRequest {
   readonly name: string;
@@ -14,13 +20,22 @@ export interface CreateNoteResponse {
 }
 
 export class CreateNoteController {
-  private useCase: CreateNote;
+  private useCase: UseCase<CreateNoteInput, CreateNoteOutput>;
 
   constructor(
     folderRepository: FolderRepository,
-    createNoteUnitOfWork: () => Promise<IUnitOfWork>,
+    createNoteUnitOfWork: () => Promise<IUnitOfWork>
   ) {
-    this.useCase = new CreateNote(folderRepository, createNoteUnitOfWork);
+    const coreUseCase = new CreateNote(folderRepository, createNoteUnitOfWork);
+
+    this.useCase = new RetryUseCaseDecorator<CreateNoteInput, CreateNoteOutput>(
+      coreUseCase,
+      {
+        maxRetries: 3,
+        initialDelay: 500,
+        useJitter: true,
+      }
+    );
   }
 
   async apply(request: CreateNoteRequest): Promise<CreateNoteResponse> {

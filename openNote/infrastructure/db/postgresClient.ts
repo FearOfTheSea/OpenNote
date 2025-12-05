@@ -1,9 +1,14 @@
 import { Pool } from "pg";
+import { RetryExecutor } from "../resilience/RetryExecutor.ts";
 
 let pool: Pool | null = null;
 
+/**
+ * Create a new PostgreSQL connection pool
+ */
 function createPool(): Pool {
-  console.log("[POSTGRES] POOL INITIALIZED");
+  console.log("[POSTGRES] Initializing pool...");
+
   return new Pool(
     {
       hostname: Deno.env.get("DB_HOST"),
@@ -12,18 +17,38 @@ function createPool(): Pool {
       password: Deno.env.get("DB_PASSWORD"),
       database: Deno.env.get("DB_NAME"),
     },
-    49,
+    20
   );
 }
 
-// Export getter instead of pool object so that postgres
-// connection is not established in other environments
+/**
+ * Ensures PostgreSQL is ready before API starts.
+ * Uses retries with exponential backoff.
+ */
+export async function waitForDatabase(): Promise<void> {
+  await RetryExecutor.execute(
+    "Connect to PostgreSQL",
+    async () => {
+      const p = await getPool(); // pool đảm bảo init ở đây
+      const client = await p.connect();
+      try {
+        await client.queryObject("SELECT 1");
+        console.log("PostgreSQL ready!");
+      } finally {
+        client.release();
+      }
+    },
+    { maxRetries: 10, initialDelay: 2000 } // thử lại tối đa 10 lần, bắt đầu với delay 2s
+  );
+}
+
+/**
+ * Lazily initializes the PG pool — only when needed.
+ */
 export async function getPool(): Promise<Pool> {
   if (!pool) {
     pool = createPool();
-    const client = await pool.connect();
-    console.log("[POSTGRES] Connected to PostgreSQL via pool!");
-    client.release();
+    console.log("[POSTGRES] Pool created.");
   }
   return pool;
 }

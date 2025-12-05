@@ -1,6 +1,7 @@
 import { Note } from "../../../domain/entities/Note.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
 import { IUnitOfWork } from "../../ports/IUnitOfWork.ts";
+import { UseCase } from "../../core/UseCase.ts";
 
 export interface CreateNoteInput {
   readonly name: string;
@@ -12,38 +13,45 @@ export interface CreateNoteOutput {
   readonly note: Note;
 }
 
-export class CreateNote {
+export class CreateNote implements UseCase<CreateNoteInput, CreateNoteOutput> {
   constructor(
     private readonly folderRepository: FolderRepository,
-    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>,
+    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>
   ) {}
 
   async execute(input: CreateNoteInput): Promise<CreateNoteOutput> {
     const parentFolder = await this.folderRepository.findById(
-      input.parentFolderId,
+      input.parentFolderId
     );
     if (!parentFolder) {
       throw new Error(`Folder with id ${input.parentFolderId} not found`);
     }
+
     const unitOfWork = await this.createNoteUnitOfWork();
-    await unitOfWork.begin();
-    if (
-      (await unitOfWork.notes.findAll(parentFolder.userId)).find(
-        (n) => n.name === input.name,
-      )
-    ) {
-      throw new Error(
-        `Note with name ${input.name} already exists in folder ${parentFolder.id}`,
-      );
-    }
 
     try {
+      await unitOfWork.begin();
+
+      const notesInFolder = await unitOfWork.notes.findByFolderId(
+        input.parentFolderId
+      );
+
+      const isDuplicate = notesInFolder.find((n) => n.name === input.name);
+
+      if (isDuplicate) {
+        throw new Error(
+          `Note with name "${input.name}" already exists in folder`
+        );
+      }
+
       const note = new Note(input.name, input.content, input.parentFolderId);
+
       await unitOfWork.notes.save(note);
       await unitOfWork.tags.syncTagsForNoteUpdate(note.id, note.content);
+
       await unitOfWork.commit();
 
-      console.log(`[CreateNote] Created note with name = "${note.name}"`);
+      console.log(`[CreateNote] Created note "${note.name}" successfully.`);
       return { note };
     } catch (error) {
       await unitOfWork.rollback();

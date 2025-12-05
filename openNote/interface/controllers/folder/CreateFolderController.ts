@@ -1,5 +1,11 @@
-import { CreateFolder, CreateFolderInput } from "../../../application/useCases/folder/CreateFolder.ts";
+import {
+  CreateFolder,
+  CreateFolderInput,
+  CreateFolderOutput,
+} from "../../../application/useCases/folder/CreateFolder.ts";
 import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
+import { UseCase } from "../../../application/core/UseCase.ts";
+import { RetryUseCaseDecorator } from "../../../infrastructure/decorators/RetryUseCaseDecorator.ts";
 
 export interface CreateFolderRequest {
   readonly name: string;
@@ -17,10 +23,15 @@ export interface CreateFolderResponse {
 }
 
 export class CreateFolderController {
-  private useCase: CreateFolder;
+  private useCase: UseCase<CreateFolderInput, CreateFolderOutput>;
 
   constructor(folderRepository: FolderRepository) {
-    this.useCase = new CreateFolder(folderRepository);
+    const coreUseCase = new CreateFolder(folderRepository);
+    this.useCase = new RetryUseCaseDecorator(coreUseCase, {
+      maxRetries: 3,
+      initialDelay: 500,
+      useJitter: true,
+    });
   }
 
   async apply(request: CreateFolderRequest): Promise<CreateFolderResponse> {

@@ -38,7 +38,7 @@ switch (env) {
     tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
     createUnitOfWork = () => {
       return Promise.resolve(
-        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository),
+        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository)
       );
     };
     console.log("[CONTEXT]: test");
@@ -54,11 +54,7 @@ switch (env) {
     userRepository = new PostgreUserRepository();
     jobRepository = new PostgreJobRepository();
 
-    // init redis queue
-    const redisHost = Deno.env.get("REDIS_HOST") || "localhost";
-    const redisPort = parseInt(Deno.env.get("REDIS_PORT") || "6379");
-    console.log(`[QUEUE SERVICE] Connecting to Redis at ${redisHost}:${redisPort}...`);
-    queueService = new RedisQueueService(redisHost, redisPort);
+    queueService = new RedisQueueService(60);
 
     createUnitOfWork = async () => {
       const client = await pool.connect();
@@ -83,7 +79,7 @@ switch (env) {
     userRepository = new InMemoryUserRepository();
     createUnitOfWork = () => {
       return Promise.resolve(
-        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository),
+        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository)
       );
     };
     console.log("[CONTEXT]: development");

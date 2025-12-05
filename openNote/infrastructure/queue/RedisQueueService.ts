@@ -1,82 +1,97 @@
-import { connect, Redis } from "https://deno.land/x/redis@v0.32.1/mod.ts";
+import { redisClient } from "../redis/RedisClient.ts";
 import { IQueueService } from "../../application/ports/IQueueService.ts";
 
 export class RedisQueueService implements IQueueService {
-  private redis: Redis | null = null;
-  private isConnected = false;
-
   constructor(
-    private host: string,
-    private port: number,
+    private visibilityTimeoutSec = 60 // timeout job stuck
   ) {}
 
-  private async getClient(): Promise<Redis> {
-    if (!this.isConnected || !this.redis) {
-      this.redis = await connect({ hostname: this.host, port: this.port });
-      this.isConnected = true;
-      console.log("[QUEUE] Redis Connected");
-    }
-    return this.redis;
+  private getVisibilityKey(processingQueueName: string, raw: string) {
+    return `vt:${processingQueueName}:${raw}`;
   }
 
   async enqueue(queueName: string, payload: any): Promise<void> {
-    const client = await this.getClient();
-    // LPUSH: Đẩy vào đầu danh sách
-    await client.lpush(queueName, JSON.stringify(payload));
+    await redisClient.lPush(queueName, JSON.stringify(payload));
   }
 
   async dequeueReliable(
     queueName: string,
-    processingQueueName: string,
+    processingQueueName: string
   ): Promise<{ data: any; raw: string } | null> {
-    const client = await this.getClient();
+    const raw = await redisClient.brPopLPush(queueName, processingQueueName, 1);
+    if (!raw) return null;
 
-    // BRPOPLPUSH source destination timeout
-    // 1. Lấy phần tử cuối cùng của 'queueName'
-    // 2. Đẩy nó vào đầu 'processingQueueName'
-    // 3. Trả về phần tử đó.
-    // Thao tác này là ATOMIC (Nguyên tử). Không thể bị ngắt giữa chừng.
-    // [FIX]: Đổi timeout từ 0 sang 1 (giây)
-    // Nghĩa là: "Thử lấy trong 1s, nếu không có thì trả về null để worker đi làm việc khác"
-    const rawData = await client.brpoplpush(queueName, processingQueueName, 1); // 0 = Chờ vô hạn
+    // set visibility timeout timestamp
+    const vtKey = this.getVisibilityKey(processingQueueName, raw);
+    await redisClient.set(vtKey, Date.now().toString(), {
+      EX: this.visibilityTimeoutSec,
+    });
 
-    if (rawData) {
-      return { data: JSON.parse(rawData), raw: rawData };
-    }
-    return null;
+    return {
+      data: JSON.parse(raw),
+      raw,
+    };
   }
 
   async acknowledge(
     processingQueueName: string,
-    rawData: string,
+    rawData: string
   ): Promise<void> {
-    const client = await this.getClient();
-    // LREM: Xóa job khỏi hàng đợi đang xử lý -> Xác nhận hoàn tất
-    await client.lrem(processingQueueName, 1, rawData);
+    const vtKey = this.getVisibilityKey(processingQueueName, rawData);
+
+    // remove from processing queue
+    await redisClient.lRem(processingQueueName, 1, rawData);
+
+    // remove visibility timeout
+    await redisClient.del(vtKey);
   }
 
+  /**
+   * Check all jobs inside processingQueue
+   * If timestamp expired, then requeue back to main queue
+   */
   async recover(queueName: string, processingQueueName: string): Promise<void> {
-    const client = await this.getClient();
     console.log(
-      `[QUEUE] Checking for orphaned jobs in ${processingQueueName}...`,
+      `[QUEUE] Running visibility-timeout recovery on ${processingQueueName}...`
     );
 
     while (true) {
-      // rpoplpush trả về Bulk (string | null | ...)
-      const item = await client.rpoplpush(processingQueueName, queueName);
+      // peek oldest job
+      const raw = await redisClient.lIndex(processingQueueName, -1);
+      if (!raw) break;
 
-      // Kiểm tra nếu item là null hoặc undefined -> Hết job -> Thoát
-      if (!item) {
-        break;
+      const vtKey = this.getVisibilityKey(processingQueueName, raw);
+      const timestampStr = await redisClient.get(vtKey);
+
+      // job không có timestamp nghĩa là worker crash sau khi lấy job nhưng chưa set key
+      if (!timestampStr) {
+        console.log(`[QUEUE RECOVERY] Job missing vt-key → requeue: ${raw}`);
+
+        // move job back to main queue
+        await redisClient.rPopLPush(processingQueueName, queueName);
+
+        // đảm bảo không còn vtKey
+        await redisClient.del(vtKey);
+        continue;
       }
 
-      // Ép kiểu về string để log (nếu item tồn tại, nó chắc chắn là chuỗi JSON)
-      const itemStr = String(item);
-      console.log(`[QUEUE RECOVERY] Restored job:`, itemStr);
-    }
-  }
+      const timestamp = Number(timestampStr);
+      const elapsed = Date.now() - timestamp;
 
-  close() {
-    if (this.redis) this.redis.close();
+      if (elapsed > this.visibilityTimeoutSec * 1000) {
+        console.log(
+          `[QUEUE RECOVERY] Visibility timeout → requeue job: ${raw}`
+        );
+
+        // move job back
+        await redisClient.rPopLPush(processingQueueName, queueName);
+
+        // delete vt key
+        await redisClient.del(vtKey);
+      } else {
+        // job chưa timeout thì không xử lý tiếp
+        break;
+      }
+    }
   }
 }

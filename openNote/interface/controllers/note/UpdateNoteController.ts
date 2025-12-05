@@ -1,7 +1,13 @@
+import { UseCase } from "../../../application/core/UseCase.ts";
 import { IUnitOfWork } from "../../../application/ports/IUnitOfWork.ts";
 import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
 import { NoteRepository } from "../../../application/repositories/NoteRepository.ts";
-import { UpdateNote, UpdateNoteInput } from "../../../application/useCases/note/UpdateNote.ts";
+import {
+  UpdateNote,
+  UpdateNoteInput,
+  UpdateNoteOutput,
+} from "../../../application/useCases/note/UpdateNote.ts";
+import { RetryUseCaseDecorator } from "../../../infrastructure/decorators/RetryUseCaseDecorator.ts";
 import { GetNoteByIdResponse } from "./GetNoteByIdController.ts";
 
 export interface UpdateNoteRequest {
@@ -16,18 +22,24 @@ export interface UpdateNoteResponse {
 }
 
 export class UpdateNoteController {
-  private useCase: UpdateNote;
+  private useCase: UseCase<UpdateNoteInput, UpdateNoteOutput>;
 
   constructor(
     folderRepository: FolderRepository,
     noteRepository: NoteRepository,
-    createNoteUnitOfWork: () => Promise<IUnitOfWork>,
+    createNoteUnitOfWork: () => Promise<IUnitOfWork>
   ) {
-    this.useCase = new UpdateNote(
+    const coreUseCase = new UpdateNote(
       folderRepository,
       noteRepository,
-      createNoteUnitOfWork,
+      createNoteUnitOfWork
     );
+
+    this.useCase = new RetryUseCaseDecorator(coreUseCase, {
+      maxRetries: 3,
+      initialDelay: 500,
+      useJitter: true,
+    });
   }
 
   async apply(request: UpdateNoteRequest): Promise<UpdateNoteResponse> {

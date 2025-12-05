@@ -1,4 +1,5 @@
 import { Folder } from "../../../domain/entities/Folder.ts";
+import { UseCase } from "../../core/UseCase.ts";
 import { FolderRepository } from "../../repositories/FolderRepository.ts";
 
 export interface CreateFolderInput {
@@ -11,7 +12,9 @@ export interface CreateFolderOutput {
   readonly folder: Folder;
 }
 
-export class CreateFolder {
+export class CreateFolder
+  implements UseCase<CreateFolderInput, CreateFolderOutput>
+{
   constructor(private folderRepository: FolderRepository) {}
 
   async execute(input: CreateFolderInput): Promise<CreateFolderOutput> {
@@ -25,20 +28,24 @@ export class CreateFolder {
     }
 
     console.log(parentFolderId);
-    if (parentFolderId && !(await this.folderRepository.findById(parentFolderId))) {
+    if (
+      parentFolderId &&
+      !(await this.folderRepository.findById(parentFolderId))
+    ) {
       throw new Error("Parent folder not found");
     }
 
-    const neighboring_folders = await this.folderRepository.findByParentFolderId(
-      parentFolderId,
-      input.userId,
-    );
+    const neighboring_folders =
+      await this.folderRepository.findByParentFolderId(
+        parentFolderId,
+        input.userId
+      );
 
     if (
       neighboring_folders.some((folder) => folder.name === input.name.trim())
     ) {
       throw new Error(
-        "[CreateFolder] Folder with the same name already exists in the parent folder",
+        "[CreateFolder] Folder with the same name already exists in the parent folder"
       );
     }
 
@@ -47,7 +54,7 @@ export class CreateFolder {
       await this.folderRepository.save(folder);
 
       console.log(
-        `[CreateFolder] Created folder: name=${folder.name}, parent=${parentFolderId ?? "ROOT"}`,
+        `[CreateFolder] Created folder: name=${folder.name}, parent=${parentFolderId ?? "ROOT"}`
       );
 
       return { folder };

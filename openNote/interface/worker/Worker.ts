@@ -9,113 +9,130 @@ import { ImportBackup } from "../../application/useCases/backup/ImportBackUp.ts"
 import { PostgreNoteRepository } from "../../infrastructure/repositories/PostgreNoteRepository.ts";
 import { PostgreFolderRepository } from "../../infrastructure/repositories/PostgreFolderRepository.ts";
 import { PostgreTagRepository } from "../../infrastructure/repositories/PostgreTagRepository.ts";
+import { waitForDatabase } from "../../infrastructure/db/postgresClient.ts";
+import {
+  initRedis,
+  closeRedis,
+} from "../../infrastructure/redis/RedisClient.ts";
+import { RetryExecutor } from "../../infrastructure/resilience/RetryExecutor.ts";
 
-// Load env
 config({ export: true });
 
 async function startWorker() {
   console.log("[WORKER] Initializing...");
 
-  // 1. Init Infrastructure
+  await initRedis();
+  await waitForDatabase();
+
   const queueService = new RedisQueueService(
-    Deno.env.get("REDIS_HOST") || "localhost",
-    Number(Deno.env.get("REDIS_PORT") || 6379),
+    Number(Deno.env.get("VISIBILITY_TIMEOUT_SEC") || 60)
   );
 
   const jobRepo = new PostgreJobRepository();
-
   const createImportUseCase = new ImportBackup(createUnitOfWork);
-  // import handler
   const importHandler = new ImportBackupHandler(createImportUseCase);
 
-  // export handler (dùng để test export trực tiếp)
   const folderRepo = new PostgreFolderRepository();
   const noteRepo = new PostgreNoteRepository();
   const tagRepo = new PostgreTagRepository();
-
   const createBackupUseCase = new CreateBackup(folderRepo, noteRepo, tagRepo);
   const exportHandler = new CreateBackupHandler(createBackupUseCase);
 
-  // định nghĩa tên queue và processing queue cần lắng nghe
   const QUEUES = [
     { name: "import_queue", processing: "import_queue:processing" },
     { name: "export_queue", processing: "export_queue:processing" },
   ];
 
-  // CRASH RECOVERY
-  // Trước khi làm việc, kiểm tra xem có job nào của lần chạy trước bị chết giữa chừng không
-  // Khôi phục lỗi cho tất cả queue
+  // startup recovery 1 lần khi khởi động
+  console.log("[WORKER] Running startup recovery...");
   for (const q of QUEUES) {
     await queueService.recover(q.name, q.processing);
   }
 
   console.log(
     "[WORKER] Listening on queues:",
-    QUEUES.map((q) => q.name),
+    QUEUES.map((q) => q.name)
   );
 
-  // 3. Event Loop
+  let lastRecoverTime = Date.now();
+  const RECOVER_INTERVAL_MS = 5 * 60 * 1000; // 5p
+
   while (true) {
     let didWork = false;
 
+    if (Date.now() - lastRecoverTime > RECOVER_INTERVAL_MS) {
+      console.log("[WORKER] Running periodic maintenance recovery...");
+      for (const q of QUEUES) {
+        await queueService.recover(q.name, q.processing);
+      }
+      lastRecoverTime = Date.now();
+    }
+
     for (const q of QUEUES) {
       try {
-        // Dequeue tin cậy
         const jobContainer = await queueService.dequeueReliable(
           q.name,
-          q.processing,
+          q.processing
         );
 
         if (jobContainer) {
           didWork = true;
           const { data, raw } = jobContainer;
-          const { jobId, userId, type } = data; // Payload phải có type
+          const { jobId, userId, type } = data;
 
           console.log(`[WORKER] Processing ${type} (Job ${jobId})...`);
           await jobRepo.updateStatus(jobId, "PROCESSING");
 
           try {
-            let resultUrl = null;
+            const resultUrl = await RetryExecutor.execute(
+              `Process job ${jobId}`,
+              async () => {
+                if (q.name === "import_queue") {
+                  await importHandler.execute(userId, data.jsonContent);
+                  return null; // import không có url trả về
+                } else if (q.name === "export_queue") {
+                  return await exportHandler.execute(userId, jobId);
+                }
+                return null;
+              },
+              { maxRetries: 3, initialDelay: 1000, factor: 2 }
+            );
 
-            // --- ROUTING LOGIC ---
-            if (q.name === "import_queue") {
-              // Payload import có thêm jsonContent
-              await importHandler.execute(userId, data.jsonContent);
-            } else if (q.name === "export_queue") {
-              // Export trả về URL file
-              resultUrl = await exportHandler.execute(userId, jobId);
-            }
-
-            // Success
             await queueService.acknowledge(q.processing, raw);
+
             await jobRepo.updateStatus(jobId, "COMPLETED", resultUrl, null);
-            console.log(`[WORKER] Job ${jobId} COMPLETED`);
           } catch (err) {
-            console.error(`[WORKER] Job ${jobId} FAILED:`, err);
+            console.error(`[WORKER] Job ${jobId} FAILED logic:`, err);
+
             await queueService.acknowledge(q.processing, raw);
+
             await jobRepo.updateStatus(
               jobId,
               "FAILED",
               null,
-              (err as Error).message,
+              (err as Error).message
             );
           }
         }
       } catch (err) {
-        console.error(`[WORKER] Error on queue ${q.name}:`, err);
+        console.error(`[WORKER] Infrastructure Error on queue ${q.name}:`, err);
+        break;
       }
 
-      // [FIX]: Worker nghỉ 20ms sau mỗi job để nhường CPU cho Server API
-      // Điều này giúp Server API phản hồi nhanh hơn cho user
-      // Vì hiện tại cả 2 chạy chung 1 process
+      // throttle giữa các queue để tránh chiếm dụng CPU
       await new Promise((r) => setTimeout(r, 20));
     }
 
-    // Nếu không có việc ở cả 2 queue, nghỉ 1 chút để đỡ tốn CPU
+    // nếu không có việc gì làm, nghỉ 1s
     if (!didWork) {
-      await new Promise((r) => setTimeout(r, 1000)); // Sleep 1s
+      await new Promise((r) => setTimeout(r, 1000));
     }
   }
 }
+
+// Fallback
+addEventListener("unload", () => {
+  closeRedis().catch(console.error);
+});
 
 startWorker();

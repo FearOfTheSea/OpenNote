@@ -52,7 +52,6 @@ export interface CreateBackupRequest {
   readonly userId: string;
 }
 
-// [FIX]: Cập nhật Interface phản hồi mới (Async Response)
 export interface CreateBackupResponse {
   readonly success: boolean;
   readonly message: string;
@@ -62,7 +61,7 @@ export interface CreateBackupResponse {
 export class CreateBackupController {
   constructor(
     private jobRepo: JobRepository,
-    private queueService: IQueueService,
+    private queueService: IQueueService
   ) {}
 
   async apply(request: { userId: string }): Promise<any> {
