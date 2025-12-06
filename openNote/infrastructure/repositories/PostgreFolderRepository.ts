@@ -185,8 +185,32 @@ export class PostgreFolderRepository implements FolderRepository {
       VALUES ($1, $2, $3, $4)
       ON CONFLICT (folder_id) DO UPDATE
       SET folder_name = EXCLUDED.folder_name
+
       `,
       [folder.id, folder.name, folder.userId, folder.parentFolderId]
+    );
+  }
+
+  // use for backup restore
+  async restore(folder: Folder): Promise<void> {
+    await this.executeQuery(
+      `
+      INSERT INTO folders (folder_id, folder_name, user_id, parent_folder_id, created_at, updated_at)
+      VALUES ($1, $2, $3, $4, $5, $6)
+      ON CONFLICT (folder_id) DO UPDATE
+      SET folder_name = EXCLUDED.folder_name,
+          parent_folder_id = EXCLUDED.parent_folder_id,
+          created_at = EXCLUDED.created_at,
+          updated_at = EXCLUDED.updated_at
+      `,
+      [
+        folder.id,
+        folder.name,
+        folder.userId,
+        folder.parentFolderId,
+        folder.createdAt,
+        folder.updatedAt,
+      ]
     );
   }
 

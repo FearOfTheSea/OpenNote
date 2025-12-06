@@ -37,7 +37,7 @@ export class ImportBackup {
           `Processing Folder: ${oldFolder.name} (OldID: ${oldFolder.id} -> NewID: ${newId})`
         );
 
-        await folderRepo.save({
+        await folderRepo.restore({
           ...oldFolder,
           id: newId,
           userId: userId, // Override user sở hữu
@@ -52,7 +52,7 @@ export class ImportBackup {
 
           if (newId && newParentId) {
             // Gọi save lại để update parentId
-            await folderRepo.save({
+            await folderRepo.restore({
               ...oldFolder,
               id: newId,
               userId: userId,

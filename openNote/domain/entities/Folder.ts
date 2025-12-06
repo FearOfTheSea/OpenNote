@@ -4,24 +4,24 @@ export class Folder {
   public readonly id: string;
   public readonly name: string;
   public readonly userId: string;
-  public readonly parentFolderId?: string;
+  public readonly parentFolderId?: string | undefined;
   public readonly createdAt: Date;
   public readonly updatedAt: Date;
 
   constructor(
     name: string,
     userId: string,
-    parentFolderId?: string,
+    parentFolderId?: string | undefined,
     folderId?: string,
     createdAt?: Date,
-    updatedAt?: Date,
+    updatedAt?: Date
   ) {
     if (!name || name.trim() === "") {
       throw new Error("Folder name cannot be empty");
     }
     if (!validateName(name)) {
       throw new Error(
-        "Folder name must be 1-255 characters long, uses only 0-9, a-Z, ., _, - and spaces",
+        "Folder name must be 1-255 characters long, uses only 0-9, a-Z, ., _, - and spaces"
       );
     }
 

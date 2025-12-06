@@ -6,13 +6,14 @@ export interface FolderRepository {
   findByName(name: string, userId: string): Promise<Folder[]>;
   findByParentFolderId(
     parentFolderId: string | undefined,
-    userId: string,
+    userId: string
   ): Promise<Folder[]>;
   cutFolder(
     folderId: string,
     userId: string,
-    newParentFolderId: string | undefined,
+    newParentFolderId: string | undefined
   ): Promise<boolean>;
   save(folder: Folder): Promise<void>;
+  restore(folder: Folder): Promise<void>;
   delete(id: string): Promise<void>;
 }

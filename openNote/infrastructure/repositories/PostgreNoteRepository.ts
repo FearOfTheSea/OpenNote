@@ -176,6 +176,7 @@ export class PostgreNoteRepository implements NoteRepository {
         ON CONFLICT (note_id) DO UPDATE
         SET title = EXCLUDED.title,
             content = EXCLUDED.content,
+            folder_id = EXCLUDED.folder_id
             updated_at = CURRENT_TIMESTAMP
         `,
       [note.id, note.name, note.content, note.parentFolderId]
