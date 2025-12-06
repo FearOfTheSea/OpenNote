@@ -10,10 +10,7 @@ import { PostgreNoteRepository } from "../../infrastructure/repositories/Postgre
 import { PostgreFolderRepository } from "../../infrastructure/repositories/PostgreFolderRepository.ts";
 import { PostgreTagRepository } from "../../infrastructure/repositories/PostgreTagRepository.ts";
 import { waitForDatabase } from "../../infrastructure/db/postgresClient.ts";
-import {
-  initRedis,
-  closeRedis,
-} from "../../infrastructure/redis/RedisClient.ts";
+import { closeRedis, initRedis } from "../../infrastructure/redis/RedisClient.ts";
 import { RetryExecutor } from "../../infrastructure/resilience/RetryExecutor.ts";
 
 config({ export: true });
@@ -25,7 +22,7 @@ async function startWorker() {
   await waitForDatabase();
 
   const queueService = new RedisQueueService(
-    Number(Deno.env.get("VISIBILITY_TIMEOUT_SEC") || 60)
+    Number(Deno.env.get("VISIBILITY_TIMEOUT_SEC") || 60),
   );
 
   const jobRepo = new PostgreJobRepository();
@@ -51,7 +48,7 @@ async function startWorker() {
 
   console.log(
     "[WORKER] Listening on queues:",
-    QUEUES.map((q) => q.name)
+    QUEUES.map((q) => q.name),
   );
 
   let lastRecoverTime = Date.now();
@@ -72,7 +69,7 @@ async function startWorker() {
       try {
         const jobContainer = await queueService.dequeueReliable(
           q.name,
-          q.processing
+          q.processing,
         );
 
         if (jobContainer) {
@@ -95,7 +92,7 @@ async function startWorker() {
                 }
                 return null;
               },
-              { maxRetries: 3, initialDelay: 1000, factor: 2 }
+              { maxRetries: 3, initialDelay: 1000, factor: 2 },
             );
 
             await queueService.acknowledge(q.processing, raw);
@@ -110,7 +107,7 @@ async function startWorker() {
               jobId,
               "FAILED",
               null,
-              (err as Error).message
+              (err as Error).message,
             );
           }
         }

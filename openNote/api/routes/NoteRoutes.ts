@@ -15,7 +15,7 @@ import { redisClient } from "../../infrastructure/redis/RedisClient.ts";
 import { invalidateGetFolderContentsCache } from "./FolderRoutes.ts";
 import { invalidateGetAllTagsCache } from "./TagRoutes.ts";
 
-const ENABLE_NOTES_CACHE = true;
+const ENABLE_NOTES_CACHE = false;
 const NOTES_CACHE_TTL = 600;
 function getAllNotesCacheKey(userId: string): string {
   return `notes:list:${userId}`;
@@ -127,15 +127,15 @@ export function createNoteRoutes(
         parentFolderId: req.body.parent_folder_id,
       });
 
-      const userId = req.session.user_id;
-      await invalidateGetAllNotesCache(userId);
-      await invalidateGetAllTagsCache(userId);
-      await invalidateGetFolderContentsCache(userId, result.note.parentFolderId);
-      await redisClient.setEx(
-        getNoteByIdCacheKey(userId, result.note.id),
-        NOTES_CACHE_TTL,
-        JSON.stringify(result.note),
-      );
+      // const userId = req.session.user_id;
+      // await invalidateGetAllNotesCache(userId);
+      // await invalidateGetAllTagsCache(userId);
+      // await invalidateGetFolderContentsCache(userId, result.note.parentFolderId);
+      // await redisClient.setEx(
+      //   getNoteByIdCacheKey(userId, result.note.id),
+      //   NOTES_CACHE_TTL,
+      //   JSON.stringify(result.note),
+      // );
 
       res.status(201).json(result);
     } catch (error) {
@@ -162,21 +162,21 @@ export function createNoteRoutes(
   // Get note by ID
   router.get("/:id", requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = req.session.user_id;
-      const cacheKey = getNoteByIdCacheKey(userId, req.params.id);
-      const cached = await redisClient.get(cacheKey);
-      if (cached) {
-        console.log(`[CACHE HIT] GET /api/notes/:id`);
-        const note = JSON.parse(cached);
-        return res.json(note);
-      }
+      // const userId = req.session.user_id;
+      // const cacheKey = getNoteByIdCacheKey(userId, req.params.id);
+      // const cached = await redisClient.get(cacheKey);
+      // if (cached) {
+      //   console.log(`[CACHE HIT] GET /api/notes/:id`);
+      //   const note = JSON.parse(cached);
+      //   return res.json(note);
+      // }
 
       const result = await getNoteByIdController.apply({ id: req.params.id });
-      await redisClient.setEx(
-        cacheKey,
-        NOTES_CACHE_TTL,
-        JSON.stringify(result),
-      );
+      // await redisClient.setEx(
+      //   cacheKey,
+      //   NOTES_CACHE_TTL,
+      //   JSON.stringify(result),
+      // );
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -186,7 +186,7 @@ export function createNoteRoutes(
   // Update note
   router.put("/:id", requireAuth, async (req: Request, res: Response) => {
     try {
-      const userId = req.session.user_id;
+      // const userId = req.session.user_id;
       const result = await updateNoteController.apply({
         id: req.params.id,
         newName: req.body.name,
@@ -194,14 +194,10 @@ export function createNoteRoutes(
         newParentFolderId: req.body.parent_folder_id,
       });
 
-      await invalidateGetAllNotesCache(userId);
-      await invalidateGetAllTagsCache(userId);
-      await invalidateGetFolderContentsCache(userId, result.note.parentFolderId);
-      await redisClient.setEx(
-        getNoteByIdCacheKey(userId, req.params.id),
-        NOTES_CACHE_TTL,
-        JSON.stringify(result.note),
-      );
+      // await invalidateGetAllNotesCache(userId);
+      // await invalidateGetNoteByIdCache(userId, result.note.id);
+      // await invalidateGetAllTagsCache(userId);
+      // await invalidateGetFolderContentsCache(userId, result.note.parentFolderId);
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -211,13 +207,13 @@ export function createNoteRoutes(
   // Delete note
   router.delete("/:id", requireAuth, async (req: Request, res: Response) => {
     try {
-      const noteInfo = await getNoteByIdController.apply({ id: req.params.id });
+      // const noteInfo = await getNoteByIdController.apply({ id: req.params.id });
       await deleteNoteController.apply({ id: req.params.id });
-      const userId = req.session.user_id;
-      await invalidateGetAllNotesCache(userId);
-      await invalidateGetFolderContentsCache(userId, noteInfo.parentFolderId);
-      await invalidateGetNoteByIdCache(userId, req.params.id);
-      await invalidateGetAllTagsCache(userId);
+      // const userId = req.session.user_id;
+      // await invalidateGetAllNotesCache(userId);
+      // await invalidateGetFolderContentsCache(userId, noteInfo.parentFolderId);
+      // await invalidateGetNoteByIdCache(userId, req.params.id);
+      // await invalidateGetAllTagsCache(userId);
 
       res.status(204).send();
     } catch (error) {

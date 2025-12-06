@@ -2,11 +2,7 @@ import { UseCase } from "../../../application/core/UseCase.ts";
 import { IUnitOfWork } from "../../../application/ports/IUnitOfWork.ts";
 import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
 import { NoteRepository } from "../../../application/repositories/NoteRepository.ts";
-import {
-  UpdateNote,
-  UpdateNoteInput,
-  UpdateNoteOutput,
-} from "../../../application/useCases/note/UpdateNote.ts";
+import { UpdateNote, UpdateNoteInput, UpdateNoteOutput } from "../../../application/useCases/note/UpdateNote.ts";
 import { RetryUseCaseDecorator } from "../../../infrastructure/decorators/RetryUseCaseDecorator.ts";
 import { GetNoteByIdResponse } from "./GetNoteByIdController.ts";
 
@@ -27,12 +23,12 @@ export class UpdateNoteController {
   constructor(
     folderRepository: FolderRepository,
     noteRepository: NoteRepository,
-    createNoteUnitOfWork: () => Promise<IUnitOfWork>
+    createNoteUnitOfWork: () => Promise<IUnitOfWork>,
   ) {
     const coreUseCase = new UpdateNote(
       folderRepository,
       noteRepository,
-      createNoteUnitOfWork
+      createNoteUnitOfWork,
     );
 
     this.useCase = new RetryUseCaseDecorator(coreUseCase, {

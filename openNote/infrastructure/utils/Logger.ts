@@ -14,7 +14,7 @@ export class Logger {
     console.log(
       `%c[${this.getTime()}] [INFO] ${message}`,
       "color: green",
-      context ? JSON.stringify(context, null, 2) : ""
+      context ? JSON.stringify(context, null, 2) : "",
     );
   }
 
@@ -22,7 +22,7 @@ export class Logger {
     console.warn(
       `%c[${this.getTime()}] [WARN] ${message}`,
       "color: yellow",
-      context ? JSON.stringify(context, null, 2) : ""
+      context ? JSON.stringify(context, null, 2) : "",
     );
   }
 
@@ -39,7 +39,7 @@ export class Logger {
       console.debug(
         `%c[${this.getTime()}] [DEBUG] ${message}`,
         "color: blue",
-        context ? JSON.stringify(context, null, 2) : ""
+        context ? JSON.stringify(context, null, 2) : "",
       );
     }
   }

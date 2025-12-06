@@ -17,7 +17,7 @@ function createPool(): Pool {
       password: Deno.env.get("DB_PASSWORD"),
       database: Deno.env.get("DB_NAME"),
     },
-    20
+    20,
   );
 }
 
@@ -38,7 +38,7 @@ export async function waitForDatabase(): Promise<void> {
         client.release();
       }
     },
-    { maxRetries: 10, initialDelay: 2000 } // thử lại tối đa 10 lần, bắt đầu với delay 2s
+    { maxRetries: 10, initialDelay: 2000 }, // thử lại tối đa 10 lần, bắt đầu với delay 2s
   );
 }
 

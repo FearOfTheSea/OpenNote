@@ -11,7 +11,7 @@ export class RetryExecutor {
   static async execute<T>(
     operationName: string,
     operation: () => Promise<T>,
-    options: RetryOptions = {}
+    options: RetryOptions = {},
   ): Promise<T> {
     const maxRetries = options.maxRetries ?? 5;
     const initialDelay = options.initialDelay ?? 1000;
@@ -34,7 +34,7 @@ export class RetryExecutor {
         // thành công sau khi đã từng retry, log info để biết đã phục hồi
         if (attempt > 1) {
           Logger.info(
-            `[RETRY-SUCCESS] ${operationName} succeeded after ${attempt - 1} retries.`
+            `[RETRY-SUCCESS] ${operationName} succeeded after ${attempt - 1} retries.`,
           );
         }
 
@@ -43,7 +43,7 @@ export class RetryExecutor {
         if (attempt > maxRetries) {
           Logger.error(
             `[RETRY-FAIL] ${operationName} FAILED permanently after ${attempt - 1} retries.`,
-            error
+            error,
           );
           throw error;
         }
@@ -57,7 +57,7 @@ export class RetryExecutor {
 
         Logger.warn(
           `[RETRY-WAIT] ${operationName} failed (Attempt ${attempt}/${maxRetries}). Waiting ${actualDelay}ms...`,
-          { error: (error as Error).message, actualDelay }
+          { error: (error as Error).message, actualDelay },
         );
 
         await new Promise((resolve) => setTimeout(resolve, actualDelay));

@@ -31,8 +31,8 @@ export function createAuthRoutes(
 
       res.status(201).json({
         user_id: result.id,
-        email: result.email,
-        fullname: result.fullName,
+        user_email: result.email,
+        user_fullname: result.fullName,
       });
     } catch (error) {
       res.status(400).json({ error: (error as Error).message });
@@ -91,6 +91,15 @@ export function createAuthRoutes(
       res.clearCookie("connect.sid");
       console.log(`[AuthRoutes] User with email ${userEmail} logged out!`);
       return res.status(200).json({ message: "Logged out successfully" });
+    });
+  });
+
+  // Session check
+  router.get("/me", requireAuth, (req: Request, res: Response) => {
+    return res.json({
+      logged_in: true,
+      user_id: req.session.user_id,
+      user_email: req.session.user_email,
     });
   });
 

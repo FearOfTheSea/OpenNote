@@ -4,7 +4,7 @@ import { RetryExecutor, RetryOptions } from "../resilience/RetryExecutor.ts";
 export class RetryUseCaseDecorator<I, O> implements UseCase<I, O> {
   constructor(
     private useCase: UseCase<I, O>,
-    private options: RetryOptions = {}
+    private options: RetryOptions = {},
   ) {}
 
   async execute(request: I): Promise<O> {
@@ -15,7 +15,7 @@ export class RetryUseCaseDecorator<I, O> implements UseCase<I, O> {
       async () => {
         return await this.useCase.execute(request);
       },
-      this.options
+      this.options,
     );
   }
 }

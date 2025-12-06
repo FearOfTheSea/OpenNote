@@ -13,12 +13,10 @@ export interface UpdateFolderOutput {
   readonly folder: Folder;
 }
 
-export class UpdateFolder
-  implements UseCase<UpdateFolderInput, UpdateFolderOutput>
-{
+export class UpdateFolder implements UseCase<UpdateFolderInput, UpdateFolderOutput> {
   constructor(
     private folderRepository: FolderRepository,
-    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>
+    private readonly createNoteUnitOfWork: () => Promise<IUnitOfWork>,
   ) {}
 
   async execute(input: UpdateFolderInput): Promise<UpdateFolderOutput> {
@@ -39,8 +37,7 @@ export class UpdateFolder
     let newParentId: string | undefined = existingFolder.parentFolderId;
 
     if (input.newParentFolderId !== undefined) {
-      newParentId =
-        input.newParentFolderId === "" ? undefined : input.newParentFolderId;
+      newParentId = input.newParentFolderId === "" ? undefined : input.newParentFolderId;
     }
 
     const isNameChanged = newName !== existingFolder.name;
@@ -50,16 +47,16 @@ export class UpdateFolder
     if (isNameChanged || isLocationChanged) {
       const siblings = await this.folderRepository.findByParentFolderId(
         newParentId,
-        existingFolder.userId
+        existingFolder.userId,
       );
 
       const isDuplicate = siblings.some(
-        (f) => f.name === newName && f.id !== existingFolder.id
+        (f) => f.name === newName && f.id !== existingFolder.id,
       );
 
       if (isDuplicate) {
         throw new Error(
-          `Folder with name "${newName}" already exists in the destination folder.`
+          `Folder with name "${newName}" already exists in the destination folder.`,
         );
       }
     }
@@ -73,8 +70,9 @@ export class UpdateFolder
         await uow.folders.cutFolder(
           existingFolder.id,
           existingFolder.userId,
-          newParentId
+          newParentId,
         );
+        await uow.commit();
       } catch (error) {
         await uow.rollback();
         throw error;
@@ -88,7 +86,7 @@ export class UpdateFolder
         existingFolder.parentFolderId,
         existingFolder.id,
         existingFolder.createdAt,
-        new Date()
+        new Date(),
       );
 
       await this.folderRepository.save(folderToSave);
@@ -100,11 +98,11 @@ export class UpdateFolder
       newParentId,
       existingFolder.id,
       existingFolder.createdAt,
-      new Date()
+      new Date(),
     );
 
     console.log(
-      `Updated folder: id: ${updatedFolder.id}, name: ${updatedFolder.name}, parentFolderId: ${updatedFolder.parentFolderId}, userId: ${updatedFolder.userId}`
+      `Updated folder: id: ${updatedFolder.id}, name: ${updatedFolder.name}, parentFolderId: ${updatedFolder.parentFolderId}, userId: ${updatedFolder.userId}`,
     );
 
     return { folder: updatedFolder };

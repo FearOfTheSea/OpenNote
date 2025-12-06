@@ -23,7 +23,7 @@ export async function initRedis(): Promise<void> {
         await redisClient.connect();
       }
     },
-    { maxRetries: 10, initialDelay: 500 }
+    { maxRetries: 10, initialDelay: 500 },
   );
 
   console.log(`[REDIS] Connected to redis at ${redisHost}:${redisPort}`);

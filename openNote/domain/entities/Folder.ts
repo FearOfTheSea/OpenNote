@@ -14,14 +14,14 @@ export class Folder {
     parentFolderId?: string | undefined,
     folderId?: string,
     createdAt?: Date,
-    updatedAt?: Date
+    updatedAt?: Date,
   ) {
     if (!name || name.trim() === "") {
       throw new Error("Folder name cannot be empty");
     }
     if (!validateName(name)) {
       throw new Error(
-        "Folder name must be 1-255 characters long, uses only 0-9, a-Z, ., _, - and spaces"
+        "Folder name must be 1-255 characters long, uses only 0-9, a-Z, ., _, - and spaces",
       );
     }
 

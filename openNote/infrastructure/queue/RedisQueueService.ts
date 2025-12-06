@@ -3,7 +3,7 @@ import { IQueueService } from "../../application/ports/IQueueService.ts";
 
 export class RedisQueueService implements IQueueService {
   constructor(
-    private visibilityTimeoutSec = 60 // timeout job stuck
+    private visibilityTimeoutSec = 60, // timeout job stuck
   ) {}
 
   private getVisibilityKey(processingQueueName: string, raw: string) {
@@ -16,7 +16,7 @@ export class RedisQueueService implements IQueueService {
 
   async dequeueReliable(
     queueName: string,
-    processingQueueName: string
+    processingQueueName: string,
   ): Promise<{ data: any; raw: string } | null> {
     const raw = await redisClient.brPopLPush(queueName, processingQueueName, 1);
     if (!raw) return null;
@@ -35,7 +35,7 @@ export class RedisQueueService implements IQueueService {
 
   async acknowledge(
     processingQueueName: string,
-    rawData: string
+    rawData: string,
   ): Promise<void> {
     const vtKey = this.getVisibilityKey(processingQueueName, rawData);
 
@@ -52,7 +52,7 @@ export class RedisQueueService implements IQueueService {
    */
   async recover(queueName: string, processingQueueName: string): Promise<void> {
     console.log(
-      `[QUEUE] Running visibility-timeout recovery on ${processingQueueName}...`
+      `[QUEUE] Running visibility-timeout recovery on ${processingQueueName}...`,
     );
 
     while (true) {
@@ -80,7 +80,7 @@ export class RedisQueueService implements IQueueService {
 
       if (elapsed > this.visibilityTimeoutSec * 1000) {
         console.log(
-          `[QUEUE RECOVERY] Visibility timeout → requeue job: ${raw}`
+          `[QUEUE RECOVERY] Visibility timeout → requeue job: ${raw}`,
         );
 
         // move job back

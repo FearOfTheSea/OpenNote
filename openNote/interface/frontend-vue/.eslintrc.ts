@@ -1,0 +1,12 @@
+module.exports = {
+  env: {
+    node: true,
+  },
+  extends: [
+    "eslint:recommended",
+    "plugin:vue/vue3-recommended",
+  ],
+  rules: {
+    "vue/html-self-closing": "off",
+  },
+};

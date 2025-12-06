@@ -38,7 +38,7 @@ switch (env) {
     tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
     createUnitOfWork = () => {
       return Promise.resolve(
-        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository)
+        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository),
       );
     };
     console.log("[CONTEXT]: test");
@@ -79,7 +79,7 @@ switch (env) {
     userRepository = new InMemoryUserRepository();
     createUnitOfWork = () => {
       return Promise.resolve(
-        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository)
+        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository),
       );
     };
     console.log("[CONTEXT]: development");

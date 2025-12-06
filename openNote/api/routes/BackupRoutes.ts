@@ -86,6 +86,8 @@ import { redisClient } from "../../infrastructure/redis/RedisClient.ts";
 import { invalidateGetAllNotesCache } from "./NoteRoutes.ts";
 import { invalidateGetAllTagsCache } from "./TagRoutes.ts";
 import { invalidateGetAllFoldersCache } from "./FolderRoutes.ts";
+import { join } from "@std/path";
+import { existsSync } from "@std/fs";
 
 export function createBackupRoutes(
   createBackupController: CreateBackupController,
@@ -154,6 +156,34 @@ export function createBackupRoutes(
     } catch (error) {
       console.error("[Backup Import Error]:", error);
       res.status(500).json({ error: (error as Error).message });
+    }
+  });
+
+  // Download backup json
+  router.get("/download/:jobId", requireAuth, (req: Request, res: Response) => {
+    try {
+      const jobId = req.params.jobId;
+
+      // Define the path to the backup file
+      const backupDir = join(Deno.cwd(), "interface", "web", "public", "backups");
+      const filePath = join(backupDir, `backup_${jobId}.json`);
+
+      // Check if the file exists
+      if (!existsSync(filePath)) {
+        res.status(404).json({ error: "Backup file not found or still processing" });
+        return;
+      }
+
+      // Use res.download() to serve the file for download
+      res.download(filePath, "userdata.json", (err: Error) => {
+        if (err) {
+          console.error("[Backup Download Error]:", err);
+          res.status(500).json({ error: "Error downloading the file" });
+        }
+      });
+    } catch (error) {
+      console.error("[Backup Download Error]:", error);
+      res.status(500).json({ error: "Server error" });
     }
   });
 

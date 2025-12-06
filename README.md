@@ -1,88 +1,30 @@
 # OpenNote
 
-> This project has received the kiss of death. That is, I myself don't use it anymore. I have switched to using a
-> [text editor with markdown support](https://vscodium.com/), Git, and [Syncthing](https://syncthing.net/) for my
-> journaling/note taking. If you want to export your notes, the [cli](https://github.com/FoxUSA/OpenNote-CLI) can dump
-> them to text files.
+OpenNote is a web based text editor/note taking software.
 
-![][responsive] OpenNote is a progressive web application(PWA)/HTML5 offline app that was built to be a open source(MIT
-License), web based text editor/note taking software. It is designed to be self hosted and gives you ownership of your
-data
+## Dependencies
 
-Please support this project by:
+- [Deno](https://docs.deno.com/runtime/getting_started/installation/) (Backend server)
+- [npm](https://docs.npmjs.com/downloading-and-installing-node-js-and-npm) (Frontend)
+- [Docker Compose](https://docs.docker.com/compose/install) (Database & Cache)
 
-- [Using GitTip][GitTip],
-- [donating bitcoins][Bitcoins],
-- and/or like on [Alternative To][Alternative].
+## How to install
 
-Thank you!
+```cmd
+$ deno install
+$ cd openNote/interface/frontend-vue && npm install
+```
 
-[Download using Docker][Docker]
+## How to run
 
-[or download manually from here.][Download]
+Set your variables in the `.env` file following the format of `.env.example`
+```cmd
+$ docker compose up -d
+```
 
-## Demo
-
-https://foxusa.github.io/OpenNote/OpenNote/
-
-## ![][topLevel] Features
-
-- BYOS(Bring Your Own Server)
-- Touch friendly and mouse friendly ui
-- Light weight
-- Multi user support
-- Search
-- Offline App
-- CouchDB Sync via PouchDB
-- Move Folders(Drag into another folder in the list view.)
-- Rename/Delete Folders(Click on folder title to get menu.)
-- Responsive
-- Tags
-- [CLI](https://github.com/FoxUSA/OpenNote-CLI) Upcoming Features
-
----
-
-- Email to note
-- Mobile App
-
-## Documentation
-
-- [How to install][Install]
-- [How to upgrade][Upgrade]
-- [How to build](https://github.com/FoxUSA/OpenNote/blob/master/docs/Build.md)
-- [Themes][Themes]
-- [Project history][History]
-
-## License
-
-    JQuery - Distributed under the MIT License
-    Angular - Distributed under the MIT License
-    Bootstrap - Distributed under the MIT License
-    Angular UI Tree - Distributed under the MIT License
-    Alertify.js - Distributed under the MIT License
-    PouchDB - Distributed under the Apache License
-    Dragula - Distributed under the MIT License
-    Into.js - Distributed with license from Afshin Mehrabani Copyright (C) 2012
-
-    OpenNote Code - Distributed under the MIT License
-
-    © Jacob Liscom 2018
-
-## Credits
-
-    J. Liscom - Creator
-
-    Kam Bnkamalesh - His TODO project heavily influenced my UI design
-
-[topLevel]: ./docs/screenShots/topLevel.png
-[responsive]: ./docs/screenShots/OpenNote.png
-[Install]: https://github.com/FoxUSA/OpenNote/blob/master/docs/Install.md
-[History]: https://github.com/FoxUSA/OpenNote/blob/master/docs/History.md
-[Upgrade]: https://github.com/FoxUSA/OpenNote/blob/master/docs/Upgrade.md
-[Dependencies]: https://github.com/FoxUSA/OpenNote/blob/master/docs/Dependencies.md
-[Themes]: https://github.com/FoxUSA/OpenNote/blob/master/docs/Themes.md
-[GitTip]: https://www.gittip.com/FoxUSA/
-[Bitcoins]: http://blockchain.info/address/15Q2jhnTvxDQm4LvTku68vTzU8j8dcLnLB
-[Alternative]: http://alternativeto.net/software/opennote/
-[Download]: https://github.com/FoxUSA/OpenNote/releases
-[Docker]: https://registry.hub.docker.com/u/foxusa/opennote/
+Run these 3 commands in 3 different processes
+```cmd
+$ deno task dev
+$ deno task worker
+$ deno task vue
+```

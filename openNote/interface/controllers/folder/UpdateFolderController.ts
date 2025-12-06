@@ -24,7 +24,7 @@ export class UpdateFolderController {
 
   constructor(
     folderRepository: FolderRepository,
-    createUnitOfWork: () => Promise<IUnitOfWork>
+    createUnitOfWork: () => Promise<IUnitOfWork>,
   ) {
     const coreUseCase = new UpdateFolder(folderRepository, createUnitOfWork);
     this.useCase = new RetryUseCaseDecorator(coreUseCase, {
