@@ -168,6 +168,7 @@ export function createFolderRoutes(
       if (result.folder.parentFolderId) {
         await invalidateGetFolderContentsCache(userId, result.folder.parentFolderId);
       }
+      await invalidateGetFolderByIdCache(userId, req.params.id);
 
       res.json(result);
     } catch (error) {
