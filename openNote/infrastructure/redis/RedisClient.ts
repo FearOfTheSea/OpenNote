@@ -34,3 +34,16 @@ export async function closeRedis(): Promise<void> {
   await redisClient.quit();
   console.log("[REDIS] Redis client closed");
 }
+
+// redis health check
+export async function checkRedisHealth(): Promise<boolean> {
+  try {
+    if (!redisClient.isOpen) return false;
+
+    const response = await redisClient.ping();
+    return response === "PONG";
+  } catch (error) {
+    console.error("[HEALTH] Redis check failed:", error);
+    return false;
+  }
+}

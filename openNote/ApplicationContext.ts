@@ -14,7 +14,7 @@ import { PostgreUserRepository } from "./infrastructure/repositories/PostgreUser
 import { UserRepository } from "./application/repositories/UserRepository.ts";
 import { InMemoryUserRepository } from "./infrastructure/repositories/InmemoryUserRepository.ts";
 import { BcryptPasswordHasher } from "./infrastructure/utils/BcryptPasswordHasher.ts";
-import { getPool } from "./infrastructure/db/postgresClient.ts";
+import { closeDbPool, getPool } from "./infrastructure/db/postgresClient.ts";
 import { JobRepository } from "./application/repositories/JobRepository.ts";
 import { PostgreJobRepository } from "./infrastructure/repositories/PostgreJobRepository.ts";
 import { IQueueService } from "./application/ports/IQueueService.ts";
@@ -38,7 +38,7 @@ switch (env) {
     tagRepository = new InMemoryTagRepository(noteRepository, folderRepository);
     createUnitOfWork = () => {
       return Promise.resolve(
-        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository),
+        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository)
       );
     };
     console.log("[CONTEXT]: test");
@@ -46,8 +46,6 @@ switch (env) {
   }
 
   case "production": {
-    const pool = await getPool();
-
     folderRepository = new PostgreFolderRepository();
     noteRepository = new PostgreNoteRepository();
     tagRepository = new PostgreTagRepository();
@@ -57,14 +55,23 @@ switch (env) {
     queueService = new RedisQueueService(60);
 
     createUnitOfWork = async () => {
-      const client = await pool.connect();
-      const tx = client.createTransaction("unit_of_work_tx");
+      try {
+        const pool = await getPool();
+        const client = await pool.connect();
 
-      const noteRepo = new PostgreNoteRepository(tx);
-      const folderRepo = new PostgreFolderRepository(tx);
-      const tagRepo = new PostgreTagRepository(tx);
+        await client.queryObject("SELECT 1");
 
-      return new PostgreUnitOfWork(tx, client, noteRepo, tagRepo, folderRepo);
+        const tx = client.createTransaction("unit_of_work_tx");
+
+        const noteRepo = new PostgreNoteRepository(tx);
+        const folderRepo = new PostgreFolderRepository(tx);
+        const tagRepo = new PostgreTagRepository(tx);
+
+        return new PostgreUnitOfWork(tx, client, noteRepo, tagRepo, folderRepo);
+      } catch (error) {
+        await closeDbPool(); // pool được gán null để tạo lại
+        throw error;
+      }
     };
 
     console.log("[CONTEXT]: production");
@@ -79,7 +86,7 @@ switch (env) {
     userRepository = new InMemoryUserRepository();
     createUnitOfWork = () => {
       return Promise.resolve(
-        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository),
+        new InMemoryUnitOfWork(noteRepository, tagRepository, folderRepository)
       );
     };
     console.log("[CONTEXT]: development");

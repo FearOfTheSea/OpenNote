@@ -1,5 +1,5 @@
 import { UseCase } from "../../../application/core/UseCase.ts";
-import { FolderRepository } from "../../../application/repositories/FolderRepository.ts";
+
 import {
   UpdateFolder,
   UpdateFolderInput,
@@ -22,13 +22,10 @@ export interface UpdateFolderResponse {
 export class UpdateFolderController {
   private useCase: UseCase<UpdateFolderInput, UpdateFolderOutput>;
 
-  constructor(
-    folderRepository: FolderRepository,
-    createUnitOfWork: () => Promise<IUnitOfWork>,
-  ) {
-    const coreUseCase = new UpdateFolder(folderRepository, createUnitOfWork);
+  constructor(createUnitOfWork: () => Promise<IUnitOfWork>) {
+    const coreUseCase = new UpdateFolder(createUnitOfWork);
     this.useCase = new RetryUseCaseDecorator(coreUseCase, {
-      maxRetries: 3,
+      maxRetries: 5,
       initialDelay: 500,
       useJitter: true,
     });

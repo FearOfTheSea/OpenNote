@@ -1,6 +1,6 @@
 import { Note } from "../../domain/entities/Note.ts";
 import { NoteRepository } from "../../application/repositories/NoteRepository.ts";
-import { getPool } from "../db/postgresClient.ts";
+import { getPool, closeDbPool } from "../db/postgresClient.ts";
 import { QueryObjectResult, Transaction } from "pg";
 import { buildSearchSyntax } from "../utils/SearchHelper.ts";
 
@@ -12,18 +12,25 @@ export class PostgreNoteRepository implements NoteRepository {
 
   private async executeQuery<T>(
     query: string,
-    args: any[] = [],
+    args: any[] = []
   ): Promise<QueryObjectResult<T>> {
     if (this.tx) {
       return await this.tx.queryObject<T>(query, args);
     } else {
-      // create a new client from the pool
-      const client = await (await getPool()).connect();
+      let client;
       try {
+        const pool = await getPool();
+        client = await pool.connect();
+
+        await client.queryObject("SELECT 1");
         return await client.queryObject<T>(query, args);
+      } catch (error) {
+        await closeDbPool();
+        throw error;
       } finally {
-        // release the client back to the pool
-        client.release();
+        if (client) {
+          client.release(); // chỉ release khi đã connect thành công
+        }
       }
     }
   }
@@ -41,7 +48,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [userId],
+      [userId]
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -58,7 +65,7 @@ export class PostgreNoteRepository implements NoteRepository {
       WHERE n.note_id = $1
       GROUP BY n.note_id
       `,
-      [id],
+      [id]
     );
 
     if (result.rows.length === 0) return null;
@@ -77,7 +84,7 @@ export class PostgreNoteRepository implements NoteRepository {
       GROUP BY n.note_id
       ORDER BY n.updated_at DESC
       `,
-      [folderId],
+      [folderId]
     );
 
     return result.rows.map((row) => this.mapRowToNote(row));
@@ -131,7 +138,7 @@ export class PostgreNoteRepository implements NoteRepository {
     // kiểm tra quyền sở hữu của folder mới
     const checkOwnership = await this.executeQuery<{ user_id: string }>(
       `SELECT user_id FROM folders WHERE folder_id = $1`,
-      [newFolderId],
+      [newFolderId]
     );
 
     if (checkOwnership.rows.length === 0) {
@@ -142,14 +149,14 @@ export class PostgreNoteRepository implements NoteRepository {
 
     const currentFolderOwner = await this.executeQuery<{ user_id: string }>(
       `SELECT user_id FROM folders WHERE folder_id = $1`,
-      [note.parentFolderId],
+      [note.parentFolderId]
     );
 
     const currentOwnerId = currentFolderOwner.rows[0]?.user_id;
 
     if (currentOwnerId !== targetFolderOwnerId) {
       throw new Error(
-        "Cannot move note to a folder belonging to another user.",
+        "Cannot move note to a folder belonging to another user."
       );
     }
 
@@ -160,7 +167,7 @@ export class PostgreNoteRepository implements NoteRepository {
           updated_at = CURRENT_TIMESTAMP
       WHERE note_id = $2
       `,
-      [newFolderId, noteId],
+      [newFolderId, noteId]
     );
     return true;
   }
@@ -180,7 +187,7 @@ export class PostgreNoteRepository implements NoteRepository {
             folder_id = EXCLUDED.folder_id,
             updated_at = CURRENT_TIMESTAMP
         `,
-      [note.id, note.name, note.content, note.parentFolderId],
+      [note.id, note.name, note.content, note.parentFolderId]
     );
   }
 
@@ -243,7 +250,7 @@ export class PostgreNoteRepository implements NoteRepository {
       row.tags,
       row.note_id,
       row.created_at,
-      row.updated_at,
+      row.updated_at
     );
   }
 }

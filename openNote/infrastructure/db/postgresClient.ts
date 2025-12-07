@@ -1,5 +1,6 @@
 import { Pool } from "pg";
 import { RetryExecutor } from "../resilience/RetryExecutor.ts";
+import { Logger } from "../utils/Logger.ts";
 
 let pool: Pool | null = null;
 
@@ -8,8 +9,10 @@ let pool: Pool | null = null;
  */
 function createPool(): Pool {
   console.log("[POSTGRES] Initializing pool...");
+  console.log("DB_HOST =", Deno.env.get("DB_HOST"));
+  console.log(`[POSTGRES CONFIG] Connecting to`, Deno.env.get("DB_PORT"));
 
-  return new Pool(
+  const newPool = new Pool(
     {
       hostname: Deno.env.get("DB_HOST"),
       port: Number(Deno.env.get("DB_PORT")),
@@ -17,8 +20,12 @@ function createPool(): Pool {
       password: Deno.env.get("DB_PASSWORD"),
       database: Deno.env.get("DB_NAME"),
     },
-    20,
+    40,
+    // lazy connection, không connect tới db ngay lúc new Pool
+    true
   );
+
+  return newPool;
 }
 
 /**
@@ -38,8 +45,13 @@ export async function waitForDatabase(): Promise<void> {
         client.release();
       }
     },
-    { maxRetries: 10, initialDelay: 2000 }, // thử lại tối đa 10 lần, bắt đầu với delay 2s
-  );
+    { maxRetries: 10, initialDelay: 1000 } // thử lại tối đa 10 lần, bắt đầu với delay 1s
+  ).catch((err: any) => {
+    Logger.warn(
+      "[POSTGRES] Warm-up failed. Will retry on request. Error:",
+      err
+    );
+  });
 }
 
 /**
@@ -50,5 +62,54 @@ export async function getPool(): Promise<Pool> {
     pool = createPool();
     console.log("[POSTGRES] Pool created.");
   }
+
   return pool;
+}
+
+// health check monitor
+// return true if db is still ok
+export async function checkDatabaseHealth(): Promise<boolean> {
+  if (!pool) {
+    return false;
+  }
+
+  try {
+    const checkPromise = async () => {
+      const client = await pool!.connect();
+      try {
+        await client.queryObject("SELECT 1");
+        return true;
+      } finally {
+        client.release();
+      }
+    };
+
+    const timeoutPromise = new Promise<boolean>((_, reject) =>
+      setTimeout(() => reject(new Error("Health check timeout")), 2000)
+    );
+
+    await Promise.race([checkPromise(), timeoutPromise]);
+    return true;
+  } catch (error) {
+    Logger.error("[HEALTH] Database check failed", error);
+    // chủ động reset pool để thử lại
+    await closeDbPool();
+    return false;
+  }
+}
+
+export async function closeDbPool(): Promise<void> {
+  if (pool) {
+    const tempPool = pool;
+    pool = null; // set null để request sau tạo pool mới
+    try {
+      const timeoutPromise = new Promise((_, reject) =>
+        setTimeout(() => reject(new Error("Force close timeout")), 500)
+      );
+      await Promise.race([tempPool.end(), timeoutPromise]);
+      Logger.info("[POSTGRES] Pool closed.");
+    } catch (error) {
+      Logger.warn("Error while closing dead pool: ${error}");
+    }
+  }
 }
