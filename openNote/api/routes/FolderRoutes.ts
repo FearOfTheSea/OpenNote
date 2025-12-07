@@ -55,17 +55,17 @@ export function createFolderRoutes(
     try {
       const userId = req.session.user_id;
 
-      // const cacheKey = getAllFoldersCacheKey(userId);
-      // const cached = await redisClient.get(cacheKey);
+      const cacheKey = getAllFoldersCacheKey(userId);
+      const cached = await redisClient.get(cacheKey);
 
-      // if (cached) {
-      //   console.log(`[CACHE HIT] GET /api/folders`);
-      //   const data = JSON.parse(cached);
-      //   return res.json(data);
-      // }
+      if (cached) {
+        console.log(`[CACHE HIT] GET /api/folders`);
+        const data = JSON.parse(cached);
+        return res.json(data);
+      }
 
       const result = await getAllFoldersController.apply({ userId });
-      // await redisClient.setEx(cacheKey, NOTES_CACHE_TTL, JSON.stringify(result));
+      await redisClient.setEx(cacheKey, NOTES_CACHE_TTL, JSON.stringify(result));
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -83,12 +83,11 @@ export function createFolderRoutes(
       });
 
       // console.log("[FolderRoutes] Create folder: User id: ", req.body.user_id);
-      // await invalidateGetAllFoldersCache(userId);
-      // await invalidateGetFolderContentsCache(userId, req.body.parent_folder_id);
-      // await redisClient.setEx(getFolderByIdCacheKey(userId, result.id), NOTES_CACHE_TTL, JSON.stringify(result));
-      // if (result.parentFolderId) {
-      //   await invalidateGetFolderByIdCache(userId, result.parentFolderId);
-      // }
+      await invalidateGetAllFoldersCache(userId);
+      if (result.parentFolderId) {
+        await invalidateGetFolderContentsCache(userId, req.body.parent_folder_id);
+        await invalidateGetFolderByIdCache(userId, result.parentFolderId);
+      }
 
       res.status(201).json(result);
     } catch (error) {
@@ -115,18 +114,18 @@ export function createFolderRoutes(
   // Get folder by ID
   router.get("/:id", requireAuth, async (req: Request, res: Response) => {
     try {
-      // const userId = req.session.user_id;
+      const userId = req.session.user_id;
 
-      // const cacheKey = getFolderByIdCacheKey(userId, req.params.id);
-      // const cached = await redisClient.get(cacheKey);
-      // if (cached) {
-      //   console.log(`[CACHE HIT] GET /api/folders/:id`);
-      //   const data = JSON.parse(cached);
-      //   return res.json(data);
-      // }
+      const cacheKey = getFolderByIdCacheKey(userId, req.params.id);
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        console.log(`[CACHE HIT] GET /api/folders/:id`);
+        const data = JSON.parse(cached);
+        return res.json(data);
+      }
 
       const result = await getFolderByIdController.apply({ id: req.params.id });
-      // await redisClient.setEx(cacheKey, NOTES_CACHE_TTL, JSON.stringify(result));
+      await redisClient.setEx(cacheKey, NOTES_CACHE_TTL, JSON.stringify(result));
       res.json(result);
     } catch (error) {
       res.status(404).json({ error: (error as Error).message });
@@ -135,20 +134,20 @@ export function createFolderRoutes(
   // Get folder contents (subfolders and notes)
   router.get("/:id/contents", requireAuth, async (req: Request, res: Response) => {
     try {
-      // const userId = req.session.user_id;
-      // const cacheKey = getFolderContentsCacheKey(userId, req.params.id);
-      // const cached = await redisClient.get(cacheKey);
-      // if (cached) {
-      //   console.log(`[CACHE HIT] GET /api/folders/:id/contents`);
-      //   const data = JSON.parse(cached);
-      //   return res.json(data);
-      // }
+      const userId = req.session.user_id;
+      const cacheKey = getFolderContentsCacheKey(userId, req.params.id);
+      const cached = await redisClient.get(cacheKey);
+      if (cached) {
+        console.log(`[CACHE HIT] GET /api/folders/:id/contents`);
+        const data = JSON.parse(cached);
+        return res.json(data);
+      }
 
       const result = await getFolderContentsController.apply({
         userId: req.session.user_id,
         folderId: req.params.id,
       });
-      // await redisClient.setEx(cacheKey, NOTES_CACHE_TTL, JSON.stringify(result));
+      await redisClient.setEx(cacheKey, NOTES_CACHE_TTL, JSON.stringify(result));
       res.json(result);
     } catch (error) {
       res.status(500).json({ error: (error as Error).message });
@@ -158,17 +157,17 @@ export function createFolderRoutes(
   // Update folder
   router.put("/:id", requireAuth, async (req: Request, res: Response) => {
     try {
-      // const userId = req.session.user_id;
+      const userId = req.session.user_id;
       const result = await updateFolderController.apply({
         id: req.params.id,
         newName: req.body.name,
         newParentFolderId: req.body.parent_folder_id,
       });
 
-      // await invalidateGetAllFoldersCache(userId);
-      // if (result.folder.parentFolderId) {
-      //   await invalidateGetFolderContentsCache(userId, result.folder.parentFolderId);
-      // }
+      await invalidateGetAllFoldersCache(userId);
+      if (result.folder.parentFolderId) {
+        await invalidateGetFolderContentsCache(userId, result.folder.parentFolderId);
+      }
 
       res.json(result);
     } catch (error) {
@@ -179,25 +178,25 @@ export function createFolderRoutes(
   // Delete folder
   router.delete("/:id", requireAuth, async (req: Request, res: Response) => {
     try {
-      // const userId = req.session.user_id;
-      // const contents = await getFolderContentsController.apply({ userId: userId, folderId: req.params.id });
-      // for (const folder of contents.folders) {
-      //   await invalidateGetFolderByIdCache(userId, folder.id);
-      //   await invalidateGetFolderContentsCache(userId, folder.id);
-      // }
-      // for (const note of contents.notes) {
-      //   await invalidateGetNoteByIdCache(userId, note.id);
-      // }
-      // await invalidateGetAllNotesCache(userId);
-      // await invalidateGetNotesByTagIdsCache(userId);
-      // await invalidateGetAllFoldersCache(userId);
-      // await invalidateGetAllTagsCache(userId);
+      const userId = req.session.user_id;
+      const contents = await getFolderContentsController.apply({ userId: userId, folderId: req.params.id });
+      for (const folder of contents.folders) {
+        await invalidateGetFolderByIdCache(userId, folder.id);
+        await invalidateGetFolderContentsCache(userId, folder.id);
+      }
+      for (const note of contents.notes) {
+        await invalidateGetNoteByIdCache(userId, note.id);
+      }
+      await invalidateGetAllNotesCache(userId);
+      await invalidateGetNotesByTagIdsCache(userId);
+      await invalidateGetAllFoldersCache(userId);
+      await invalidateGetAllTagsCache(userId);
 
-      // const parentFolderId = (await getFolderByIdController.apply({ id: req.params.id })).parentFolderId;
-      // if (parentFolderId) {
-      //   await invalidateGetFolderByIdCache(userId, parentFolderId);
-      // }
-      // await invalidateGetFolderByIdCache(userId, req.params.id);
+      const parentFolderId = (await getFolderByIdController.apply({ id: req.params.id })).parentFolderId;
+      if (parentFolderId) {
+        await invalidateGetFolderByIdCache(userId, parentFolderId);
+      }
+      await invalidateGetFolderByIdCache(userId, req.params.id);
       await deleteFolderController.apply({ id: req.params.id });
       res.status(204).send();
     } catch (error) {

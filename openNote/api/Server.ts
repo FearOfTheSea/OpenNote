@@ -6,6 +6,7 @@ import { RedisStore } from "connect-redis";
 import { closeRedis, initRedis, redisClient } from "../infrastructure/redis/RedisClient.ts";
 import express from "express";
 import session from "express-session";
+import cors from "cors";
 
 import {
   createUnitOfWork,
@@ -78,13 +79,25 @@ export async function createServer(options: ServerOptions = {}) {
   app.use(express.json({ limit: "50mb" }));
   app.use(express.static(join(__dirname, "interface/web/public")));
 
-  app.use((_req, res, next) => {
-    res.header("Access-Control-Allow-Origin", "http://localhost:5173");
-    res.header("Access-Control-Allow-Credentials", "true");
-    res.header("Access-Control-Allow-Headers", "Content-Type");
-    res.header("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE");
-    next();
-  });
+  const allowedOrigins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://your-production.com",
+  ];
+  const corsOptions = {
+    origin: (
+      origin: string | undefined,
+      callback: (err: Error | null, allow?: boolean) => void,
+    ) => {
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
+    credentials: true,
+  };
+  app.use(cors(corsOptions));
 
   await initRedis();
   const redisStore = new RedisStore({

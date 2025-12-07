@@ -82,7 +82,6 @@ import { Router } from "express";
 import { CreateBackupController } from "../../interface/controllers/backup/CreateBackupController.ts";
 import { ImportBackupController } from "../../interface/controllers/backup/ImportBackupController.ts";
 import { requireAuth } from "./middlewares/RequireAuth.ts";
-import { redisClient } from "../../infrastructure/redis/RedisClient.ts";
 import { invalidateGetAllNotesCache } from "./NoteRoutes.ts";
 import { invalidateGetAllTagsCache } from "./TagRoutes.ts";
 import { invalidateGetAllFoldersCache } from "./FolderRoutes.ts";
