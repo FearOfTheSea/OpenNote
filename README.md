@@ -18,11 +18,13 @@ $ cd openNote/interface/frontend-vue && npm install
 ## How to run
 
 Set your variables in the `.env` file following the format of `.env.example`
+
 ```cmd
 $ docker compose up -d
 ```
 
 Run these 3 commands in 3 different processes
+
 ```cmd
 $ deno task dev
 $ deno task worker

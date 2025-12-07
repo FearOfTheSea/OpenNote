@@ -1,6 +1,12 @@
-.git
-.env
-node_modules
+.git/
+node_modules/
 docker-compose.yml
 README.md
-tests
+tests/
+benchmarks/
+.vscode/
+.zed/
+.gitignore
+backup_sample.json
+.env
+.env.example

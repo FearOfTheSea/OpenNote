@@ -22,7 +22,7 @@ function createPool(): Pool {
     },
     40,
     // lazy connection, không connect tới db ngay lúc new Pool
-    true
+    true,
   );
 
   return newPool;
@@ -45,11 +45,11 @@ export async function waitForDatabase(): Promise<void> {
         client.release();
       }
     },
-    { maxRetries: 10, initialDelay: 1000 } // thử lại tối đa 10 lần, bắt đầu với delay 1s
+    { maxRetries: 10, initialDelay: 1000 }, // thử lại tối đa 10 lần, bắt đầu với delay 1s
   ).catch((err: any) => {
     Logger.warn(
       "[POSTGRES] Warm-up failed. Will retry on request. Error:",
-      err
+      err,
     );
   });
 }

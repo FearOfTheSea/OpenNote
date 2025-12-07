@@ -18,6 +18,7 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 10s
 
   redis:
     container_name: opennote-redis
@@ -35,38 +36,31 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+      start_period: 5s
 
   app-server:
     container_name: opennote-server
-    build: . # Dockerfile ở thư mục gốc
-    command:
-      [
-        "run",
-        "--allow-net",
-        "--allow-env",
-        "--allow-read",
-        "--allow-write",
-        "--allow-ffi",
-        "--config",
-        "deno.jsonc",
-        "openNote/Main.ts",
-      ]
+    image: localhost/opennote-server:latest
     restart: always
-    ports:
-      - "7000:7000"
-    environment:
-      - DB_HOST=postgres
-      - REDIS_HOST=redis
-      - PORT=7000
-      - DB_USER=manh
-      - DB_PASSWORD=12345678
-      - DB_NAME=opennote_db
-      - DB_PORT=5432
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    environment: &app_env
+      DB_HOST: postgres
+      DB_PORT: 5432
+      DB_USER: manh
+      DB_PASSWORD: 12345678
+      DB_NAME: opennote_db
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      PORT: 7000
+      JWT_SECRET: bimat
+      NODE_ENV: production
+      SESSION_SECRET: very_unique_session_secret
+    ports:
+      - "7000:7000"
     networks:
       - opennote-net
     healthcheck:
@@ -75,46 +69,29 @@ services:
       timeout: 10s
       retries: 3
       start_period: 10s
+    volumes:
+      - backup_data:/app/interface/web/public/backups
 
   app-worker:
-    # container_name: opennote-worker
-    build: .
-    command:
-      [
-        "run",
-        "--allow-net",
-        "--allow-env",
-        "--allow-read",
-        "--allow-write",
-        "--allow-ffi",
-        "--config",
-        "deno.jsonc",
-        "openNote/interface/worker/Worker.ts",
-      ]
+    container_name: opennote-worker
+    image: localhost/opennote-server:latest
     restart: always
-    environment:
-      - DB_HOST=postgres
-      - REDIS_HOST=redis
     depends_on:
       postgres:
         condition: service_healthy
       redis:
         condition: service_healthy
+    command: deno run -A openNote/interface/worker/Worker.ts
+    environment: *app_env
     networks:
       - opennote-net
-    healthcheck:
-      test:
-        [
-          "CMD-SHELL",
-          "test -f /tmp/worker_heartbeat && find /tmp/worker_heartbeat -mmin -1",
-        ]
-      interval: 30s
-      timeout: 5s
-      retries: 3
+    volumes:
+      - backup_data:/app/interface/web/public/backups
 
 volumes:
   postgres_data:
   redis_data:
+  backup_data:
 
 networks:
   opennote-net:
