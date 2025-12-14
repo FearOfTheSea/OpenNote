@@ -1,0 +1,26 @@
+Results from ES-Lint analysis.
+
+Version Comparison Analysis
+
+Metric                          v0      v2
+---------------------------------------------
+Total Modules                   20      90
+Max Dependencies (single mod)   11      5
+Avg Dependencies per Module     6.1     2.2
+Modules with Circular Deps      4       0
+
+Stability Distribution          v0              v2
+-----------------------------------------------------
+Completely Stable               1 (5%)          5 (5%)
+Stable                          2 (10%)         26 (28%)
+Balanced                        2 (10%)         35 (33%)
+Unstable                        6 (30%)         13 (14%)
+Completely Unstable             9 (45%)         8 (9%)
+Average Instability             0.76            0.39
+
+Maintainability Index           v0              v2
+-----------------------------------------------------
+MI <= 5                         8 (40%)         53 (58%)
+MI <= 10                        7 (35%)         44 (48%)
+MI > 10                         5 (25%)         3 (3%)
+Average MI                      40.3            58.5
